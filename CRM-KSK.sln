@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35431.28
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D26B0E13-E7A7-474D-9BAD-89F9FEDE95D3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM-KSK.Api", "src\CRM-KSK.Api\CRM-KSK.Api.csproj", "{4CDF76DB-AE68-4D67-96B5-B18F5B12F3FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM-KSK.Application", "src\CRM-KSK.Application\CRM-KSK.Application.csproj", "{5006ECB7-F5D2-4CC6-994B-B3DFA69FA84B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM-KSK.Core", "src\CRM-KSK.Core\CRM-KSK.Core.csproj", "{ECD9A6C6-5C66-489B-BB72-528677BB47C8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM-KSK.Dal.PostgreSQL", "src\CRM-KSK.Dal.PostgreSQL\CRM-KSK.Dal.PostgreSQL.csproj", "{2CD1787A-78C8-46AC-92B0-7A237E7FE288}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CRM-KSK.Infrastructure", "src\CRM-KSK.Infrastructure\CRM-KSK.Infrastructure.csproj", "{8B30D829-4840-46BF-B432-DFD0739785A5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4CDF76DB-AE68-4D67-96B5-B18F5B12F3FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CDF76DB-AE68-4D67-96B5-B18F5B12F3FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CDF76DB-AE68-4D67-96B5-B18F5B12F3FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CDF76DB-AE68-4D67-96B5-B18F5B12F3FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5006ECB7-F5D2-4CC6-994B-B3DFA69FA84B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5006ECB7-F5D2-4CC6-994B-B3DFA69FA84B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5006ECB7-F5D2-4CC6-994B-B3DFA69FA84B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5006ECB7-F5D2-4CC6-994B-B3DFA69FA84B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECD9A6C6-5C66-489B-BB72-528677BB47C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECD9A6C6-5C66-489B-BB72-528677BB47C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECD9A6C6-5C66-489B-BB72-528677BB47C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECD9A6C6-5C66-489B-BB72-528677BB47C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CD1787A-78C8-46AC-92B0-7A237E7FE288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CD1787A-78C8-46AC-92B0-7A237E7FE288}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CD1787A-78C8-46AC-92B0-7A237E7FE288}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CD1787A-78C8-46AC-92B0-7A237E7FE288}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B30D829-4840-46BF-B432-DFD0739785A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B30D829-4840-46BF-B432-DFD0739785A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B30D829-4840-46BF-B432-DFD0739785A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B30D829-4840-46BF-B432-DFD0739785A5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4CDF76DB-AE68-4D67-96B5-B18F5B12F3FD} = {D26B0E13-E7A7-474D-9BAD-89F9FEDE95D3}
+		{5006ECB7-F5D2-4CC6-994B-B3DFA69FA84B} = {D26B0E13-E7A7-474D-9BAD-89F9FEDE95D3}
+		{ECD9A6C6-5C66-489B-BB72-528677BB47C8} = {D26B0E13-E7A7-474D-9BAD-89F9FEDE95D3}
+		{2CD1787A-78C8-46AC-92B0-7A237E7FE288} = {D26B0E13-E7A7-474D-9BAD-89F9FEDE95D3}
+		{8B30D829-4840-46BF-B432-DFD0739785A5} = {D26B0E13-E7A7-474D-9BAD-89F9FEDE95D3}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DADB7D7A-9BE0-40F2-947A-75FE1CA14E15}
+	EndGlobalSection
+EndGlobal
