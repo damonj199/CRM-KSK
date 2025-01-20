@@ -1,0 +1,46 @@
+﻿@page "/schedule"
+@inject HttpClient Client
+
+<h3>Расписание тренировок</h3>
+
+@if(schedules == null)
+{
+    <p>Загрузка...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Клиент</th>
+                <th>Тренер</th>
+                <th>Тип тренировки</th>
+                <th>Описание</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var schedule in schedules)
+            {
+                <tr>
+                    <td>@schedule.Day</td>
+                    <td>@schedule.Time.ToShortDateString()</td>
+                    <td>@schedule.ClientName</td>
+                    <td>@schedule.TrainerName</td>
+                    <td>@schedule.TrainingType</td>
+                    <td>@schedule.Description</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private ICollection<ScheduleDto> schedules;
+
+    protected override async Task OnInitializedAsync()
+    {
+        schedules = await Client.GetFromJsonAsync<List<ScheduleDto>>("api/schedule");
+    }
+}

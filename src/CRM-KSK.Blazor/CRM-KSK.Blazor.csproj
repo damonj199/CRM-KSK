@@ -15,4 +15,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CRM-KSK.Application\CRM-KSK.Application.csproj" />
+    <ProjectReference Include="..\CRM-KSK.Core\CRM-KSK.Core.csproj" />
+  </ItemGroup>
+
 </Project>
