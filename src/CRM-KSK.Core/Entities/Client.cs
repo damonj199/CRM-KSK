@@ -11,5 +11,4 @@ public class Client
     public string? ParentPhone { get; set; }
     public Trainer? Trainer { get; set; }
     public ICollection<Schedule> Schedules { get; set; } = [];
-
 }

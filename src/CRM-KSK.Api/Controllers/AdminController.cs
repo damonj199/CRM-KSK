@@ -9,28 +9,35 @@ namespace CRM_KSK.Api.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
-    private readonly HttpContext _context;
 
-    public AdminController(IAdminService adminService, HttpContext context)
+    public AdminController(IAdminService adminService)
     {
         _adminService = adminService;
-        _context = context;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromQuery] RegisterRequest registerRequest, CancellationToken cancellationToken)
     {
-        await _adminService.Register(registerRequest, cancellationToken);
+        var result = await _adminService.RegisterAsync(registerRequest, cancellationToken);
+        if(result.Succeeded)
+        {
+            return Ok(new { message = "Пользователь успешно зарегистрирован!"});
+        }
 
-        return Ok();
+        return Conflict(new { message = result.ErrorMessage });
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromQuery] LoginRequest loginRequest, CancellationToken cancellationToken)
     {
-        var token = await _adminService.Login(loginRequest.Email, loginRequest.Password, cancellationToken);
+        var result = await _adminService.LoginAsync(loginRequest, cancellationToken);
 
-        _context.Response.Cookies.Append("jwt", token);
-        return Ok(token);
+        if (result.Succeeded)
+        {
+            HttpContext.Response.Cookies.Append("jwt", result.Token);
+            return Ok(new { token = result.Token });
+        }
+
+        return Unauthorized(new { message = result.ErrorMessage });
     }
 }

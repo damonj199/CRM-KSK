@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CRM_KSK.Application.Configurations;
 using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Application.Models;
 using CRM_KSK.Core.Entities;
@@ -20,29 +21,36 @@ public class AdminService : IAdminService
         _jwtProvider = jwtProvider;
     }
 
-    public async Task Register(RegisterRequest register, CancellationToken cancellationToken)
+    public async Task<RegistrationResult> RegisterAsync(RegisterRequest register, CancellationToken cancellationToken)
     {
+        var exisitingAdmin = _adminRepository.GetByEmail(register.Email);
+
+        if (exisitingAdmin != null)
+            return RegistrationResult.Failure("Пользователь с таким Email уже зарегистрирован");
+
         var hashedPassword = _passwordHasher.Generate(register.Password);
         var mapping = _mapper.Map<Admin>(register);
 
         var admin = await _adminRepository.AddAdmin(Guid.NewGuid(), mapping.FirstName, mapping.LastName, mapping.Email, hashedPassword, cancellationToken);
+
+        return RegistrationResult.Success();
     }
 
-    public async Task<string> Login(string email, string password, CancellationToken cancellationToken)
+    public async Task<LoginResult> LoginAsync(LoginRequest login, CancellationToken cancellationToken)
     {
-        var user = _adminRepository.GetByEmail(email);
+        var user = _adminRepository.GetByEmail(login.Email);
+
         if (user == null)
-        {
-            throw new Exception("Неверный логин или пароль! Попробуйте еще раз");
-        }
-        var result = _passwordHasher.Verify(password, user.Result.PasswordHash);
+            return LoginResult.Failure("Неверный логин или пароль! Попробуйте еще раз");
+
+        var result = _passwordHasher.Verify(login.Password, user.Result.PasswordHash);
+        
         if(result == false)
-        {
-            throw new Exception("Неверный логин или пароль! Попробуйте еще раз");
-        }
+            return LoginResult.Failure("Неверный логин или пароль! Попробуйте еще раз");
 
         var token = _jwtProvider.GenerateToken(user.Result);
 
-        return token;
+        return LoginResult.Success(token);
     }
+
 }
