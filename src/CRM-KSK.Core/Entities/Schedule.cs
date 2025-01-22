@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using CRM_KSK.Core.Enums;
 
 namespace CRM_KSK.Core.Entities;
 
 public class Schedule
 {
     public Guid Id { get; set; }
-    public string? Day { get; set; }
-    public DateTime Time { get; set; }
+    public DateTime DateTime { get; set; }
     public string? Description { get; set; }
-    public string TrainerName { get; set; }
-    public string ClientName { get; set; }
-    public string TrainingType { get; set; }
+    public Trainer TrainerName { get; set; }
+    public Client ClientName { get; set; }
 }
