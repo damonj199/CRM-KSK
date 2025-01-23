@@ -7,6 +7,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Repositories;
 public class AdminRepositiry : IAdminRepository
 {
     private readonly CRM_KSKDbContext _context;
+
     public AdminRepositiry(CRM_KSKDbContext context)
     {
         _context = context;

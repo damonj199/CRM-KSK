@@ -24,6 +24,14 @@
         <label>Дата рождения:</label>
         <InputDate @bind-Value="client.DateOfBirth" class="form-control" />
     </div>
+    <div class="form-group">
+        <label>Уровень тренировок:</label>
+        <InputRadio @bind-Value="client.LevelOfTraining" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Тренер:</label>
+        <InputText @bind-Value="client.TrainerName" class="form-control" />
+    </div>
     <h4>Данные о родителях</h4>
     <div class="form-group">
         <label>Родитель:</label>

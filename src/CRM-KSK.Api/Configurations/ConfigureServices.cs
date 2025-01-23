@@ -5,7 +5,7 @@ using CRM_KSK.Dal.PostgreSQL.Repositories;
 using CRM_KSK.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
-namespace CRM_KSK.Api;
+namespace CRM_KSK.Api.Configurations;
 
 public static class ConfigureServices
 {
@@ -31,8 +31,10 @@ public static class ConfigureServices
             .UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
             .UseCamelCaseNamingConvention());
 
-        services.AddScoped<IAdminRepository, AdminRepositiry>();
         services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<IAdminRepository, AdminRepositiry>();
+        services.AddScoped<IClientService, ClientService>();
+        services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
     }
