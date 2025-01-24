@@ -1,9 +1,10 @@
-﻿using CRM_KSK.Core.Entities;
+﻿using CRM_KSK.Application.Interfaces;
+using CRM_KSK.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CRM_KSK.Dal.PostgreSQL.Repositories;
 
-public class TrainerRepository
+public class TrainerRepository : ITrainerRepository
 {
     private readonly CRM_KSKDbContext _context;
 
@@ -12,14 +13,28 @@ public class TrainerRepository
         _context = context;
     }
 
-    public async Task AddTrainerAsync(Trainer trainer)
+    public async Task AddTrainerAsync(Trainer trainer, CancellationToken cancellationToken)
     {
         _context.Trainers.Add(trainer);
         await _context.SaveChangesAsync();
     }
 
-    public async Task<Trainer> GetTrainerByNameAsync(string name)
+    public async Task<Trainer> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken)
     {
-        return await _context.Trainers.AsNoTracking().FirstOrDefaultAsync(n => n.FirstName == name);
+        var query = _context.Trainers.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(firstName))
+            query = query.Where(f => f.FirstName.ToLower().Contains(firstName.ToLower()));
+
+        if (!string.IsNullOrWhiteSpace(lastName))
+            query = query.Where(query => query.LastName.ToLower().Contains(lastName.ToLower()));
+
+        return await query.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task DeleteTraner(Trainer trainer, CancellationToken cancellationToken)
+    {
+        _context.Trainers.Remove(trainer);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

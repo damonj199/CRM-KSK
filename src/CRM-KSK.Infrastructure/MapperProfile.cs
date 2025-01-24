@@ -15,5 +15,7 @@ public class MapperProfile : Profile
             .ForMember(dest => dest.Trainer, opt => opt.Ignore())
             .ForMember(dest => dest.Schedules, opt => opt.Ignore())
             .ForMember(dest => dest.Membership, opt => opt.Ignore());
+        CreateMap<TrainerDto, Trainer>();
+        CreateMap<Trainer, TrainerDto>();
     }
 }

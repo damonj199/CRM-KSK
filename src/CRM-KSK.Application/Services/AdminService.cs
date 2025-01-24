@@ -23,7 +23,7 @@ public class AdminService : IAdminService
 
     public async Task<RegistrationResult> RegisterAsync(RegisterRequest register, CancellationToken cancellationToken)
     {
-        var exisitingAdmin = _adminRepository.GetByEmail(register.Email);
+        var exisitingAdmin = await _adminRepository.GetByEmail(register.Email);
 
         if (exisitingAdmin != null)
             return RegistrationResult.Failure("Пользователь с таким Email уже зарегистрирован");

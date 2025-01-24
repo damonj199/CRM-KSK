@@ -2,7 +2,7 @@
 
 namespace CRM_KSK.Application.Dtos;
 
-public class AdminDto
+public class TrainerDto
 {
     [Required]
     public string FirstName { get; set; }
@@ -11,8 +11,12 @@ public class AdminDto
     public string LastName { get; set; }
 
     [Required]
-    public string PasswordHash { get; set; }
+    public string Surname { get; set; }
+
+    public string Phone { get; set; }
+
+    public string? Specialization { get; set; }
 
     [Required]
-    public string Email { get; set; }
+    public DateOnly DateOfBirth { get; set; }
 }
