@@ -6,12 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace CRM_KSK.Api.Controllers;
 
 [Controller]
-[Route("api/[controller]/")]
-public class TrainerController : ControllerBase
+[Route("api/[controller]")]
+public class TrainersController : ControllerBase
 {
     private readonly ITrainerService _trainerService;
 
-    public TrainerController(ITrainerService trainerService)
+    public TrainersController(ITrainerService trainerService)
     {
         _trainerService = trainerService;
     }

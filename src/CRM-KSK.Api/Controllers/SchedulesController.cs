@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace CRM_KSK.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]/")]
-public class ScheduleController : ControllerBase
+[Route("api/[controller]")]
+public class SchedulesController : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetScheduleAsync()

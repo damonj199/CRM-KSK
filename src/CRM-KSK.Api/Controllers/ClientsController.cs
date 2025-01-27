@@ -8,7 +8,7 @@ namespace CRM_KSK.Api.Controllers;
 
 //[Authorize]
 [ApiController]
-[Route("api/[controller]/")]
+[Route("api/[controller]")]
 public class ClientsController : ControllerBase
 {
     private readonly IClientService _clientService;
@@ -48,12 +48,12 @@ public class ClientsController : ControllerBase
         return Ok(client);
     }
 
-    [HttpDelete]
-    public async Task<IActionResult> DeleteClient(string phoneNumber, CancellationToken cancellationToken)
+    [HttpDelete("/{phone}")]
+    public async Task<IActionResult> DeleteClient(string phone, CancellationToken cancellationToken)
     {
         try
         {
-            await _clientService.DeleteClientAsync(phoneNumber, cancellationToken);
+            await _clientService.DeleteClientAsync(phone, cancellationToken);
             return Ok(new { message = "Удалено"});
         }
         catch(Exception ex)
