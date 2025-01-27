@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace CRM_KSK.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]/")]
-public class AdminController : ControllerBase
+[Route("api/[controller]")]
+public class AdminsController : ControllerBase
 {
     private readonly IAdminService _adminService;
 
-    public AdminController(IAdminService adminService)
+    public AdminsController(IAdminService adminService)
     {
         _adminService = adminService;
     }
