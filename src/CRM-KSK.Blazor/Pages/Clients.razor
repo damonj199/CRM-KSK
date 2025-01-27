@@ -1,0 +1,45 @@
+﻿@page "/clients"
+@inject ClientService ClientService
+
+<h3>Клиенты</h3>
+
+<input @bind="searchName" placeholder="Введите имя для поиска" />
+<button @onclick="SearchClient">Найти</button>
+
+@if (client != null)
+{
+    <p>@client.FirstName - @client.LastName - @client.Phone</p>
+    <button @onclick="() => DeleteClient(client.Phone)">Удалить</button>
+}
+
+<input @bind="newClient.FirstName" placeholder="Имя" />
+<input @bind="newClient.LastName" placeholder="Фамилия" />
+<input @bind="newClient.Phone" placeholder="Телефон" />
+<button @onclick="AddClient">Добавить</button>
+
+@code {
+    private string searchName;
+    private ClientDto? client;
+    private ClientDto newClient = new ClientDto();
+
+    private async Task SearchClient()
+    {
+        //client = await ClientService.GetClientsByNameAsync(searchName);
+    }
+
+    private async Task AddClient()
+    {
+        if (await ClientService.AddClientAsync(newClient))
+        {
+            newClient = new();
+        }
+    }
+
+    private async Task DeleteClient(string phone)
+    {
+        if (await ClientService.DeleteClientAsync(phone))
+        {
+            client = null;
+        }
+    }
+}

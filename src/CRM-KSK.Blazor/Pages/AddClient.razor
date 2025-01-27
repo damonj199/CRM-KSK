@@ -1,10 +1,9 @@
 ﻿@page "/add-client"
-@inject HttpClient Client
-@inject NavigationManager Navigation
+@inject ClientService ClientService
 
 <h3>Добавить Клиента</h3>
 
-<EditForm Model="@client" OnValidSubmit="@HandleValidSubmit">
+<EditForm Model="@client" OnValidSubmit="@AddClientAsync">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -41,18 +40,17 @@
         <label>Телефон для связи:</label>
         <InputText @bind-Value="client.ParentPhone" class="form-control" />
     </div>
-    <button type="submit" class="btn btn-primary">Добавить</button>
+    <button @onclick="AddClientAsync">Добавить</button>
 </EditForm>
 
 @code {
     private ClientDto client = new ClientDto();
 
-    private async Task HandleValidSubmit()
+    private async Task AddClientAsync()
     {
-        var response = await Client.PostAsJsonAsync("api/clients", client);
-        if (response.IsSuccessStatusCode)
+        if (await ClientService.AddClientAsync(client))
         {
-            Navigation.NavigateTo("/clients");
+            client = new();
         }
     }
 }
