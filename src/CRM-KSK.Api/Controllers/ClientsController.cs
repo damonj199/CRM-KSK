@@ -19,11 +19,11 @@ public class ClientsController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult AddClient([FromBody] ClientDto client, CancellationToken cancellationToken)
+    public async Task<IActionResult> AddClient([FromBody] ClientDto client, CancellationToken cancellationToken)
     {
         try
         {
-            var clientNew = _clientService.AddClientAsync(client, cancellationToken);
+            var clientNew = await _clientService.AddClientAsync(client, cancellationToken);
             return Ok(new { message = $"Клиент {client.FirstName}, успешно добавлен" });
         }
         catch (InvalidOperationException ex)
@@ -36,10 +36,10 @@ public class ClientsController : ControllerBase
         }
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetClientByName([FromHeader]SearchByNameRequest searchByName, CancellationToken cancellationToken)
+    [HttpGet("search-by-name")]
+    public async Task<IActionResult> GetClientByName([FromQuery]string firstName, string lastName, CancellationToken cancellationToken)
     {
-        var client = await _clientService.GetClientByNameAsync(searchByName, cancellationToken);
+        var client = await _clientService.GetClientByNameAsync(firstName, lastName, cancellationToken);
 
         if (client == null)
         {
@@ -48,7 +48,7 @@ public class ClientsController : ControllerBase
         return Ok(client);
     }
 
-    [HttpDelete("/{phone}")]
+    [HttpDelete("/{Phone}")]
     public async Task<IActionResult> DeleteClient(string phone, CancellationToken cancellationToken)
     {
         try

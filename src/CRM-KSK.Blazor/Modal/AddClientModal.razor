@@ -1,0 +1,89 @@
+﻿@inject ClientServiceBlazor ClientService
+
+@if (IsVisible)
+{
+    <EditForm Model="client" OnValidSubmit="AddClient">
+        <DataAnnotationsValidator />
+
+        <div class="modal-overlay" style="@(IsVisible ? "display:flex;" : "display:none;")">
+            <div class="modal-content">
+                <h3>Добавить клиента</h3>
+
+                <div class="form-group">
+                    <label for="firstName">Имя:</label>
+                    <InputText id="firstName" name="firstName" @bind-Value="client.FirstName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Фамилия:</label>
+                    <InputText id="lastName" name="lastName" @bind-Value="client.LastName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="phone">Телефон:</label>
+                    <InputText id="phone" name="phone" @bind-Value="client.Phone" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="dob">Дата рождения:</label>
+                    <InputDate id="dob" name="dob" @bind-Value="client.DateOfBirth" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="level">Уровень тренировок:</label>
+                    <InputSelect id="level" name="level" @bind-Value="client.LevelOfTraining" class="form-control">
+                        @foreach (LevelOfTraining level in Enum.GetValues(typeof(LevelOfTraining)))
+                        {
+                            <option value="@level">@level</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="form-group">
+                    <label for="trainer">Тренер:</label>
+                    <InputText id="trainer" name="trainer" @bind-Value="client.TrainerName" class="form-control" />
+                </div>
+                <h4>Данные о родителях</h4>
+                <div class="form-group">
+                    <label for="parentName">Родитель:</label>
+                    <InputText id="parentName" name="parentName" @bind-Value="client.ParentName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="parentPhone">Телефон для связи:</label>
+                    <InputText id="parentPhone" name="parentPhone" @bind-Value="client.ParentPhone" class="form-control" />
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Отмена</button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <p class="alert @(message.Contains("Ошибка") ? "alert-danger" : "alert-success")">@message</p>
+                }
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public EventCallback OnClientAdded { get; set; }
+
+    private ClientDto client = new();
+    private string message = string.Empty;
+
+    private async Task AddClient()
+    {
+        message = await ClientService.AddClientAsync(client);
+
+        if (!string.IsNullOrEmpty(message) && message.Contains("Успешно"))
+        {
+            await OnClientAdded.InvokeAsync();
+            await CloseModal();
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+        StateHasChanged();
+    }
+}

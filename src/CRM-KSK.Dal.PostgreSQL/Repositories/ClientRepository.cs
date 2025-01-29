@@ -1,22 +1,27 @@
 ﻿using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CRM_KSK.Dal.PostgreSQL.Repositories;
 
 public class ClientRepository : IClientRepository
 {
     private readonly CRM_KSKDbContext _context;
+    private readonly ILogger<ClientRepository> _logger;
 
-    public ClientRepository(CRM_KSKDbContext context)
+    public ClientRepository(CRM_KSKDbContext context, ILogger<ClientRepository> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task AddClientAsync(Client client, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("передаем клиента на добавление в БД");
         _context.Clients.Add(client);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(); 
+        _logger.LogInformation("Клиент добавлен!");
     }
 
     public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
@@ -34,14 +39,17 @@ public class ClientRepository : IClientRepository
 
     public async Task<Client> GetClientByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("проверяем есть ли в БД клиент с таким номером");
         var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(n => n.Phone == phoneNumber);
-
+        _logger.LogInformation($"вот что в бд по этому клиенту {client}");
         return client;
     }
 
     public async Task<Trainer> GetTrainerByNameAsync(string name)
     {
-        return await _context.Trainers.AsNoTracking().FirstOrDefaultAsync(n => n.FirstName.ToLower() == name.ToLower());
+        var trainer =  await _context.Trainers.FirstOrDefaultAsync(n => n.FirstName.ToLower() == name.ToLower());
+        _logger.LogInformation($"нашли тренера, {trainer.FirstName}");
+        return trainer;
     }
 
     public async Task DeleteClientAsync(Client client, CancellationToken cancellationToken)

@@ -4,6 +4,7 @@ using CRM_KSK.Dal.PostgreSQL;
 using CRM_KSK.Dal.PostgreSQL.Repositories;
 using CRM_KSK.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 namespace CRM_KSK.Api.Configurations;
 
@@ -11,17 +12,17 @@ public static class ConfigureServices
 {
     public static void ConfigureService(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddControllers();
         services.AddCors(options =>
         {
-            options.AddPolicy("AllowFrontend",
+            options.AddPolicy("AllowAllOrigins",
                 builder => builder
-                    .WithOrigins("http://localhost:7028")
+                    .WithOrigins("https://localhost:7028")
                     .AllowAnyHeader()
                     .AllowAnyMethod());
         });
         services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
 
-        services.AddControllers();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
         services.AddAutoMapper(typeof(MapperProfile));

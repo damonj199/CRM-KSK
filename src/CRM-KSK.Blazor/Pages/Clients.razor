@@ -1,45 +1,30 @@
 ﻿@page "/clients"
-@inject ClientService ClientService
 
-<h3>Клиенты</h3>
 
-<input @bind="searchName" placeholder="Введите имя для поиска" />
-<button @onclick="SearchClient">Найти</button>
+<h3>Управление клиентами</h3>
 
-@if (client != null)
-{
-    <p>@client.FirstName - @client.LastName - @client.Phone</p>
-    <button @onclick="() => DeleteClient(client.Phone)">Удалить</button>
-}
+<div class="btn-group">
+    <button class="btn btn-primary" @onclick="ShowAddClientModal">Добавить клиента</button>
+    <button class="btn btn-secondary" @onclick="ShowFindClientModal">Найти клиента</button>
+    <button class="btn btn-danger" @onclick="ShowDeleteClientModal">Удалить клиента</button>
+</div>
 
-<input @bind="newClient.FirstName" placeholder="Имя" />
-<input @bind="newClient.LastName" placeholder="Фамилия" />
-<input @bind="newClient.Phone" placeholder="Телефон" />
-<button @onclick="AddClient">Добавить</button>
+<AddClientModal @bind-IsVisible="isAddClientModalVisible" OnClientAdded="OnClientAdded" />
+<SearchClientModal @bind-IsVisible="isSearchClientModalVisible" />
+<DeleteClientModal @bind-IsVisible="isDeleteClientModalVisible" />
 
 @code {
-    private string searchName;
-    private ClientDto? client;
-    private ClientDto newClient = new ClientDto();
+    private bool isAddClientModalVisible;
+    private bool isSearchClientModalVisible;
+    private bool isDeleteClientModalVisible;
 
-    private async Task SearchClient()
-    {
-        //client = await ClientService.GetClientsByNameAsync(searchName);
-    }
+    private void ShowAddClientModal() => isAddClientModalVisible = true;
+    private void ShowFindClientModal() => isSearchClientModalVisible = true;
+    private void ShowDeleteClientModal() => isDeleteClientModalVisible = true;
 
-    private async Task AddClient()
+    private void OnClientAdded()
     {
-        if (await ClientService.AddClientAsync(newClient))
-        {
-            newClient = new();
-        }
-    }
-
-    private async Task DeleteClient(string phone)
-    {
-        if (await ClientService.DeleteClientAsync(phone))
-        {
-            client = null;
-        }
+        // Логика после добавления клиента
+        Console.WriteLine("Клиент добавлен.");
     }
 }

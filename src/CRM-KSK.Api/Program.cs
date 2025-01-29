@@ -1,6 +1,10 @@
 using CRM_KSK.Api.Configurations;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
 
 var isDev = builder.Environment.IsDevelopment();
 if (isDev)
@@ -25,7 +29,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 
@@ -39,6 +42,7 @@ app.UseCookiePolicy(new CookiePolicyOptions
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseCors("AllowAllOrigins");
 app.MapControllers();
 
 app.Run();
