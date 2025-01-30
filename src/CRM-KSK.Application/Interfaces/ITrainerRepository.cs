@@ -6,5 +6,5 @@ public interface ITrainerRepository
 {
     Task AddTrainerAsync(Trainer trainer, CancellationToken cancellationToken);
     Task DeleteTraner(Trainer trainer, CancellationToken cancellationToken);
-    Task<Trainer> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken);
+    Task<List<Trainer>> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken);
 }

@@ -20,7 +20,7 @@ public class ClientRepository : IClientRepository
     {
         _logger.LogInformation("передаем клиента на добавление в БД");
         _context.Clients.Add(client);
-        await _context.SaveChangesAsync(); 
+        await _context.SaveChangesAsync(cancellationToken); 
         _logger.LogInformation("Клиент добавлен!");
     }
 

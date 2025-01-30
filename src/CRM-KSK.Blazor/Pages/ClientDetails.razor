@@ -1,0 +1,39 @@
+﻿@page "/client-details"
+@inject ClientStateService ClientState
+
+<h3>Подробная информация о клиенте</h3>
+
+@if(_client != null)
+{
+    <div class="card p-3">
+        <p><strong>Имя:</strong> @_client.FirstName</p>
+        <p><strong>Фамилия:</strong> @_client.LastName</p>
+        <p><strong>Телефон:</strong> @_client.Phone</p>
+        <p><strong>Дата рождения:</strong> @_client.DateOfBirth.ToString("dd.MM.yyyy")</p>
+        <p><strong>Уровень тренировок:</strong> @_client.LevelOfTraining</p>
+        <p><strong>Тренер:</strong> @_client.TrainerName</p>
+        <h5>Данные о родителях</h5>
+        <p><strong>Родитель:</strong> @_client.ParentName</p>
+        <p><strong>Телефон родителя:</strong> @_client.ParentPhone</p>
+    </div>
+}
+else
+{
+    <p>Выберите клиента для просмотра информации.</p>
+}
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+    
+    private ClientDto _client;
+
+    private async Task CloseDetails()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        _client = ClientState.SelectedClient;
+    }
+}

@@ -1,10 +1,17 @@
 using CRM_KSK.Api.Configurations;
 using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .WriteTo.File("logs/myapp.txt", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
 builder.Logging.ClearProviders();
-builder.Logging.AddSerilog();
 
 var isDev = builder.Environment.IsDevelopment();
 if (isDev)
