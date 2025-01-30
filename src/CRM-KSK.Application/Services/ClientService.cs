@@ -40,7 +40,7 @@ public class ClientService : IClientService
         }
         _logger.LogInformation("все проверки пройдены, добавляем нового клиента");
         await _clientRepository.AddClientAsync(clientEntity, cancellationToken);
-        return clientEntity.FirstName.ToString();
+        return clientEntity.FirstName;
     }
 
     public async Task<IReadOnlyList<ClientDto>> GetClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)

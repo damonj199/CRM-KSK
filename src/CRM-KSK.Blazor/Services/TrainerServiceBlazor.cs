@@ -1,21 +1,20 @@
 ﻿using CRM_KSK.Application.Dtos;
-using System;
 using System.Net.Http.Json;
 
 namespace CRM_KSK.Blazor.Services;
 
-public class ClientServiceBlazor
+public class TrainerServiceBlazor
 {
     private readonly HttpClient _httpClient;
 
-    public ClientServiceBlazor(HttpClient httpClient)
+    public TrainerServiceBlazor(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
 
-    public async Task<IReadOnlyList<ClientDto>> GetClientsByNameAsync(string? firstName = null, string? lastName = null)
+    public async Task<List<TrainerDto>> GetTrainerByName(string? firstName = null, string? lastName = null)
     {
-        var url = "api/Clients/search-by-name";
+        var url = "api/Trainers/by-name";
         var queryParams = new List<string>();
 
         if (!string.IsNullOrEmpty(firstName))
@@ -32,14 +31,15 @@ public class ClientServiceBlazor
         {
             url += "?" + string.Join("&", queryParams);
         }
-        var response = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientDto>>(url);
+
+        var response = await _httpClient.GetFromJsonAsync<List<TrainerDto>>(url);
 
         return response ?? [];
     }
 
-    public async Task<string> AddClientAsync(ClientDto clientDto)
+    public async Task<string> AddTrainer(TrainerDto trainerDto)
     {
-        var response = await _httpClient.PostAsJsonAsync("api/Clients", clientDto);
+        var response = await _httpClient.PostAsJsonAsync("api/Trainers", trainerDto);
 
         if (response.IsSuccessStatusCode)
         {
@@ -52,10 +52,9 @@ public class ClientServiceBlazor
         }
     }
 
-    public async Task<bool> DeleteClientAsync(string phoneNumber)
+    public async Task<bool> DeleteTrainer(string firstName, string lastName)
     {
-        var response = await _httpClient.DeleteAsync($"/{phoneNumber}");
+        var response = await _httpClient.DeleteAsync($"api/Trainers?firstName={firstName}&lastName={lastName}");
         return response.IsSuccessStatusCode;
     }
 }
-
