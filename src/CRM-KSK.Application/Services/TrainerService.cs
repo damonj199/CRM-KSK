@@ -29,13 +29,13 @@ public class TrainerService : ITrainerService
         return trainerDto.FirstName;
     }
 
-    public async Task<TrainerDto> GetTrainerAsync(string firstName, string lastName, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<TrainerDto>> GetTrainerAsync(string firstName, string lastName, CancellationToken cancellationToken)
     {
-        var trainerEntity = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
-        if (trainerEntity == null)
-            throw new Exception("Тренер не найден");
+        var trainersEntitis = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
+        
+        var trainersDtos = _mapper.Map<IReadOnlyList<TrainerDto>>(trainersEntitis);
 
-        return _mapper.Map<TrainerDto>(trainerEntity);
+        return trainersDtos ?? [];
     }
 
     public async Task DeleteTrainer(string firstName, string lastName, CancellationToken cancellationToken)

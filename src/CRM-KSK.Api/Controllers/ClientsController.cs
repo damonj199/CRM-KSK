@@ -38,16 +38,15 @@ public class ClientsController : ControllerBase
 
     [HttpGet("search-by-name")]
     public async Task<IActionResult> GetClientByName(
-        [FromQuery]string? firstName = null, 
+        [FromQuery] string? firstName = null, 
         [FromQuery] string? lastName = null, 
         CancellationToken cancellationToken = default)
     {
         var client = await _clientService.GetClientByNameAsync(firstName, lastName, cancellationToken);
 
         if (client == null)
-        {
             return BadRequest(new { message = "Клиент не найден" });
-        }
+        
         return Ok(client);
     }
 

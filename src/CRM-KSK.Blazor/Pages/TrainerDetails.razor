@@ -1,0 +1,32 @@
+﻿@page "/trainer-details"
+@inject TrainerStateService TrainerState
+@inject NavigationManager Navigation
+
+<h3>Подродная информация о тренере </h3>
+
+@if (TrainerState.SelectedTrainer != null)
+{
+    var trainer = TrainerState.SelectedTrainer;
+
+    <div class="card p-3">
+        <p><strong>Имя:</strong> @trainer.FirstName</p>
+        <p><strong>Фамилия:</strong> @trainer.LastName</p>
+        <p><strong>Отчество:</strong> @trainer.Surname</p>
+        <p><strong>Телефон:</strong> +7 (@trainer.Phone)</p>
+        <p><strong>Специализация:</strong> @trainer.Specialization</p>
+        <p><strong>Дата рождения:</strong> @trainer.DateOfBirth.ToShortDateString()</p>
+    </div>
+}
+else
+{
+    <p class="alert alert-warning">Тренер не выбран. Перейдите на страницу <a href="/trainers">управления клиентами</a>.</p>
+}
+<button class="btn btn-secondary mt-3" @onclick="GoBack">Назад</button>
+
+@code {
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/trainers");
+    }
+}

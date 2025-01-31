@@ -11,5 +11,6 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddScoped<ClientServiceBlazor>();
 builder.Services.AddScoped<TrainerServiceBlazor>();
 builder.Services.AddSingleton<ClientStateService>();
+builder.Services.AddSingleton<TrainerStateService>();
 
 await builder.Build().RunAsync();
