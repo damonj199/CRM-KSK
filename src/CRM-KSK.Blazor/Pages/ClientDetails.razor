@@ -1,39 +1,35 @@
 ﻿@page "/client-details"
 @inject ClientStateService ClientState
+@inject NavigationManager Navigation
 
 <h3>Подробная информация о клиенте</h3>
 
-@if(_client != null)
+@if (ClientState.SelectedClient != null)
 {
+    var client = ClientState.SelectedClient;
+
     <div class="card p-3">
-        <p><strong>Имя:</strong> @_client.FirstName</p>
-        <p><strong>Фамилия:</strong> @_client.LastName</p>
-        <p><strong>Телефон:</strong> @_client.Phone</p>
-        <p><strong>Дата рождения:</strong> @_client.DateOfBirth.ToString("dd.MM.yyyy")</p>
-        <p><strong>Уровень тренировок:</strong> @_client.LevelOfTraining</p>
-        <p><strong>Тренер:</strong> @_client.TrainerName</p>
+        <p><strong>Имя:</strong> @client.FirstName</p>
+        <p><strong>Фамилия:</strong> @client.LastName</p>
+        <p><strong>Телефон:</strong> +7 (@client.Phone)</p>
+        <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
+        <p><strong>Уровень тренировок:</strong> @client.LevelOfTraining</p>
+        <p><strong>Тренер:</strong> @client.TrainerName</p>
         <h5>Данные о родителях</h5>
-        <p><strong>Родитель:</strong> @_client.ParentName</p>
-        <p><strong>Телефон родителя:</strong> @_client.ParentPhone</p>
+        <p><strong>Родитель:</strong> @client.ParentName</p>
+        <p><strong>Телефон родителя:</strong> @client.ParentPhone</p>
     </div>
 }
 else
 {
-    <p>Выберите клиента для просмотра информации.</p>
+    <p class="alert alert-warning">Клиент не выбран. Перейдите на страницу <a href="/clients">управления клиентами</a>.</p>
 }
+<button class="btn btn-secondary mt-3" @onclick="GoBack">Назад</button>
 
 @code {
-    [Parameter] public EventCallback OnClose { get; set; }
-    
-    private ClientDto _client;
 
-    private async Task CloseDetails()
+    private void GoBack()
     {
-        await OnClose.InvokeAsync();
-    }
-
-    protected override void OnInitialized()
-    {
-        _client = ClientState.SelectedClient;
+        Navigation.NavigateTo("/clients");
     }
 }

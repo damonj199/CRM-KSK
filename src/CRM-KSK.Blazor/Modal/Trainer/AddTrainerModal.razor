@@ -5,8 +5,8 @@
     <EditForm Model="trainer" OnValidSubmit="AddTrainer">
         <DataAnnotationsValidator />
 
-        <div class="modal-overlay" style="@(IsVisible ? "display:flex;" : "display:none;")">
-            <div class="modal-content">
+        <div class="modal-overlay" @onclick="HandleOverlayClick" style="@(IsVisible ? "display:flex;" : "display:none;")">
+            <div class="modal-content" @onclick:stopPropagation="true">
                 <h3>Добавить тренера</h3>
 
                 <div class="form-group">
@@ -71,5 +71,10 @@
         IsVisible = false;
         await IsVisibleChanged.InvokeAsync(IsVisible);
         StateHasChanged();
+    }
+
+    private async Task HandleOverlayClick()
+    {
+        await CloseModal();
     }
 }

@@ -19,7 +19,7 @@ public class TrainerRepository : ITrainerRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<Trainer>> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Trainer>> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken)
     {
         var query = _context.Trainers.AsQueryable();
 
@@ -29,7 +29,7 @@ public class TrainerRepository : ITrainerRepository
         if (!string.IsNullOrWhiteSpace(lastName))
             query = query.Where(query => query.LastName.ToLower().Contains(lastName.ToLower()));
 
-        return await query.ToListAsync();
+        return await query.ToListAsync(cancellationToken);
     }
 
     public async Task DeleteTraner(Trainer trainer, CancellationToken cancellationToken)
