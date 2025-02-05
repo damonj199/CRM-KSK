@@ -2,7 +2,7 @@
 
 public enum TypeTrainings
 {
-    Unknown = 0,
-    Individual = 1,
-    Group = 2
+    Неизвестно,
+    Индивидуальная,
+    Групповая
 }

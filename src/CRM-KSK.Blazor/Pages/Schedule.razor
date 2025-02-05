@@ -1,46 +1,255 @@
 ﻿@page "/schedule"
-@inject HttpClient Client
+@using System.Globalization
+@inject ClientServiceBlazor _clientService
+@inject TrainerServiceBlazor _trainerService
+@inject ScheduleServiceBlazor _scheduleService
 
 <h3>Расписание тренировок</h3>
 
-@if(schedules == null)
-{
-    <p>Загрузка...</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Дата</th>
-                <th>Время</th>
-                <th>Клиент</th>
-                <th>Тренер</th>
-                <th>Тип тренировки</th>
-                <th>Описание</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var schedule in schedules)
+<table class="schedule-table">
+    <thead>
+        <tr>
+            <th>Время</th>
+            @foreach (var day in DaysOfWeekWithDates)
             {
-                <tr>
-                    <td>@schedule.Day</td>
-                    <td>@schedule.Time.ToShortDateString()</td>
-                    <td>@schedule.ClientName</td>
-                    <td>@schedule.TrainerName</td>
-                    <td>@schedule.TrainingType</td>
-                    <td>@schedule.Description</td>
-                </tr>
+                <th>@day</th>
             }
-        </tbody>
-    </table>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var time in TimeSlots)
+        {
+            <tr>
+                <td>@time</td>
+                @foreach (var day in DaysOfWeekWithDates)
+                {
+                    <td class="schedule-cell" @onclick="() => OpenModal(day, time)">
+                        @GetCellContent(day, time)
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: center;
+    }
+
+        .schedule-table th, .schedule-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+
+        .schedule-table th {
+            background-color: #f4f4f4;
+        }
+
+    .schedule-cell {
+        cursor: pointer;
+        height: 50px;
+    }
+
+        .schedule-cell:hover {
+            background-color: #eef;
+        }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        width: 300px;
+        text-align: center;
+    }
+
+    .modal-buttons {
+        margin-top: 15px;
+    }
+
+        .modal-buttons button {
+            margin: 5px;
+            padding: 5px 10px;
+        }
+</style>
+
+@if (IsModalOpen)
+{
+    <div class="modal">
+        <div class="modal-content">
+            <h4>Добавить тренировку</h4>
+
+            <label>Тренер:</label>
+            <select @bind="SelectedTrainerId">
+                <option value="">Выберите тренера</option>
+
+                @foreach (var trainer in Trainers)
+                {
+                    <option value="@trainer.FirstName">@trainer.LastName</option>
+                }
+            </select>
+
+            <label>Клиент:</label>
+            <select @bind="SelectedClientId">
+                <option value="">Выберите клиента</option>
+                @foreach (var client in Clients)
+                {
+                    <option value="@client.FirstName">@client.LastName</option>
+                }
+            </select>
+
+            <label>Тип тренировки:</label>
+            <select @bind="SelectedTrainingType">
+                @foreach (var type in Enum.GetValues(typeof(TypeTrainings)).Cast<TypeTrainings>())
+                {
+                    <option value="@type">@type.ToString()</option>
+                }
+            </select>
+
+            <div class="modal-buttons">
+                <button @onclick="SaveTraining">Сохранить</button>
+                <button @onclick="CloseModal">Отмена</button>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
-    private ICollection<ScheduleDto> schedules;
+    private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "21:00");
+    private List<string> DaysOfWeekWithDates = new();
+    private Dictionary<(string Day, string Time), string> ScheduleData = new();
+
+    private IReadOnlyList<TrainerDto> Trainers = [];
+    private IReadOnlyList<ClientDto> Clients = [];
+    private IReadOnlyList<ScheduleDto> Schedules = [];
+
+    private Guid SelectedTrainerId;
+    private Guid SelectedClientId;
+    private TypeTrainings SelectedTrainingType = TypeTrainings.Индивидуальная;
+
+    private string SelectedDay = string.Empty;
+    private string SelectedTime = string.Empty;
+
+    private bool IsModalOpen = false;
 
     protected override async Task OnInitializedAsync()
     {
-        schedules = await Client.GetFromJsonAsync<List<ScheduleDto>>("api/schedule");
+        GenerateDaysOfWeekWithDates();
+        await LoadDataFromApi();
+        await LoadScheduleFromApi();
+        EnsureScheduleDataInitialized();
+    }
+
+    private void GenerateDaysOfWeekWithDates()
+    {
+        var today = DateTime.Today;
+        DaysOfWeekWithDates = Enumerable.Range(0, 7)
+            .Select(i => today.AddDays(i).ToString("dddd, dd MMMM"))
+            .ToList();
+    }
+
+    private async Task LoadDataFromApi()
+    {
+        Trainers = await _trainerService.GetTrainerByName() ?? [];
+        Clients = await _clientService.GetClientsByNameAsync() ?? [];
+    }
+
+    private async Task LoadScheduleFromApi()
+    {
+        Schedules = await _scheduleService.GetWeeksSchedule();
+
+        ScheduleData.Clear();
+
+        foreach (var schedule in Schedules)
+        {
+            var dayKey = schedule.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU"));
+            var timeKey = schedule.Time.ToString(@"hh\:mm");
+
+            ScheduleData[(dayKey, timeKey)] = $"{schedule.TrainerId} - {schedule.ClientId} ({schedule.TypeTrainings})";
+        }
+    }
+
+    private void EnsureScheduleDataInitialized()
+    {
+        foreach (var day in DaysOfWeekWithDates)
+        {
+            foreach (var time in TimeSlots)
+            {
+                if (!ScheduleData.ContainsKey((day, time)))
+                {
+                    ScheduleData[(day, time)] = " ";
+                }
+            }
+        }
+    }
+
+    private static List<string> GenerateTimeSlots(string start, string end)
+    {
+        var timeSlots = new List<string>();
+        var startTime = DateTime.ParseExact(start, "HH:mm", CultureInfo.InvariantCulture);
+        var endTime = DateTime.ParseExact(end, "HH:mm", CultureInfo.InvariantCulture);
+
+        while (startTime < endTime)
+        {
+            timeSlots.Add(startTime.ToString("HH:mm"));
+            startTime = startTime.AddMinutes(60);
+        }
+
+        return timeSlots;
+    }
+
+    private void OpenModal(string day, string time)
+    {
+        SelectedDay = day;
+        SelectedTime = time;
+        IsModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        IsModalOpen = false;
+        SelectedTrainerId = Guid.Empty;
+        SelectedClientId = Guid.Empty;
+        SelectedTrainingType = TypeTrainings.Неизвестно;
+    }
+
+    private async void SaveTraining()
+    {
+        if (SelectedTrainerId != Guid.Empty && SelectedClientId != Guid.Empty)
+        {
+            var training = new ScheduleDto
+                {
+                    Date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU")),
+                    Time = TimeSpan.Parse(SelectedTime),
+                    TrainerId = SelectedTrainerId,
+                    ClientId = SelectedClientId,
+                    TypeTrainings = SelectedTrainingType
+                };
+
+            await _scheduleService.AddOrUpdateSchedule(training);
+            await LoadScheduleFromApi();
+            EnsureScheduleDataInitialized();
+        }
+
+        CloseModal();
+    }
+
+    private string GetCellContent(string day, string time)
+    {
+        return ScheduleData.TryGetValue((day, time), out var content) ? content : " ";
     }
 }

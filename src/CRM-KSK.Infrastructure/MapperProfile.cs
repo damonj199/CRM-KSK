@@ -13,9 +13,10 @@ public class MapperProfile : Profile
         CreateMap<Client, ClientDto>();
         CreateMap<ClientDto, Client>()
             .ForMember(dest => dest.Trainer, opt => opt.Ignore())
-            .ForMember(dest => dest.Schedules, opt => opt.Ignore())
             .ForMember(dest => dest.Membership, opt => opt.Ignore());
         CreateMap<TrainerDto, Trainer>();
         CreateMap<Trainer, TrainerDto>();
+        CreateMap<ScheduleDto, Schedule>();
+        CreateMap<Schedule, ScheduleDto>();
     }
 }

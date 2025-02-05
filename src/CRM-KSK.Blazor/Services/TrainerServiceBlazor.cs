@@ -43,7 +43,7 @@ public class TrainerServiceBlazor
 
         if (response.IsSuccessStatusCode)
         {
-            return "Клиент успешно добавлен!";
+            return "Тренер успешно добавлен!";
         }
         else
         {
