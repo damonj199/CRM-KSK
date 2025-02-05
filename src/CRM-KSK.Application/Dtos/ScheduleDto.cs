@@ -1,13 +1,13 @@
-﻿using CRM_KSK.Core.Entities;
+﻿using CRM_KSK.Core.Enums;
 
 namespace CRM_KSK.Application.Dtos;
 
 public class ScheduleDto
 {
-    public string Day {  get; set; }
-    public DateTime Time { get; set; }
-    public string Description { get; set; }
-    public string TrainerName { get; set; }
-    public string ClientName { get; set; }
-    public string TrainingType { get; set; }
+    public Guid Id { get; set; }
+    public DateOnly Date { get; set; }
+    public TimeSpan Time { get; set; }
+    public Guid TrainerId { get; set; }
+    public Guid ClientId { get; set; }
+    public TypeTrainings TypeTrainings { get; set; }
 }

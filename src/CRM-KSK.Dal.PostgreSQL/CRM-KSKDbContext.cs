@@ -13,7 +13,6 @@ public class CRM_KSKDbContext : DbContext
     public DbSet<Payment> Payment { get; set; }
     public DbSet<Schedule> Schedules { get; set; }
     public DbSet<Trainer> Trainers { get; set; }
-    public DbSet<Training> Trainings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,11 +29,6 @@ public class CRM_KSKDbContext : DbContext
         modelBuilder
             .Entity<Payment>()
             .Property(x => x.PaymentMethod)
-            .HasConversion<string>();
-
-        modelBuilder
-            .Entity<Training>()
-            .Property(x => x.TypeTrainings)
             .HasConversion<string>();
 
         modelBuilder.Entity<Client>()

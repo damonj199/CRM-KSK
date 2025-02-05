@@ -5,6 +5,8 @@ namespace CRM_KSK.Application.Dtos;
 
 public class ClientDto
 {
+    public Guid Id { get; set; }
+
     [Required]
     public string FirstName { get; set; }
 
@@ -15,9 +17,9 @@ public class ClientDto
     public string Phone { get; set; }
 
     [Required]
-    public DateOnly DateOfBirth { get; set; }
+    public DateOnly DateOfBirth { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-    public LevelOfTraining LevelOfTraining { get; set; } = LevelOfTraining.Newbie;
+    public LevelOfTraining LevelOfTraining { get; set; } = LevelOfTraining.Начинающий;
 
     public string? TrainerName { get; set; }
 

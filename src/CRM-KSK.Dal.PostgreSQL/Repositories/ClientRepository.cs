@@ -41,14 +41,14 @@ public class ClientRepository : IClientRepository
     {
         _logger.LogInformation("проверяем есть ли в БД клиент с таким номером");
         var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(n => n.Phone == phoneNumber);
-        _logger.LogInformation($"вот что в бд по этому клиенту {client}");
+        _logger.LogInformation("вот что в бд по этому клиенту {0}", client);
         return client;
     }
 
     public async Task<Trainer> GetTrainerByNameAsync(string name)
     {
         var trainer =  await _context.Trainers.FirstOrDefaultAsync(n => n.FirstName.ToLower() == name.ToLower());
-        _logger.LogInformation($"нашли тренера, {trainer.FirstName}");
+        _logger.LogInformation("нашли тренера, {0}", trainer.FirstName);
         return trainer;
     }
 
