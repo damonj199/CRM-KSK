@@ -164,9 +164,7 @@
 
     private async Task LoadDataFromApi()
     {
-        var trainer = await _trainerService.GetTrainerByName();
-        Trainers.Add(trainer);
-
+        Trainers = await _trainerService.GetAllTrainers() ?? [];
         Clients = await _clientService.GetClientsByNameAsync() ?? [];
     }
 

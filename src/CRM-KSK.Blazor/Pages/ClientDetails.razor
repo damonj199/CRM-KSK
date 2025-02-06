@@ -11,13 +11,13 @@
     <div class="card p-3">
         <p><strong>Имя:</strong> @client.FirstName</p>
         <p><strong>Фамилия:</strong> @client.LastName</p>
-        <p><strong>Телефон:</strong> +7 (@client.Phone)</p>
+        <p><strong>Телефон:</strong> +7 @client.Phone</p>
         <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
         <p><strong>Уровень тренировок:</strong> @client.LevelOfTraining</p>
         <p><strong>Тренер:</strong> @client.TrainerName</p>
         <h5>Данные о родителях</h5>
         <p><strong>Родитель:</strong> @client.ParentName</p>
-        <p><strong>Телефон родителя:</strong> @client.ParentPhone</p>
+        <p><strong>Телефон родителя:</strong>+7 @client.ParentPhone</p>
     </div>
 }
 else

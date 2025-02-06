@@ -26,9 +26,9 @@ public class TrainerRepository : ITrainerRepository
         return trainits;
     }
 
-    public async Task<Trainer> GetTrainerByNameAsync(string? firstName, string? lastName, CancellationToken cancellationToken)
+    public async Task<Trainer> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken)
     {
-        var query = _context.Trainers.AsNoTracking().AsQueryable();
+        var query = _context.Trainers.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(firstName))
             query = query.Where(f => f.FirstName.ToLower().Contains(firstName.ToLower()));

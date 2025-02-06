@@ -35,8 +35,10 @@ public class ClientService : IClientService
         {
             var (firstName, lastName) = SplitFullName(clientDto.TrainerName);
 
-            clientEntity.Trainer = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
-            
+            var trainer = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
+
+            clientEntity.Trainer = trainer;
+
             if (clientEntity.Trainer == null)
                 throw new InvalidOperationException("Тренер не найден");
         }

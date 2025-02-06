@@ -45,12 +45,9 @@ public class TrainersController : ControllerBase
     }
 
     [HttpGet("by-name")]
-    public async Task<IActionResult> GetTrainerByName(
-        [FromQuery] string? firstName = null,
-        [FromQuery] string? lastName = null,
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetTrainerByName([FromQuery] SearchNameDto nameDto, CancellationToken cancellationToken)
     {
-        var trainer = await _trainerService.GetTrainerByName(firstName, lastName, cancellationToken);
+        var trainer = await _trainerService.GetTrainerByName(nameDto.FirstName, nameDto.LastName, cancellationToken);
         if (trainer == null)
             return BadRequest(new { message = "тренер не найден" });
 
