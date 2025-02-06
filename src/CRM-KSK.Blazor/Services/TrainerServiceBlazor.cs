@@ -12,7 +12,7 @@ public class TrainerServiceBlazor
         _httpClient = httpClient;
     }
 
-    public async Task<List<TrainerDto>> GetTrainerByName(string? firstName = null, string? lastName = null)
+    public async Task<TrainerDto> GetTrainerByName(string? firstName = null, string? lastName = null)
     {
         var url = "api/Trainers/by-name";
         var queryParams = new List<string>();
@@ -32,7 +32,14 @@ public class TrainerServiceBlazor
             url += "?" + string.Join("&", queryParams);
         }
 
-        var response = await _httpClient.GetFromJsonAsync<List<TrainerDto>>(url);
+        var response = await _httpClient.GetFromJsonAsync<TrainerDto>(url);
+
+        return response;
+    }
+
+    public async Task<List<TrainerDto>> GetAllTrainers()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<TrainerDto>>("api/Trainers");
 
         return response ?? [];
     }

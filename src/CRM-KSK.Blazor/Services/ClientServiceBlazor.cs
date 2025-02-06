@@ -15,7 +15,7 @@ public class ClientServiceBlazor
 
     public async Task<IReadOnlyList<ClientDto>> GetClientsByNameAsync(string? firstName = null, string? lastName = null)
     {
-        var url = "api/Clients/search-by-name";
+        var url = "api/Clients/by-name";
         var queryParams = new List<string>();
 
         if (!string.IsNullOrEmpty(firstName))
@@ -54,7 +54,7 @@ public class ClientServiceBlazor
 
     public async Task<bool> DeleteClientAsync(string phoneNumber)
     {
-        var response = await _httpClient.DeleteAsync($"/{phoneNumber}");
+        var response = await _httpClient.DeleteAsync($"api/Clients/{phoneNumber}");
         return response.IsSuccessStatusCode;
     }
 }

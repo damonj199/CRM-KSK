@@ -34,57 +34,57 @@
 
 <style>
     .schedule-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: center;
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
     }
 
-        .schedule-table th, .schedule-table td {
-            border: 1px solid #ccc;
-            padding: 8px;
-        }
+    .schedule-table th, .schedule-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    }
 
-        .schedule-table th {
-            background-color: #f4f4f4;
-        }
+    .schedule-table th {
+    background-color: #f4f4f4;
+    }
 
     .schedule-cell {
-        cursor: pointer;
-        height: 50px;
+    cursor: pointer;
+    height: 50px;
     }
 
-        .schedule-cell:hover {
-            background-color: #eef;
-        }
+    .schedule-cell:hover {
+    background-color: #eef;
+    }
 
     .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     }
 
     .modal-content {
-        background: white;
-        padding: 20px;
-        border-radius: 5px;
-        width: 300px;
-        text-align: center;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 300px;
+    text-align: center;
     }
 
     .modal-buttons {
-        margin-top: 15px;
+    margin-top: 15px;
     }
 
-        .modal-buttons button {
-            margin: 5px;
-            padding: 5px 10px;
-        }
+    .modal-buttons button {
+    margin: 5px;
+    padding: 5px 10px;
+    }
 </style>
 
 @if (IsModalOpen)
@@ -133,7 +133,7 @@
     private List<string> DaysOfWeekWithDates = new();
     private Dictionary<(string Day, string Time), string> ScheduleData = new();
 
-    private IReadOnlyList<TrainerDto> Trainers = [];
+    private List<TrainerDto> Trainers = [];
     private IReadOnlyList<ClientDto> Clients = [];
     private IReadOnlyList<ScheduleDto> Schedules = [];
 
@@ -164,7 +164,9 @@
 
     private async Task LoadDataFromApi()
     {
-        Trainers = await _trainerService.GetTrainerByName() ?? [];
+        var trainer = await _trainerService.GetTrainerByName();
+        Trainers.Add(trainer);
+
         Clients = await _clientService.GetClientsByNameAsync() ?? [];
     }
 

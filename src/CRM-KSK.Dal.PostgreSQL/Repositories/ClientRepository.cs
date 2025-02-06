@@ -45,16 +45,16 @@ public class ClientRepository : IClientRepository
         return client;
     }
 
-    public async Task<Trainer> GetTrainerByNameAsync(string name)
-    {
-        var trainer =  await _context.Trainers.FirstOrDefaultAsync(n => n.FirstName.ToLower() == name.ToLower());
-        _logger.LogInformation("нашли тренера, {0}", trainer.FirstName);
-        return trainer;
-    }
-
     public async Task DeleteClientAsync(Client client, CancellationToken cancellationToken)
     {
         _context.Clients.Remove(client);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> ClientVerificationAsync(string phoneNumber, CancellationToken cancellationToken)
+    {
+        var clientExist = await _context.Clients.AnyAsync(c => c.Phone == phoneNumber, cancellationToken);
+        _logger.LogDebug("Провряем что у нас там в БД, {0}", clientExist);
+        return clientExist;
     }
 }
