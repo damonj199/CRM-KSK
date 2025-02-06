@@ -20,7 +20,7 @@ public class TrainersController : ControllerBase
     {
         try
         {
-            string trainerNew = await _trainerService.AddTrainerAsync(trainer, cancellationToken);
+            await _trainerService.AddTrainerAsync(trainer, cancellationToken);
             return Ok(new { message = $"Тренер {trainer.FirstName}, успешно добавлен" });
         }
         catch (InvalidOperationException ex)
@@ -33,18 +33,28 @@ public class TrainersController : ControllerBase
         }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetTrainersAsync(CancellationToken cancellationToken)
+    {
+        var trainers = await _trainerService.GetTrainersAsync(cancellationToken);
+
+        if (trainers == null)
+            return BadRequest(new { message = "Тренеры не найден" });
+
+        return Ok(trainers);
+    }
+
     [HttpGet("by-name")]
-    public async Task<IActionResult> GetTrainerByNameAsync(
+    public async Task<IActionResult> GetTrainerByName(
         [FromQuery] string? firstName = null,
-        [FromQuery] string? lastName = null, 
+        [FromQuery] string? lastName = null,
         CancellationToken cancellationToken = default)
     {
-        var client = await _trainerService.GetTrainerAsync(firstName, lastName, cancellationToken);
+        var trainer = await _trainerService.GetTrainerByName(firstName, lastName, cancellationToken);
+        if (trainer == null)
+            return BadRequest(new { message = "тренер не найден" });
 
-        if (client == null)
-            return BadRequest(new { message = "Клиент не найден" });
-
-        return Ok(client);
+        return Ok(trainer);
     }
 
     [HttpDelete]

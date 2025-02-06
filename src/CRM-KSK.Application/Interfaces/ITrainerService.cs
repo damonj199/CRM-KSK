@@ -4,7 +4,8 @@ namespace CRM_KSK.Application.Interfaces;
 
 public interface ITrainerService
 {
-    Task<string> AddTrainerAsync(TrainerDto trainerDto, CancellationToken cancellationToken);
+    Task AddTrainerAsync(TrainerDto trainerDto, CancellationToken cancellationToken);
     Task DeleteTrainer(string firstName, string lastName, CancellationToken cancellationToken);
-    Task<IReadOnlyList<TrainerDto>> GetTrainerAsync(string firstName, string lastName, CancellationToken cancellationToken);
+    Task<TrainerDto> GetTrainerByName(string firstName, string lastName, CancellationToken cancellationToken);
+    Task<IReadOnlyList<TrainerDto>> GetTrainersAsync(CancellationToken cancellationToken);
 }

@@ -9,32 +9,34 @@ namespace CRM_KSK.Application.Services;
 public class ClientService : IClientService
 {
     private readonly IClientRepository _clientRepository;
+    private readonly ITrainerRepository _trainerRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ClientService> _logger;
 
-    public ClientService(IClientRepository clientRepository, IMapper mapper, ILogger<ClientService> logger)
+    public ClientService(IClientRepository clientRepository, IMapper mapper, ITrainerRepository trainerRepository, ILogger<ClientService> logger)
     {
         _clientRepository = clientRepository;
+        _trainerRepository = trainerRepository;
         _mapper = mapper;
         _logger = logger;
     }
 
     public async Task<string> AddClientAsync(ClientDto clientDto, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("попали в метод добавления клиента в сервисе");
-        var existingClient = await _clientRepository.GetClientByPhoneNumberAsync(clientDto.Phone, cancellationToken);
+        _logger.LogInformation("попали в метод добавления клиента в сервисе, проверяем есть ли уже такой клиент");
+        var existingClient = await _clientRepository.ClientVerificationAsync(clientDto.Phone, cancellationToken);
 
-        _logger.LogInformation($"вернулся в сервис после проверки в БД");
-
-        if (existingClient != null)
+        if (existingClient)
             throw new InvalidOperationException("Клиент уже зарегистрирован");
 
         var clientEntity = _mapper.Map<Client>(clientDto);
 
         if (!string.IsNullOrWhiteSpace(clientDto.TrainerName))
         {
-            clientEntity.Trainer = await _clientRepository.GetTrainerByNameAsync(clientDto.TrainerName);
-            _logger.LogInformation("нашли тренера?");
+            var (firstName, lastName) = SplitFullName(clientDto.TrainerName);
+
+            clientEntity.Trainer = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
+            
             if (clientEntity.Trainer == null)
                 throw new InvalidOperationException("Тренер не найден");
         }
@@ -59,5 +61,16 @@ public class ClientService : IClientService
             throw new Exception("Клиент с указанным номером телефона не найден.");
 
         await _clientRepository.DeleteClientAsync(client, cancellationToken);
+    }
+
+    public (string firstName, string? lastName) SplitFullName(string fullName)
+    {
+        var parts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+
+        return parts.Length switch
+        {
+            1 => (parts[0], null),
+            2 => (parts[0], parts[1])
+        };
     }
 }

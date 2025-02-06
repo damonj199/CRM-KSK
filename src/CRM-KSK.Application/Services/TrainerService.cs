@@ -16,26 +16,33 @@ public class TrainerService : ITrainerService
         _mapper = mapper;
     }
 
-    public async Task<string> AddTrainerAsync(TrainerDto trainerDto, CancellationToken cancellationToken)
+    public async Task AddTrainerAsync(TrainerDto trainerDto, CancellationToken cancellationToken)
     {
         var existingTrainer = await _trainerRepository.GetTrainerByNameAsync(trainerDto.FirstName, trainerDto.LastName, cancellationToken);
-        if (existingTrainer.Count != 0)
+
+        if (existingTrainer != null)
             throw new Exception("Тренер уже есть в системе");
 
         var trainerEntity = _mapper.Map<Trainer>(trainerDto);
 
         await _trainerRepository.AddTrainerAsync(trainerEntity, cancellationToken);
-
-        return trainerDto.FirstName;
     }
 
-    public async Task<IReadOnlyList<TrainerDto>> GetTrainerAsync(string firstName, string lastName, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<TrainerDto>> GetTrainersAsync(CancellationToken cancellationToken)
     {
-        var trainersEntitis = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
+        var trainersEntitis = await _trainerRepository.GetTrainersAsync(cancellationToken);
         
         var trainersDtos = _mapper.Map<IReadOnlyList<TrainerDto>>(trainersEntitis);
 
         return trainersDtos ?? [];
+    }
+
+    public async Task<TrainerDto> GetTrainerByName(string firstName, string lastName, CancellationToken cancellationToken)
+    {
+        var trainerEntity = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
+        var trainerDto = _mapper.Map<TrainerDto>(trainerEntity);
+
+        return trainerDto;
     }
 
     public async Task DeleteTrainer(string firstName, string lastName, CancellationToken cancellationToken)
@@ -44,6 +51,6 @@ public class TrainerService : ITrainerService
         if (trainer == null)
             throw new Exception("Тренер не найден");
 
-        await _trainerRepository.DeleteTraner(trainer.FirstOrDefault(), cancellationToken);
+        await _trainerRepository.DeleteTraner(trainer, cancellationToken);
     }
 }

@@ -5,8 +5,8 @@ namespace CRM_KSK.Application.Interfaces;
 public interface IClientRepository
 {
     Task AddClientAsync(Client client, CancellationToken cancellationToken);
+    Task<bool> ClientVerificationAsync(string phoneNumber, CancellationToken cancellationToken);
     Task DeleteClientAsync(Client client, CancellationToken cancellationToken);
     Task<Client> GetClientByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken);
-    Task<Trainer> GetTrainerByNameAsync(string name);
     Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10);
 }
