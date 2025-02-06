@@ -12,19 +12,19 @@ public class TrainerServiceBlazor
         _httpClient = httpClient;
     }
 
-    public async Task<TrainerDto> GetTrainerByName(string? firstName = null, string? lastName = null)
+    public async Task<TrainerDto> GetTrainerByName(SearchNameDto nameDto)
     {
         var url = "api/Trainers/by-name";
         var queryParams = new List<string>();
 
-        if (!string.IsNullOrEmpty(firstName))
+        if (!string.IsNullOrEmpty(nameDto.FirstName))
         {
-            queryParams.Add($"firstName={Uri.EscapeDataString(firstName)}");
+            queryParams.Add($"firstName={Uri.EscapeDataString(nameDto.FirstName)}");
         }
 
-        if (!string.IsNullOrEmpty(lastName))
+        if (!string.IsNullOrEmpty(nameDto.LastName))
         {
-            queryParams.Add($"lastName={Uri.EscapeDataString(lastName)}");
+            queryParams.Add($"lastName={Uri.EscapeDataString(nameDto.LastName)}");
         }
 
         if (queryParams.Any())
