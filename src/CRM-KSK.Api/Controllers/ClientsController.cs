@@ -43,7 +43,7 @@ public class ClientsController : ControllerBase
         var client = await _clientService.GetClientByNameAsync(firstName, lastName, cancellationToken);
 
         if (client == null)
-            return BadRequest(new { message = "Клиент не найден" });
+            return NotFound(new { message = "Клиент не найден" });
 
         return Ok(client);
     }

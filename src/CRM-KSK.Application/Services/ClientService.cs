@@ -31,9 +31,9 @@ public class ClientService : IClientService
 
         var clientEntity = _mapper.Map<Client>(clientDto);
 
-        if (!string.IsNullOrWhiteSpace(clientDto.TrainerName))
+        if (!string.IsNullOrWhiteSpace(clientDto.Trainer.FirstName))
         {
-            var (firstName, lastName) = SplitFullName(clientDto.TrainerName);
+            var (firstName, lastName) = SplitFullName(clientDto.Trainer.FirstName);
 
             var trainer = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
 

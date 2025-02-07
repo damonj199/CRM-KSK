@@ -12,6 +12,7 @@ public class Client
     public LevelOfTraining LevelOfTraining { get; set; } = LevelOfTraining.Начинающий;
     public string? ParentName { get; set; }
     public string? ParentPhone { get; set; }
-    public Trainer? Trainer { get; set; }
+    public Trainer Trainer { get; set; }
     public Membership? Membership { get; set; }
+    public ICollection<Schedule> Schedules { get; set; } = [];
 }
