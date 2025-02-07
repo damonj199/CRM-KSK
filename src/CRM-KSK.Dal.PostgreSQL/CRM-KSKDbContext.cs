@@ -1,5 +1,6 @@
 ﻿using CRM_KSK.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace CRM_KSK.Dal.PostgreSQL;
 
@@ -16,10 +17,7 @@ public class CRM_KSKDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder
-            .Entity<Client>()
-            .Property(x => x.LevelOfTraining)
-            .HasConversion<string>();
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CRM_KSKDbContext).Assembly);
 
         modelBuilder
             .Entity<Membership>()
@@ -30,10 +28,8 @@ public class CRM_KSKDbContext : DbContext
             .Entity<Payment>()
             .Property(x => x.PaymentMethod)
             .HasConversion<string>();
-
-        modelBuilder.Entity<Client>()
-        .HasOne(c => c.Membership)
-        .WithOne(m => m.Client)
-        .HasForeignKey<Membership>(m => m.ClientId);
     }
 }
+
+
+

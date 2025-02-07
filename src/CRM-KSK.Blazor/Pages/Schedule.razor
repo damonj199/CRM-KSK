@@ -32,61 +32,6 @@
     </tbody>
 </table>
 
-<style>
-    .schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: center;
-    }
-
-    .schedule-table th, .schedule-table td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    }
-
-    .schedule-table th {
-    background-color: #f4f4f4;
-    }
-
-    .schedule-cell {
-    cursor: pointer;
-    height: 50px;
-    }
-
-    .schedule-cell:hover {
-    background-color: #eef;
-    }
-
-    .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    }
-
-    .modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 5px;
-    width: 300px;
-    text-align: center;
-    }
-
-    .modal-buttons {
-    margin-top: 15px;
-    }
-
-    .modal-buttons button {
-    margin: 5px;
-    padding: 5px 10px;
-    }
-</style>
-
 @if (IsModalOpen)
 {
     <div class="modal">
@@ -128,6 +73,61 @@
     </div>
 }
 
+<style>
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: center;
+    }
+
+        .schedule-table th, .schedule-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+
+        .schedule-table th {
+            background-color: #f4f4f4;
+        }
+
+    .schedule-cell {
+        cursor: pointer;
+        height: 50px;
+    }
+
+        .schedule-cell:hover {
+            background-color: #eef;
+        }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        width: 300px;
+        text-align: center;
+    }
+
+    .modal-buttons {
+        margin-top: 15px;
+    }
+
+        .modal-buttons button {
+            margin: 5px;
+            padding: 5px 10px;
+        }
+</style>
+
 @code {
     private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "21:00");
     private List<string> DaysOfWeekWithDates = new();
@@ -137,8 +137,8 @@
     private IReadOnlyList<ClientDto> Clients = [];
     private IReadOnlyList<ScheduleDto> Schedules = [];
 
-    private Guid SelectedTrainerId;
-    private Guid SelectedClientId;
+    private ScheduleMemberDto SelectedTrainerId;
+    private ScheduleMemberDto[] SelectedClientId;
     private TypeTrainings SelectedTrainingType = TypeTrainings.Индивидуальная;
 
     private string SelectedDay = string.Empty;
@@ -179,7 +179,7 @@
             var dayKey = schedule.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU"));
             var timeKey = schedule.Time.ToString(@"hh\:mm");
 
-            ScheduleData[(dayKey, timeKey)] = $"{schedule.TrainerId} - {schedule.ClientId} ({schedule.TypeTrainings})";
+            ScheduleData[(dayKey, timeKey)] = $"{schedule.Trainer} - {schedule.Clients} ({schedule.TypeTrainings})";
         }
     }
 
@@ -222,21 +222,21 @@
     private void CloseModal()
     {
         IsModalOpen = false;
-        SelectedTrainerId = Guid.Empty;
-        SelectedClientId = Guid.Empty;
+        SelectedTrainerId = null;
+        SelectedClientId = null;
         SelectedTrainingType = TypeTrainings.Неизвестно;
     }
 
     private async void SaveTraining()
     {
-        if (SelectedTrainerId != Guid.Empty && SelectedClientId != Guid.Empty)
+        if (SelectedTrainerId != null && SelectedClientId != null)
         {
             var training = new ScheduleDto
                 {
                     Date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU")),
                     Time = TimeSpan.Parse(SelectedTime),
-                    TrainerId = SelectedTrainerId,
-                    ClientId = SelectedClientId,
+                    Trainer = SelectedTrainerId,
+                    Clients = SelectedClientId,
                     TypeTrainings = SelectedTrainingType
                 };
 

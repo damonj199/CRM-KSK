@@ -26,7 +26,9 @@ public class ClientRepository : IClientRepository
 
     public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
     {
-        var query = _context.Clients.AsNoTracking().AsQueryable();
+        var query = _context.Clients.AsNoTracking()
+            .Include(t => t.Trainer)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(firstName))
             query = query.Where(f => f.FirstName.ToLower().Contains(firstName.ToLower()));

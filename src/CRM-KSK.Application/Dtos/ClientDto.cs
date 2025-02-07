@@ -21,7 +21,7 @@ public class ClientDto
 
     public LevelOfTraining LevelOfTraining { get; set; } = LevelOfTraining.Начинающий;
 
-    public string? TrainerName { get; set; }
+    public TrainerDto Trainer { get; set; }
 
     public string? ParentName { get; set; }
 

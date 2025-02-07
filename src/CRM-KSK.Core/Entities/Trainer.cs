@@ -10,4 +10,5 @@ public class Trainer
     public string? Specialization { get; set; }
     public DateOnly DateOfBirth { get; set; }
     public ICollection<Client> Clients { get; set; } = [];
+    public ICollection<Schedule> Schedules { get; set; } = [];
 }

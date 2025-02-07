@@ -16,8 +16,9 @@ public class ScheduleRepository : IScheduleRepository
     public async Task<IReadOnlyList<Schedule>> GetWeeksSchedule(DateOnly start, DateOnly end, CancellationToken cancellationToken)
     {
         var schedules = await _context.Schedules
-            .AsNoTracking()
             .Where(s => s.Date >= start && s.Date <= end)
+            .Include(t => t.Trainer)
+            .Include(c => c.Clients)
             .ToListAsync(cancellationToken);
 
         return schedules;
@@ -26,6 +27,6 @@ public class ScheduleRepository : IScheduleRepository
     public async Task AddOrUpdateSchedule(Schedule schedule, CancellationToken cancellationToken)
     {
         _context.Schedules.Add(schedule);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
