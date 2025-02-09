@@ -6,31 +6,33 @@
 
 <h3>Расписание тренировок</h3>
 
-<table class="schedule-table">
-    <thead>
-        <tr>
-            <th>Время</th>
-            @foreach (var day in DaysOfWeekWithDates)
-            {
-                <th>@day</th>
-            }
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var time in TimeSlots)
-        {
+<div class="table-conrainer">
+    <table class="schedule-table">
+        <thead>
             <tr>
-                <td>@time</td>
+                <th>Время</th>
                 @foreach (var day in DaysOfWeekWithDates)
                 {
-                    <td class="schedule-cell" @onclick="() => OpenModal(day, time)">
-                        @GetCellContent(day, time)
-                    </td>
+                    <th>@day</th>
                 }
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var time in TimeSlots)
+            {
+                <tr>
+                    <td>@time</td>
+                    @foreach (var day in DaysOfWeekWithDates)
+                    {
+                        <td class="schedule-cell" @onclick="() => OpenModal(day, time)">
+                            @GetCellContent(day, time)
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
 
 @if (IsModalOpen)
 {
@@ -44,29 +46,23 @@
 
                 @foreach (var trainer in Trainers)
                 {
-                    <option value="@trainer.FirstName">@trainer.LastName</option>
+                    <option value="@trainer.Id">@trainer.FirstName @trainer.LastName</option>
                 }
             </select>
 
-            <label>Клиент:</label>
-            <select @bind="SelectedClientId">
+            <label>Клиенты:</label>
+            <select multiple @bind="SelectedClientId">
                 <option value="">Выберите клиента</option>
                 @foreach (var client in Clients)
                 {
-                    <option value="@client.FirstName">@client.LastName</option>
+                    <option value="@client.Id">@client.FirstName @client.LastName</option>
                 }
             </select>
-
-            <label>Тип тренировки:</label>
-            <select @bind="SelectedTrainingType">
-                @foreach (var type in Enum.GetValues(typeof(TypeTrainings)).Cast<TypeTrainings>())
-                {
-                    <option value="@type">@type.ToString()</option>
-                }
-            </select>
-
-            <div class="modal-buttons">
-                <button @onclick="SaveTraining">Сохранить</button>
+            <div class="from-actions">
+                <button class="btn btn-secondary mt-2">Добавить клиента</button>
+            </div>
+            <div class="from-actions mt-2">
+                <button class="btm btm-primary" @onclick="SaveTraining">Сохранить</button>
                 <button @onclick="CloseModal">Отмена</button>
             </div>
         </div>
@@ -74,58 +70,65 @@
 }
 
 <style>
-    .schedule-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: center;
+    .table-container {
+    width: 100%;
+    overflow-x: auto;
     }
 
-        .schedule-table th, .schedule-table td {
-            border: 1px solid #ccc;
-            padding: 8px;
-        }
+    .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    }
 
-        .schedule-table th {
-            background-color: #f4f4f4;
-        }
+    .schedule-table th, .schedule-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    max-height: 100px;
+    
+    }
+
+    .schedule-table th {
+    background-color: #f4f4f4;
+    }
 
     .schedule-cell {
-        cursor: pointer;
-        height: 50px;
+    cursor: pointer;
+    height: 50px;
     }
 
-        .schedule-cell:hover {
-            background-color: #eef;
-        }
+    .schedule-cell:hover {
+    background-color: #eef;
+    }
 
     .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     }
 
     .modal-content {
-        background: white;
-        padding: 20px;
-        border-radius: 5px;
-        width: 300px;
-        text-align: center;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 300px;
+    text-align: center;
     }
 
     .modal-buttons {
-        margin-top: 15px;
+    margin-top: 15px;
     }
 
-        .modal-buttons button {
-            margin: 5px;
-            padding: 5px 10px;
-        }
+    .modal-buttons button {
+    margin: 5px;
+    padding: 5px 10px;
+    }
 </style>
 
 @code {
@@ -137,9 +140,8 @@
     private IReadOnlyList<ClientDto> Clients = [];
     private IReadOnlyList<ScheduleDto> Schedules = [];
 
-    private ScheduleMemberDto SelectedTrainerId;
-    private ScheduleMemberDto[] SelectedClientId;
-    private TypeTrainings SelectedTrainingType = TypeTrainings.Индивидуальная;
+    private Guid? SelectedTrainerId;
+    private string[] SelectedClientId = [];
 
     private string SelectedDay = string.Empty;
     private string SelectedTime = string.Empty;
@@ -179,7 +181,10 @@
             var dayKey = schedule.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU"));
             var timeKey = schedule.Time.ToString(@"hh\:mm");
 
-            ScheduleData[(dayKey, timeKey)] = $"{schedule.Trainer} - {schedule.Clients} ({schedule.TypeTrainings})";
+            var trainerFullName = $"{schedule.Trainer.LastName} {schedule.Trainer.FirstName}";
+            var clientFullName = string.Join(", ", schedule.Clients.Select(c => $"{c.LastName} {c.FirstName}"));
+
+            ScheduleData[(dayKey, timeKey)] = $"{trainerFullName} - {clientFullName} ({schedule.TypeTrainings})";
         }
     }
 
@@ -223,21 +228,44 @@
     {
         IsModalOpen = false;
         SelectedTrainerId = null;
-        SelectedClientId = null;
-        SelectedTrainingType = TypeTrainings.Неизвестно;
+        SelectedClientId = [];
     }
 
-    private async void SaveTraining()
+    private async Task SaveTraining()
     {
-        if (SelectedTrainerId != null && SelectedClientId != null)
+        if (SelectedTrainerId != null && SelectedClientId.Length > 0)
         {
+            var trainerDto = Trainers.FirstOrDefault(t => t.Id == SelectedTrainerId.Value);
+
+            var selectedClientGuid = SelectedClientId.Select(id => Guid.Parse(id)).ToList();
+            var clientDtos = Clients.Where(c => selectedClientGuid.Contains(c.Id)).ToList();
+
+            var trainingType = clientDtos.Count > 1 ? TypeTrainings.Групповая : TypeTrainings.Индивидуальная;
+
+            var existingSchedule = Schedules.FirstOrDefault(s =>
+            s.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU")) == SelectedDay &&
+            s.Time.ToString(@"hh\:mm") == SelectedTime);
+
+            var scheduleId = existingSchedule?.Id ?? Guid.Empty;
+
             var training = new ScheduleDto
                 {
+                    Id = scheduleId,
                     Date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU")),
                     Time = TimeSpan.Parse(SelectedTime),
-                    Trainer = SelectedTrainerId,
-                    Clients = SelectedClientId,
-                    TypeTrainings = SelectedTrainingType
+                    Trainer = new ScheduleMemberDto
+                    {
+                        Id = trainerDto.Id,
+                        FirstName = trainerDto.FirstName,
+                        LastName = trainerDto.LastName
+                    },
+                    Clients = clientDtos.Select(c => new ScheduleMemberDto
+                    {
+                        Id = c.Id,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName
+                    }).ToList(),
+                    TypeTrainings = trainingType
                 };
 
             await _scheduleService.AddOrUpdateSchedule(training);
