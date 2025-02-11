@@ -59,7 +59,10 @@
                 }
             </select>
             <div class="from-actions">
-                <button class="btn btn-secondary mt-2">Добавить клиента</button>
+                @if(SelectedTrainingId != null)
+                {
+                    <button class="btn btn-danger mt-2" @onclick="() => DeleteTraining(SelectedTrainingId.Value)">Отменить тренировку</button>
+                }
             </div>
             <div class="from-actions mt-2">
                 <button class="btm btm-primary" @onclick="SaveTraining">Сохранить</button>
@@ -85,7 +88,7 @@
     border: 1px solid #ccc;
     padding: 8px;
     max-height: 100px;
-    
+
     }
 
     .schedule-table th {
@@ -142,6 +145,7 @@
 
     private Guid? SelectedTrainerId;
     private string[] SelectedClientId = [];
+    private Guid? SelectedTrainingId;
 
     private string SelectedDay = string.Empty;
     private string SelectedTime = string.Empty;
@@ -173,9 +177,12 @@
     private async Task LoadScheduleFromApi()
     {
         Schedules = await _scheduleService.GetWeeksSchedule();
-
         ScheduleData.Clear();
+        LoadUI();
+    }
 
+    private void LoadUI()
+    {
         foreach (var schedule in Schedules)
         {
             var dayKey = schedule.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU"));
@@ -221,6 +228,13 @@
     {
         SelectedDay = day;
         SelectedTime = time;
+
+        var existingSchedule = Schedules.FirstOrDefault(s =>
+        s.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU")) == day &&
+        s.Time.ToString(@"hh\:mm") == time);
+
+        SelectedTrainingId = existingSchedule?.Id;
+
         IsModalOpen = true;
     }
 
@@ -279,5 +293,30 @@
     private string GetCellContent(string day, string time)
     {
         return ScheduleData.TryGetValue((day, time), out var content) ? content : " ";
+    }
+
+    private async Task DeleteTraining(Guid id)
+    {
+        if (id == Guid.Empty)
+            return;
+
+        var trainingToRemove = Schedules.FirstOrDefault(t => t.Id == id);
+
+        if(trainingToRemove != null)
+        {
+            Schedules = Schedules.Where(t => t.Id != id).ToList();
+            UpdateScheduleData();
+        }
+        await _scheduleService.DeleteTrainingAsync(id);
+        await LoadDataFromApi();
+        EnsureScheduleDataInitialized();
+
+        CloseModal();
+    }
+
+    private void UpdateScheduleData()
+    {
+        ScheduleData.Clear();
+        LoadUI();
     }
 }

@@ -24,8 +24,9 @@ public class ScheduleServiceBlazor
         await _httpClient.PostAsJsonAsync("api/Schedules", scheduleDto);
     }
 
-    public async Task DeleteTrainingAsync(string day, string time)
+    public async Task<bool> DeleteTrainingAsync(Guid id)
     {
-        await _httpClient.DeleteAsync($"api/Trainings/{day}/{time}");
+        var response = await _httpClient.DeleteAsync($"api/Schedules/{id}");
+        return response.IsSuccessStatusCode;
     }
 }

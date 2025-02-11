@@ -97,4 +97,12 @@ public class ScheduleRepository : IScheduleRepository
 
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task DeleteSchedule(Guid id, CancellationToken cancellationToken)
+    {
+        var schedule = await _context.Schedules.FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+
+        _context.Schedules.Remove(schedule);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

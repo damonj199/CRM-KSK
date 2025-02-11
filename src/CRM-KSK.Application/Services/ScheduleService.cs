@@ -32,4 +32,12 @@ public class ScheduleService : IScheduleService
         var schedule = _mapper.Map<Schedule>(scheduleDto);
         await _scheduleRepository.AddOrUpdateSchedule(schedule, cancellationToken);
     }
+
+    public async Task DeleteSchedule(Guid id, CancellationToken cancellationToken)
+    {
+        if(id != Guid.Empty)
+        {
+            await _scheduleRepository.DeleteSchedule(id, cancellationToken);
+        }
+    }
 }
