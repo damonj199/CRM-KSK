@@ -1,0 +1,91 @@
+﻿@page "/history"
+@inject ScheduleServiceBlazor _scheduleService
+
+<h3>История тренировок</h3>
+
+<div class="filters">
+    <label>Выберите дату:</label>
+    <input type="date" @bind="SelectedDate" @bind:event="onchange" />
+</div>
+
+<table class="history-table">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Время</th>
+            <th>Тренер</th>
+            <th>Клиенты</th>
+            <th>Тип тренировки</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (HistorySchedules.Any())
+        {
+            @foreach (var schedule in HistorySchedules)
+            {
+                <tr>
+                    <td>@schedule.Date.ToString("dd.MM.yyyy")</td>
+                    <td>@schedule.Time.ToString(@"hh\:mm")</td>
+                    <td>@schedule.Trainer.LastName @schedule.Trainer.FirstName</td>
+                    <td>@string.Join(", ", schedule.Clients.Select(c => $"{c.LastName} {c.FirstName}"))</td>
+                    <td>@schedule.TypeTrainings</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5">Нет данных за этот период</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .filters {
+    margin-bottom: 15px;
+    }
+
+    .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    }
+
+    .history-table th, .history-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    }
+
+    .history-table th {
+    background-color: #f4f4f4;
+    }
+</style>
+
+@code {
+    private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-7));
+    private IReadOnlyList<ScheduleDto> HistorySchedules = [];
+
+    private DateOnly SelectedDate
+    {
+        get => _selectedDate;
+        set
+        {
+            _selectedDate = value;
+            LoadScheduleHistory();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadScheduleHistory();
+    }
+
+    private async Task LoadScheduleHistory()
+    {
+        var startDate = SelectedDate;
+        var endDate = SelectedDate.AddDays(6);
+
+        HistorySchedules = await _scheduleService.GetScheduleHistory(startDate, endDate) ?? [];
+    }
+}

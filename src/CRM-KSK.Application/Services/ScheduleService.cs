@@ -27,6 +27,15 @@ public class ScheduleService : IScheduleService
         return scheduleDto ?? [];
     }
 
+    public async Task<IReadOnlyList<ScheduleDto>> GetScheduleHistory(DateOnly start, DateOnly end, CancellationToken cancellationToken)
+    {
+        var schedulesHistory = await _scheduleRepository.GetWeeksSchedule(start, end, cancellationToken);
+        var sortedScheduleHistory = schedulesHistory.OrderBy(s => s.Date).ThenBy(s => s.Time).ToList();
+
+        var scheduleDtos = _mapper.Map<IReadOnlyList<ScheduleDto>>(sortedScheduleHistory);
+        return scheduleDtos ?? [];
+    }
+
     public async Task AddOrUpdateSchedule(ScheduleDto scheduleDto, CancellationToken cancellationToken)
     {
         var schedule = _mapper.Map<Schedule>(scheduleDto);

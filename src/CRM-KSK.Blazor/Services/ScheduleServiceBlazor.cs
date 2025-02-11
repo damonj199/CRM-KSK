@@ -29,4 +29,9 @@ public class ScheduleServiceBlazor
         var response = await _httpClient.DeleteAsync($"api/Schedules/{id}");
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<IReadOnlyList<ScheduleDto>> GetScheduleHistory(DateOnly startDate, DateOnly endDate)
+    {
+        return await _httpClient.GetFromJsonAsync<List<ScheduleDto>>($"api/Schedules/history?start={startDate:yyyy-MM-dd}&end={endDate:yyyy-MM-dd}") ?? [];
+    }
 }

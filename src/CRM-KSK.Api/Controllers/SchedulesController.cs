@@ -35,4 +35,11 @@ public class SchedulesController : ControllerBase
         await _scheduleService.DeleteSchedule(id, cancellationToken);
         return Ok();
     }
+
+    [HttpGet("history")]
+    public async Task<IActionResult> GetScheduleHistory([FromQuery] DateOnly start, [FromQuery] DateOnly end, CancellationToken cancellationToken)
+    {
+        var history = await _scheduleService.GetScheduleHistory(start, end, cancellationToken);
+        return Ok(history);
+    }
 }

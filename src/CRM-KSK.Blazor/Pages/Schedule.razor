@@ -3,8 +3,12 @@
 @inject ClientServiceBlazor _clientService
 @inject TrainerServiceBlazor _trainerService
 @inject ScheduleServiceBlazor _scheduleService
+@inject NavigationManager Navigation
 
-<h3>Расписание тренировок</h3>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <h3>Расписание тренировок</h3>
+    <a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
+</div>
 
 <div class="table-conrainer">
     <table class="schedule-table">
@@ -58,15 +62,15 @@
                     <option value="@client.Id">@client.FirstName @client.LastName</option>
                 }
             </select>
+            <div class="from-actions mt-2">
+                <button class="btn btn-primary" @onclick="SaveTraining">Сохранить</button>
+                <button @onclick="CloseModal">Отмена</button>
+            </div>
             <div class="from-actions">
                 @if(SelectedTrainingId != null)
                 {
                     <button class="btn btn-danger mt-2" @onclick="() => DeleteTraining(SelectedTrainingId.Value)">Отменить тренировку</button>
                 }
-            </div>
-            <div class="from-actions mt-2">
-                <button class="btm btm-primary" @onclick="SaveTraining">Сохранить</button>
-                <button @onclick="CloseModal">Отмена</button>
             </div>
         </div>
     </div>
@@ -158,6 +162,11 @@
         await LoadDataFromApi();
         await LoadScheduleFromApi();
         EnsureScheduleDataInitialized();
+    }
+
+    private void ShowHistory()
+    {
+        Navigation.NavigateTo("/history");
     }
 
     private void GenerateDaysOfWeekWithDates()
