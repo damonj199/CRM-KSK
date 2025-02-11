@@ -20,7 +20,8 @@ public class MapperProfile : Profile
             .ForMember(dest => dest.Clients, opt => opt.MapFrom(src => src.Clients));
         CreateMap<Schedule, ScheduleDto>()
             .ForMember(dest => dest.Trainer, opt => opt.MapFrom(src => src.Trainer))
-            .ForMember(dest => dest.Clients, opt => opt.MapFrom(src => src.Clients));
+            .ForMember(dest => dest.Clients, opt => opt.MapFrom(src => src.Clients))
+            .ReverseMap();
         CreateMap<Trainer, ScheduleMemberDto>().ReverseMap();
         CreateMap<Client, ScheduleMemberDto>().ReverseMap();
     }
