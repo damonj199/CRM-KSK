@@ -4,6 +4,7 @@ using CRM_KSK.Dal.PostgreSQL;
 using CRM_KSK.Dal.PostgreSQL.Repositories;
 using CRM_KSK.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Text.Json.Serialization;
 
 namespace CRM_KSK.Api.Configurations;
@@ -13,11 +14,6 @@ public static class ConfigureServices
     public static void ConfigureService(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllers();
-            //.AddJsonOptions(options =>
-            //{
-            //    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            //    options.JsonSerializerOptions.Converters.Add(new JsonTrimStringConverter());
-            //});
         services.AddCors(options =>
         {
             options.AddPolicy("AllowAllOrigins",

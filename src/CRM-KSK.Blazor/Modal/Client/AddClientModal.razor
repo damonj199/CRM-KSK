@@ -26,15 +26,6 @@
                     <InputDate id="dob" name="dob" @bind-Value="client.DateOfBirth" class="form-control" />
                 </div>
                 <div class="form-group">
-                    <label for="level">Уровень тренировок:</label>
-                    <InputSelect id="level" name="level" @bind-Value="client.LevelOfTraining" class="form-control">
-                        @foreach (LevelOfTraining level in Enum.GetValues(typeof(LevelOfTraining)))
-                        {
-                            <option value="@level">@level</option>
-                        }
-                    </InputSelect>
-                </div>
-                <div class="form-group">
                     <label for="trainer">Тренер:</label>
                     <InputText id="trainer" name="trainer" @bind-Value="client.Trainer.FirstName" class="form-control" />
                 </div>
