@@ -11,7 +11,7 @@ public class CRM_KSKDbContext : DbContext
     public DbSet<Admin> Admins { get; set; }
     public DbSet<Client> Clients { get; set; }
     public DbSet<Membership> Memberships { get; set; }
-    public DbSet<Payment> Payment { get; set; }
+    public DbSet<Training> Payment { get; set; }
     public DbSet<Schedule> Schedules { get; set; }
     public DbSet<Trainer> Trainers { get; set; }
 
@@ -22,11 +22,6 @@ public class CRM_KSKDbContext : DbContext
         modelBuilder
             .Entity<Membership>()
             .Property(x => x.StatusMembership)
-            .HasConversion<string>();
-
-        modelBuilder
-            .Entity<Payment>()
-            .Property(x => x.PaymentMethod)
             .HasConversion<string>();
     }
 }

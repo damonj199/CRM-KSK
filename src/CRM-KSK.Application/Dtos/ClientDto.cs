@@ -19,8 +19,6 @@ public class ClientDto
     [Required]
     public DateOnly DateOfBirth { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-    public LevelOfTraining LevelOfTraining { get; set; } = LevelOfTraining.Начинающий;
-
     public TrainerDto Trainer { get; set; }
 
     public string? ParentName { get; set; }

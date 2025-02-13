@@ -5,10 +5,8 @@
 @inject ScheduleServiceBlazor _scheduleService
 @inject NavigationManager Navigation
 
-<div style="display: flex; justify-content: space-between; align-items: center;">
-    <h3>Расписание тренировок</h3>
-    <a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
-</div>
+<h3>Расписание тренировок</h3>
+<a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
 
 <div class="table-conrainer">
     <table class="schedule-table">
@@ -28,8 +26,15 @@
                     <td>@time</td>
                     @foreach (var day in DaysOfWeekWithDates)
                     {
-                        <td class="schedule-cell" @onclick="() => OpenModal(day, time)">
-                            @GetCellContent(day, time)
+                        <td class="schedule-cell @(string.IsNullOrWhiteSpace(GetCellContent(day, time)) ? "empty-cell" : "")"
+                        @onclick="() => OpenModal(day, time)">
+                            @if(ScheduleData.TryGetValue((day, time), out var contents))
+                            {
+                                @foreach(var content in contents)
+                                {
+                                    <div>@content</div>
+                                }
+                            }
                         </td>
                     }
                 </tr>
@@ -62,23 +67,53 @@
                     <option value="@client.Id">@client.FirstName @client.LastName</option>
                 }
             </select>
+            <label>Тип тренировки:</label>
+            <select @bind="SelectedTrainingType">
+                @foreach (var type in Enum.GetValues(typeof(TypeTrainings)))
+                {
+                    <option value="@type">@((type as Enum).GetDisplayName())</option>
+                }
+            </select>
             <div class="from-actions mt-2">
                 <button class="btn btn-primary" @onclick="SaveTraining">Сохранить</button>
                 <button @onclick="CloseModal">Отмена</button>
             </div>
             <div class="from-actions">
-                @if(SelectedTrainingId != null)
-                {
-                    <button class="btn btn-danger mt-2" @onclick="() => DeleteTraining(SelectedTrainingId.Value)">Отменить тренировку</button>
-                }
+                <button class="btn btn-danger mt-2" @onclick="() => DeleteTraining(SelectedTrainingId.Value)">Отменить тренировку</button>
             </div>
+        </div>
+    </div>
+}
+
+@if (ShowTrainingsModal)
+{
+    <div class="modal">
+        <div class="modal-content">
+            <h3>Тренировки на @SelectedDay в @SelectedTime</h3>
+
+            @if (SelectedTrainings.Count > 0)
+            {
+                @foreach (var training in SelectedTrainings)
+                {
+                    <div class="training-item">
+                        <span>@training</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <p>Нет тренировок</p>
+            }
+
+            <button class="btn btn-dark" @onclick="OpenAddTrainingModal">Добавить тренировку</button>
+            <button class="btn btn-secondary mt-1" @onclick="CloseModal">Закрыть</button>
         </div>
     </div>
 }
 
 <style>
     .table-container {
-    width: 100%;
+    width: 100vw;
     overflow-x: auto;
     }
 
@@ -89,10 +124,12 @@
     }
 
     .schedule-table th, .schedule-table td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    max-height: 100px;
 
+    min-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 5px;
+    white-space: nowrap;
     }
 
     .schedule-table th {
@@ -123,9 +160,25 @@
     .modal-content {
     background: white;
     padding: 20px;
-    border-radius: 5px;
-    width: 300px;
+    border-radius: 8px;
     text-align: center;
+    min-width: 300px;
+    }
+
+    .training-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    }
+
+    .btn-delete {
+    background: red;
+    color: white;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    border-radius: 4px;
     }
 
     .modal-buttons {
@@ -136,12 +189,17 @@
     margin: 5px;
     padding: 5px 10px;
     }
+
+    .empty-cell {
+    height: 20px;
+    background-color: #f9f9f9;
+    }
 </style>
 
 @code {
-    private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "21:00");
+    private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "22:00");
     private List<string> DaysOfWeekWithDates = new();
-    private Dictionary<(string Day, string Time), string> ScheduleData = new();
+    private Dictionary<(string Day, string Time), List<string>> ScheduleData = [];
 
     private List<TrainerDto> Trainers = [];
     private IReadOnlyList<ClientDto> Clients = [];
@@ -150,10 +208,13 @@
     private Guid? SelectedTrainerId;
     private string[] SelectedClientId = [];
     private Guid? SelectedTrainingId;
+    private TypeTrainings SelectedTrainingType = TypeTrainings.Unknown;
 
     private string SelectedDay = string.Empty;
     private string SelectedTime = string.Empty;
+    private List<string> SelectedTrainings = [];
 
+    private bool ShowTrainingsModal = false;
     private bool IsModalOpen = false;
 
     protected override async Task OnInitializedAsync()
@@ -200,7 +261,14 @@
             var trainerFullName = $"{schedule.Trainer.LastName} {schedule.Trainer.FirstName}";
             var clientFullName = string.Join(", ", schedule.Clients.Select(c => $"{c.LastName} {c.FirstName}"));
 
-            ScheduleData[(dayKey, timeKey)] = $"{trainerFullName} - {clientFullName} ({schedule.TypeTrainings})";
+            var trainingInfo = $"{trainerFullName} - {clientFullName} ({schedule.TypeTrainings.GetDisplayName()})";
+
+            if(!ScheduleData.ContainsKey((dayKey, timeKey)))
+            {
+                ScheduleData[(dayKey, timeKey)] = [];
+            }
+
+            ScheduleData[(dayKey, timeKey)].Add(trainingInfo);
         }
     }
 
@@ -212,7 +280,7 @@
             {
                 if (!ScheduleData.ContainsKey((day, time)))
                 {
-                    ScheduleData[(day, time)] = " ";
+                    ScheduleData[(day, time)] = [];
                 }
             }
         }
@@ -227,7 +295,7 @@
         while (startTime < endTime)
         {
             timeSlots.Add(startTime.ToString("HH:mm"));
-            startTime = startTime.AddMinutes(60);
+            startTime = startTime.AddMinutes(30);
         }
 
         return timeSlots;
@@ -238,18 +306,27 @@
         SelectedDay = day;
         SelectedTime = time;
 
-        var existingSchedule = Schedules.FirstOrDefault(s =>
-        s.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU")) == day &&
-        s.Time.ToString(@"hh\:mm") == time);
+        if (ScheduleData.TryGetValue((day, time), out var trainings) && trainings?.Any() == true)
+        {
+            SelectedTrainings = new List<string>(trainings);
+            ShowTrainingsModal = true;
+        }
+        else
+        {
+            IsModalOpen = true;
+        }
+    }
 
-        SelectedTrainingId = existingSchedule?.Id;
-
+    private void OpenAddTrainingModal()
+    {
+        ShowTrainingsModal = false;
         IsModalOpen = true;
     }
 
     private void CloseModal()
     {
         IsModalOpen = false;
+        ShowTrainingsModal = false;
         SelectedTrainerId = null;
         SelectedClientId = [];
     }
@@ -263,17 +340,9 @@
             var selectedClientGuid = SelectedClientId.Select(id => Guid.Parse(id)).ToList();
             var clientDtos = Clients.Where(c => selectedClientGuid.Contains(c.Id)).ToList();
 
-            var trainingType = clientDtos.Count > 1 ? TypeTrainings.Групповая : TypeTrainings.Индивидуальная;
-
-            var existingSchedule = Schedules.FirstOrDefault(s =>
-            s.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU")) == SelectedDay &&
-            s.Time.ToString(@"hh\:mm") == SelectedTime);
-
-            var scheduleId = existingSchedule?.Id ?? Guid.Empty;
-
             var training = new ScheduleDto
                 {
-                    Id = scheduleId,
+                    Id = Guid.NewGuid(),
                     Date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU")),
                     Time = TimeSpan.Parse(SelectedTime),
                     Trainer = new ScheduleMemberDto
@@ -288,7 +357,7 @@
                         FirstName = c.FirstName,
                         LastName = c.LastName
                     }).ToList(),
-                    TypeTrainings = trainingType
+                    TypeTrainings = SelectedTrainingType
                 };
 
             await _scheduleService.AddOrUpdateSchedule(training);
@@ -301,7 +370,8 @@
 
     private string GetCellContent(string day, string time)
     {
-        return ScheduleData.TryGetValue((day, time), out var content) ? content : " ";
+        return ScheduleData.TryGetValue((day, time), out var content)
+        ? string.Join("<br>", content) : " ";
     }
 
     private async Task DeleteTraining(Guid id)
