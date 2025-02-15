@@ -53,4 +53,15 @@ public class TrainerService : ITrainerService
 
         await _trainerRepository.DeleteTraner(trainer, cancellationToken);
     }
+
+    public async Task<TrainerDto> GetTrainerByIdAsync(Guid id, CancellationToken token)
+    {
+        var trainer = await _trainerRepository.GetTrainerByIdAsync(id, token);
+        if (trainer == null)
+            throw new Exception("Тренер не найден");
+
+        var trainerDto = _mapper.Map<TrainerDto>(trainer);
+        return trainerDto;
+    }
+
 }

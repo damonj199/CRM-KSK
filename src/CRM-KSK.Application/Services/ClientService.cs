@@ -9,21 +9,19 @@ namespace CRM_KSK.Application.Services;
 public class ClientService : IClientService
 {
     private readonly IClientRepository _clientRepository;
-    private readonly ITrainerRepository _trainerRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ClientService> _logger;
 
-    public ClientService(IClientRepository clientRepository, IMapper mapper, ITrainerRepository trainerRepository, ILogger<ClientService> logger)
+    public ClientService(IClientRepository clientRepository, IMapper mapper, ILogger<ClientService> logger)
     {
         _clientRepository = clientRepository;
-        _trainerRepository = trainerRepository;
         _mapper = mapper;
         _logger = logger;
     }
 
     public async Task<string> AddClientAsync(ClientDto clientDto, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("попали в метод добавления клиента в сервисе, проверяем есть ли уже такой клиент");
+        _logger.LogDebug("попали в метод добавления клиента в сервисе, проверяем есть ли уже такой клиент");
         var existingClient = await _clientRepository.ClientVerificationAsync(clientDto.Phone, cancellationToken);
 
         if (existingClient)
@@ -31,20 +29,19 @@ public class ClientService : IClientService
 
         var clientEntity = _mapper.Map<Client>(clientDto);
 
-        if (!string.IsNullOrWhiteSpace(clientDto.Trainer.FirstName))
-        {
-            var (firstName, lastName) = SplitFullName(clientDto.Trainer.FirstName);
-
-            var trainer = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
-
-            clientEntity.Trainer = trainer;
-
-            if (clientEntity.Trainer == null)
-                throw new InvalidOperationException("Тренер не найден");
-        }
-        _logger.LogInformation("все проверки пройдены, добавляем нового клиента");
+        _logger.LogDebug("все проверки пройдены, добавляем нового клиента");
         await _clientRepository.AddClientAsync(clientEntity, cancellationToken);
         return clientEntity.FirstName;
+    }
+
+    public async Task<ClientDto> GetClientById(Guid id, CancellationToken token)
+    {
+        var client = await _clientRepository.GetClientById(id, token);
+        if (client == null)
+            throw new DirectoryNotFoundException("Клиент не найден");
+
+        var clientDto = _mapper.Map<ClientDto>(client);
+        return clientDto;
     }
 
     public async Task<IReadOnlyList<ClientDto>> GetClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)

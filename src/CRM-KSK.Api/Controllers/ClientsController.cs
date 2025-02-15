@@ -19,18 +19,15 @@ public class ClientsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddClient([FromBody] ClientDto client, CancellationToken cancellationToken)
     {
-        try
+        var clientNew = await _clientService.AddClientAsync(client, cancellationToken);
+
+        if(clientNew != null)
         {
-            var clientNew = await _clientService.AddClientAsync(client, cancellationToken);
-            return Ok(new { message = $"Клиент {client.FirstName}, успешно добавлен" });
+            return Ok();
         }
-        catch (InvalidOperationException ex)
+        else
         {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.Message);
+            return BadRequest(new { message = "Ошибка при добавлении" });
         }
     }
 
@@ -51,14 +48,17 @@ public class ClientsController : ControllerBase
     [HttpDelete("{Phone}")]
     public async Task<IActionResult> DeleteClient(string phone, CancellationToken cancellationToken)
     {
-        try
-        {
-            await _clientService.DeleteClientAsync(phone, cancellationToken);
-            return Ok(new { message = "Удалено" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        await _clientService.DeleteClientAsync(phone, cancellationToken);
+        return Ok(new { message = "Удалено" });
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetClientById(Guid id, CancellationToken token)
+    {
+        var clientDto = await _clientService.GetClientById(id, token);
+        if (clientDto != null)
+            return Ok(clientDto);
+
+        return NotFound("Клиент не найден");
     }
 }

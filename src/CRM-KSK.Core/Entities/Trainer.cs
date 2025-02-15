@@ -8,6 +8,6 @@ public class Trainer
     public string? Surname { get; set; }
     public string? Phone { get; set; }
     public DateOnly DateOfBirth { get; set; }
-    public Training Training { get; set; }
-    public ICollection<Client> Clients { get; set; } = [];
+
+    public ICollection<Training> Trainings { get; set; } = [];
 }

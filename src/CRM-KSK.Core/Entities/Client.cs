@@ -9,7 +9,7 @@ public class Client
     public DateOnly DateOfBirth { get; set; }
     public string? ParentName { get; set; }
     public string? ParentPhone { get; set; }
-    public Trainer Trainer { get; set; } = default!;
+
     public Membership? Membership { get; set; }
     public ICollection<Training> Trainings { get; set; } = [];
 }

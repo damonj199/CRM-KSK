@@ -6,6 +6,7 @@ public interface ITrainerService
 {
     Task AddTrainerAsync(TrainerDto trainerDto, CancellationToken cancellationToken);
     Task DeleteTrainer(string firstName, string lastName, CancellationToken cancellationToken);
+    Task<TrainerDto> GetTrainerByIdAsync(Guid id, CancellationToken token);
     Task<TrainerDto> GetTrainerByName(string firstName, string lastName, CancellationToken cancellationToken);
     Task<IReadOnlyList<TrainerDto>> GetTrainersAsync(CancellationToken cancellationToken);
 }

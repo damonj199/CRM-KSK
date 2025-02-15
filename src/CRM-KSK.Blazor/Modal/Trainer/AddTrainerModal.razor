@@ -65,6 +65,8 @@
     private async Task CloseModal()
     {
         IsVisible = false;
+        trainer = new();
+        message = string.Empty;
         await IsVisibleChanged.InvokeAsync(IsVisible);
         StateHasChanged();
     }

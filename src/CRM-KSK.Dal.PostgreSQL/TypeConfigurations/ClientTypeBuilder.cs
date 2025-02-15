@@ -11,6 +11,7 @@ internal sealed class ClientTypeBuilder : IEntityTypeConfiguration<Client>
         builder
             .HasOne(c => c.Membership)
             .WithOne(m => m.Client)
-            .HasForeignKey<Membership>(m => m.Client);
+            .HasForeignKey<Membership>(m => m.ClientId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
