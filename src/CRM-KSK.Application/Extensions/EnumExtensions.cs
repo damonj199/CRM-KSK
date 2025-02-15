@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
-namespace CRM_KSK.Aplication.Extensions;
+namespace CRM_KSK.Application.Extensions;
 
 public static class EnumExtensions
 {

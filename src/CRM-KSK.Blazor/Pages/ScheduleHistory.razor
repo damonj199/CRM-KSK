@@ -26,9 +26,6 @@
                 <tr>
                     <td>@schedule.Date.ToString("dd.MM.yyyy")</td>
                     <td>@schedule.Time.ToString(@"hh\:mm")</td>
-                    <td>@schedule.Trainer.LastName @schedule.Trainer.FirstName</td>
-                    <td>@string.Join(", ", schedule.Clients.Select(c => $"{c.LastName} {c.FirstName}"))</td>
-                    <td>@schedule.TypeTrainings</td>
                 </tr>
             }
         }

@@ -1,5 +1,4 @@
-﻿using CRM_KSK.Core.Enums;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace CRM_KSK.Application.Dtos;
 
@@ -18,8 +17,6 @@ public class ClientDto
 
     [Required]
     public DateOnly DateOfBirth { get; set; } = DateOnly.FromDateTime(DateTime.Today);
-
-    public TrainerDto Trainer { get; set; }
 
     public string? ParentName { get; set; }
 

@@ -3,6 +3,7 @@ using System;
 using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    partial class CRM_KSKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250213192804_AddedTrainingAndUpdateAll")]
+    partial class AddedTrainingAndUpdateAll
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,10 +91,17 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("phone");
 
-                    b.HasKey("Id")
-                        .HasName("pK_client");
+                    b.Property<Guid>("TrainerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("trainerId");
 
-                    b.ToTable("client", (string)null);
+                    b.HasKey("Id")
+                        .HasName("pK_clients");
+
+                    b.HasIndex("TrainerId")
+                        .HasDatabaseName("iX_clients_trainerId");
+
+                    b.ToTable("clients", (string)null);
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
@@ -127,13 +137,13 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnName("typeTrainings");
 
                     b.HasKey("Id")
-                        .HasName("pK_membership");
+                        .HasName("pK_memberships");
 
                     b.HasIndex("ClientId")
                         .IsUnique()
-                        .HasDatabaseName("iX_membership_clientId");
+                        .HasDatabaseName("iX_memberships_clientId");
 
-                    b.ToTable("membership", (string)null);
+                    b.ToTable("memberships", (string)null);
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>
@@ -210,15 +220,15 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnName("typeTrainings");
 
                     b.HasKey("Id")
-                        .HasName("pK_trainings");
+                        .HasName("pK_training");
 
                     b.HasIndex("ScheduleId")
-                        .HasDatabaseName("iX_trainings_scheduleId");
+                        .HasDatabaseName("iX_training_scheduleId");
 
                     b.HasIndex("TrainerId")
-                        .HasDatabaseName("iX_trainings_trainerId");
+                        .HasDatabaseName("iX_training_trainerId");
 
-                    b.ToTable("trainings", (string)null);
+                    b.ToTable("training", (string)null);
                 });
 
             modelBuilder.Entity("ClientTraining", b =>
@@ -240,6 +250,18 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.ToTable("clientTraining", (string)null);
                 });
 
+            modelBuilder.Entity("CRM_KSK.Core.Entities.Client", b =>
+                {
+                    b.HasOne("CRM_KSK.Core.Entities.Trainer", "Trainer")
+                        .WithMany("Clients")
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fK_clients_trainers_trainerId");
+
+                    b.Navigation("Trainer");
+                });
+
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
                 {
                     b.HasOne("CRM_KSK.Core.Entities.Client", "Client")
@@ -247,7 +269,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasForeignKey("CRM_KSK.Core.Entities.Membership", "ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fK_membership_client_clientId");
+                        .HasConstraintName("fK_memberships_clients_clientId");
 
                     b.Navigation("Client");
                 });
@@ -259,14 +281,14 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasForeignKey("ScheduleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fK_trainings_schedules_scheduleId");
+                        .HasConstraintName("fK_training_schedules_scheduleId");
 
                     b.HasOne("CRM_KSK.Core.Entities.Trainer", "Trainer")
                         .WithMany("Trainings")
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fK_trainings_trainers_trainerId");
+                        .HasConstraintName("fK_training_trainers_trainerId");
 
                     b.Navigation("Schedule");
 
@@ -280,14 +302,14 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasForeignKey("ClientsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fK_clientTraining_client_clientsId");
+                        .HasConstraintName("fK_clientTraining_clients_clientsId");
 
                     b.HasOne("CRM_KSK.Core.Entities.Training", null)
                         .WithMany()
                         .HasForeignKey("TrainingsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fK_clientTraining_trainings_trainingsId");
+                        .HasConstraintName("fK_clientTraining_training_trainingsId");
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Client", b =>
@@ -302,6 +324,8 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Trainer", b =>
                 {
+                    b.Navigation("Clients");
+
                     b.Navigation("Trainings");
                 });
 #pragma warning restore 612, 618

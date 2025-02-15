@@ -50,13 +50,13 @@ app.UseCookiePolicy(new CookiePolicyOptions
     Secure = CookieSecurePolicy.Always
 });
 
-//using (var scope = app.Services.CreateScope())
-//{
-//    var services = scope.ServiceProvider;
-//    var dbContext = services.GetRequiredService<CRM_KSKDbContext>();
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var dbContext = services.GetRequiredService<CRM_KSKDbContext>();
 
-//    dbContext.Database.Migrate();
-//}
+    dbContext.Database.Migrate();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

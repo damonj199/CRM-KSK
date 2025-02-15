@@ -24,11 +24,15 @@ public class ClientRepository : IClientRepository
         _logger.LogInformation("Клиент добавлен!");
     }
 
+    public async Task<Client> GetClientById(Guid id, CancellationToken token)
+    {
+        var client = await _context.Clients.FindAsync(id, token);
+        return client;
+    }
+
     public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
     {
-        var query = _context.Clients.AsNoTracking()
-            .Include(t => t.Trainer)
-            .AsQueryable();
+        var query = _context.Clients.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(firstName))
             query = query.Where(f => f.FirstName.ToLower().Contains(firstName.ToLower()));
@@ -36,14 +40,15 @@ public class ClientRepository : IClientRepository
         if (!string.IsNullOrWhiteSpace(lastName))
             query = query.Where(query => query.LastName.ToLower().Contains(lastName.ToLower()));
 
-        return await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+        return await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken) ?? [];
     }
 
     public async Task<Client> GetClientByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("проверяем есть ли в БД клиент с таким номером");
+        _logger.LogDebug("проверяем есть ли в БД клиент с таким номером");
         var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(n => n.Phone == phoneNumber);
-        _logger.LogInformation("вот что в бд по этому клиенту {0}", client);
+
+        _logger.LogDebug("вот что в бд по этому клиенту {0}", client);
         return client;
     }
 

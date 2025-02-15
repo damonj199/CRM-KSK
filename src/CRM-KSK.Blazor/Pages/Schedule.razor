@@ -3,6 +3,8 @@
 @inject ClientServiceBlazor _clientService
 @inject TrainerServiceBlazor _trainerService
 @inject ScheduleServiceBlazor _scheduleService
+@inject TrainingServiceBlazor _trainingService
+@inject TrainerStateService TrainerState
 @inject NavigationManager Navigation
 
 <h3>Расписание тренировок</h3>
@@ -28,11 +30,18 @@
                     {
                         <td class="schedule-cell @(string.IsNullOrWhiteSpace(GetCellContent(day, time)) ? "empty-cell" : "")"
                         @onclick="() => OpenModal(day, time)">
-                            @if(ScheduleData.TryGetValue((day, time), out var contents))
+                            @if(ScheduleData.TryGetValue((day, time), out var trainings))
                             {
-                                @foreach(var content in contents)
+                                @foreach(var training in trainings)
                                 {
-                                    <div>@content</div>
+                                    <div>
+                                        @($"{training.TrainerName.LastName} {training.TrainerName.FirstName}") - 
+                                        @foreach(var client in training.ClientsName)
+                                        {
+                                            @($"{client.LastName} {client.FirstName} ")
+                                        }
+                                        @($"({training.TypeTrainings.GetDisplayName()})")
+                                    </div> 
                                 }
                             }
                         </td>
@@ -95,16 +104,18 @@
             {
                 @foreach (var training in SelectedTrainings)
                 {
-                    <div class="training-item">
-                        <span>@training</span>
+                    <div class="list-group-item">
+                        @($"{training.TrainerName.LastName} {training.TrainerName.FirstName} ") -
+                        @foreach(var client in training.ClientsName)
+                        {
+                            <a href="/client-detail" class="link-detail">
+                                @($"{client.LastName} {client.FirstName} ")
+                            </a>
+                        }
+                        @($"({training.TypeTrainings.GetDisplayName()})")
                     </div>
                 }
             }
-            else
-            {
-                <p>Нет тренировок</p>
-            }
-
             <button class="btn btn-dark" @onclick="OpenAddTrainingModal">Добавить тренировку</button>
             <button class="btn btn-secondary mt-1" @onclick="CloseModal">Закрыть</button>
         </div>
@@ -199,7 +210,7 @@
 @code {
     private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "22:00");
     private List<string> DaysOfWeekWithDates = new();
-    private Dictionary<(string Day, string Time), List<string>> ScheduleData = [];
+    private Dictionary<(string Day, string Time), List<TrainingDto>> ScheduleData = new();
 
     private List<TrainerDto> Trainers = [];
     private IReadOnlyList<ClientDto> Clients = [];
@@ -212,7 +223,7 @@
 
     private string SelectedDay = string.Empty;
     private string SelectedTime = string.Empty;
-    private List<string> SelectedTrainings = [];
+    private List<TrainingDto> SelectedTrainings = [];
 
     private bool ShowTrainingsModal = false;
     private bool IsModalOpen = false;
@@ -223,6 +234,13 @@
         await LoadDataFromApi();
         await LoadScheduleFromApi();
         EnsureScheduleDataInitialized();
+    }
+
+    private async Task ShowTrainerDetails(Guid id)
+    {
+        TrainerDto trainer = await _trainerService.GetTrainerBuId(id);
+        TrainerState.SelectedTrainer = trainer;
+        Navigation.NavigateTo("/trainer-details");
     }
 
     private void ShowHistory()
@@ -253,22 +271,25 @@
 
     private void LoadUI()
     {
+        ScheduleData.Clear();
+
         foreach (var schedule in Schedules)
         {
             var dayKey = schedule.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU"));
             var timeKey = schedule.Time.ToString(@"hh\:mm");
 
-            var trainerFullName = $"{schedule.Trainer.LastName} {schedule.Trainer.FirstName}";
-            var clientFullName = string.Join(", ", schedule.Clients.Select(c => $"{c.LastName} {c.FirstName}"));
-
-            var trainingInfo = $"{trainerFullName} - {clientFullName} ({schedule.TypeTrainings.GetDisplayName()})";
-
-            if(!ScheduleData.ContainsKey((dayKey, timeKey)))
+            if(schedule.Trainings != null && schedule.Trainings.Any())
             {
-                ScheduleData[(dayKey, timeKey)] = [];
-            }
+                if(!ScheduleData.ContainsKey((dayKey, timeKey)))
+                {
+                    ScheduleData[(dayKey, timeKey)] = new List<TrainingDto>();
+                }
 
-            ScheduleData[(dayKey, timeKey)].Add(trainingInfo);
+                foreach (var training in schedule.Trainings)
+                {
+                    ScheduleData[(dayKey, timeKey)].Add(training);
+                }
+            }
         }
     }
 
@@ -308,7 +329,7 @@
 
         if (ScheduleData.TryGetValue((day, time), out var trainings) && trainings?.Any() == true)
         {
-            SelectedTrainings = new List<string>(trainings);
+            SelectedTrainings = trainings.ToList();
             ShowTrainingsModal = true;
         }
         else
@@ -335,32 +356,46 @@
     {
         if (SelectedTrainerId != null && SelectedClientId.Length > 0)
         {
+            var Date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU"));
+            var Time = TimeSpan.Parse(SelectedTime);
+
+            var scheduleEntity = Schedules.FirstOrDefault(s => s.Date == Date && s.Time == Time);
+            if (scheduleEntity == null)
+            {
+                scheduleEntity = new ScheduleDto
+                    {
+                        Id = Guid.NewGuid(),
+                        Date = Date,
+                        Time = Time
+                    };
+            }
+            await _scheduleService.AddOrUpdateSchedule(scheduleEntity);
+
             var trainerDto = Trainers.FirstOrDefault(t => t.Id == SelectedTrainerId.Value);
 
             var selectedClientGuid = SelectedClientId.Select(id => Guid.Parse(id)).ToList();
             var clientDtos = Clients.Where(c => selectedClientGuid.Contains(c.Id)).ToList();
 
-            var training = new ScheduleDto
+            var training = new TrainingDto
                 {
                     Id = Guid.NewGuid(),
-                    Date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU")),
-                    Time = TimeSpan.Parse(SelectedTime),
-                    Trainer = new ScheduleMemberDto
+                    TypeTrainings = SelectedTrainingType,
+                    TrainerName = new ScheduleMemberDto
                     {
                         Id = trainerDto.Id,
                         FirstName = trainerDto.FirstName,
                         LastName = trainerDto.LastName
                     },
-                    Clients = clientDtos.Select(c => new ScheduleMemberDto
+                    ClientsName = clientDtos.Select(c => new ScheduleMemberDto
                     {
                         Id = c.Id,
                         FirstName = c.FirstName,
                         LastName = c.LastName
                     }).ToList(),
-                    TypeTrainings = SelectedTrainingType
+                    Schedule = scheduleEntity                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
                 };
 
-            await _scheduleService.AddOrUpdateSchedule(training);
+            await _trainingService.AddTrainingAsync(training);
             await LoadScheduleFromApi();
             EnsureScheduleDataInitialized();
         }
@@ -371,7 +406,8 @@
     private string GetCellContent(string day, string time)
     {
         return ScheduleData.TryGetValue((day, time), out var content)
-        ? string.Join("<br>", content) : " ";
+            ? string.Join("<br>", content) 
+            : " ";
     }
 
     private async Task DeleteTraining(Guid id)
@@ -379,15 +415,9 @@
         if (id == Guid.Empty)
             return;
 
-        var trainingToRemove = Schedules.FirstOrDefault(t => t.Id == id);
-
-        if(trainingToRemove != null)
-        {
-            Schedules = Schedules.Where(t => t.Id != id).ToList();
-            UpdateScheduleData();
-        }
         await _scheduleService.DeleteTrainingAsync(id);
         await LoadDataFromApi();
+        await LoadScheduleFromApi();
         EnsureScheduleDataInitialized();
 
         CloseModal();
