@@ -4,8 +4,8 @@
 @inject TrainerServiceBlazor _trainerService
 @inject ScheduleServiceBlazor _scheduleService
 @inject TrainingServiceBlazor _trainingService
-@inject TrainerStateService TrainerState
-@inject NavigationManager Navigation
+@inject ClientStateService _clientState
+@inject NavigationManager _navigation
 
 <h3>Расписание тренировок</h3>
 <a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
@@ -34,7 +34,7 @@
                             {
                                 @foreach(var training in trainings)
                                 {
-                                    <div>
+                                    <div style="background-color:@training.TrainerName.Color; padding: 3px; margin:2px; border-radius:4px;">
                                         @($"{training.TrainerName.LastName} {training.TrainerName.FirstName}") - 
                                         @foreach(var client in training.ClientsName)
                                         {
@@ -54,8 +54,8 @@
 
 @if (IsModalOpen)
 {
-    <div class="modal">
-        <div class="modal-content">
+    <div class="modals" @onclick="HandleOverlayClick" style="@(IsModalOpen ? "display:flex;" : "display:none;")">
+        <div class="modal-content" @onclick:stopPropagation="true">
             <h4>Добавить тренировку</h4>
 
             <label>Тренер:</label>
@@ -76,6 +76,7 @@
                     <option value="@client.Id">@client.FirstName @client.LastName</option>
                 }
             </select>
+
             <label>Тип тренировки:</label>
             <select @bind="SelectedTrainingType">
                 @foreach (var type in Enum.GetValues(typeof(TypeTrainings)))
@@ -83,12 +84,10 @@
                     <option value="@type">@((type as Enum).GetDisplayName())</option>
                 }
             </select>
+
             <div class="from-actions mt-2">
                 <button class="btn btn-primary" @onclick="SaveTraining">Сохранить</button>
                 <button @onclick="CloseModal">Отмена</button>
-            </div>
-            <div class="from-actions">
-                <button class="btn btn-danger mt-2" @onclick="() => DeleteTraining(SelectedTrainingId.Value)">Отменить тренировку</button>
             </div>
         </div>
     </div>
@@ -96,8 +95,8 @@
 
 @if (ShowTrainingsModal)
 {
-    <div class="modal">
-        <div class="modal-content">
+    <div class="modals" @onclick="HandleOverlayClick" style="@(ShowTrainingsModal ? "display:flex;" : "display:none;")">
+        <div class="modal-contents" @onclick:stopPropagation="true">
             <h3>Тренировки на @SelectedDay в @SelectedTime</h3>
 
             @if (SelectedTrainings.Count > 0)
@@ -108,11 +107,12 @@
                         @($"{training.TrainerName.LastName} {training.TrainerName.FirstName} ") -
                         @foreach(var client in training.ClientsName)
                         {
-                            <a href="/client-detail" class="link-detail">
+                            <a href="/client-details" class="link-detail" @onclick:preventDefault="true" @onclick="() => ShowClientDetails(client.Id)">
                                 @($"{client.LastName} {client.FirstName} ")
                             </a>
                         }
                         @($"({training.TypeTrainings.GetDisplayName()})")
+                        <button class="btn-delete" @onclick="() => DeleteTraining(training.Id)">❌</button>
                     </div>
                 }
             }
@@ -125,6 +125,7 @@
 <style>
     .table-container {
     width: 100vw;
+    position: relative;
     overflow-x: auto;
     }
 
@@ -135,7 +136,7 @@
     }
 
     .schedule-table th, .schedule-table td {
-
+    border: 1px solid #ccc;
     min-width: 60px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -156,7 +157,7 @@
     background-color: #eef;
     }
 
-    .modal {
+    .modals {
     position: fixed;
     top: 0;
     left: 0;
@@ -168,12 +169,13 @@
     align-items: center;
     }
 
-    .modal-content {
-    background: white;
+    .modal-contents {
+    background: #fff;
     padding: 20px;
     border-radius: 8px;
-    text-align: center;
-    min-width: 300px;
+    width: auto;
+    max-width: 90%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
 
     .training-item {
@@ -208,6 +210,8 @@
 </style>
 
 @code {
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+
     private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "22:00");
     private List<string> DaysOfWeekWithDates = new();
     private Dictionary<(string Day, string Time), List<TrainingDto>> ScheduleData = new();
@@ -236,16 +240,21 @@
         EnsureScheduleDataInitialized();
     }
 
-    private async Task ShowTrainerDetails(Guid id)
+    private async Task HandleOverlayClick()
     {
-        TrainerDto trainer = await _trainerService.GetTrainerBuId(id);
-        TrainerState.SelectedTrainer = trainer;
-        Navigation.NavigateTo("/trainer-details");
+        await CloseModal();
+    }
+
+    private async Task ShowClientDetails(Guid id)
+    {
+        var client = await _clientService.GetClientById(id);
+        _clientState.SelectedClient = client;
+        _navigation.NavigateTo("/client-details");
     }
 
     private void ShowHistory()
     {
-        Navigation.NavigateTo("/history");
+        _navigation.NavigateTo("/history");
     }
 
     private void GenerateDaysOfWeekWithDates()
@@ -344,12 +353,14 @@
         IsModalOpen = true;
     }
 
-    private void CloseModal()
+    private async Task CloseModal()
     {
         IsModalOpen = false;
         ShowTrainingsModal = false;
         SelectedTrainerId = null;
         SelectedClientId = [];
+        await IsVisibleChanged.InvokeAsync(IsModalOpen);
+        await IsVisibleChanged.InvokeAsync(ShowTrainingsModal);
     }
 
     private async Task SaveTraining()
@@ -415,7 +426,7 @@
         if (id == Guid.Empty)
             return;
 
-        await _scheduleService.DeleteTrainingAsync(id);
+        await _trainingService.DeleteTrainingAsync(id);
         await LoadDataFromApi();
         await LoadScheduleFromApi();
         EnsureScheduleDataInitialized();

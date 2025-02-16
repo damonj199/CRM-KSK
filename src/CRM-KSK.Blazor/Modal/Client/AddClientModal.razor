@@ -5,7 +5,7 @@
     <EditForm Model="client" OnValidSubmit="AddClient">
         <DataAnnotationsValidator />
 
-        <div class="modal-overlay" @onclick="HandleOverlayClick" style="@(IsVisible ? "display:flex;" : "display:none;")">
+        <div class="modal-overlay" @onclick="CloseModal" style="@(IsVisible ? "display:flex;" : "display:none;")">
             <div class="modal-content" @onclick:stopPropagation="true">
                 <h3>Добавить клиента</h3>
 

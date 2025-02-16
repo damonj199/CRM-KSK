@@ -59,4 +59,11 @@ public class TrainersController : ControllerBase
 
         return NotFound();
     }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateTrainerInfo([FromBody] TrainerDto trainerDto, CancellationToken token)
+    {
+        await _trainerService.UpdateTrainerInfoAsync(trainerDto, token);
+        return Ok();
+    }
 }
