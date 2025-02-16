@@ -64,4 +64,10 @@ public class TrainerService : ITrainerService
         return trainerDto;
     }
 
+    public async Task UpdateTrainerInfoAsync(TrainerDto trainerDto, CancellationToken token)
+    {
+        var trainer = _mapper.Map<Trainer>(trainerDto);
+        await _trainerRepository.UpdateTrainerInfoAsync(trainer, token);
+    }
+
 }

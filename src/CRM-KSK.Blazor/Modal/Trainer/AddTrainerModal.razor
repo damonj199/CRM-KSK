@@ -29,6 +29,11 @@
                     <label for="dob">Дата рождения:</label>
                     <InputDate id="dob" name="dob" @bind-Value="trainer.DateOfBirth" class="form-control" />
                 </div>
+                <div class="form-group">
+                    <label for="color">Цвет:</label>
+                    <InputText type="color" id="color" name="color" @bind-Value="trainer.Color" class="form-control" />
+                </div>
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Сохранить</button>
                     <button type="button" class="btn btn-secondary" @onclick="CloseModal">Отмена</button>

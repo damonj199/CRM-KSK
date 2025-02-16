@@ -9,4 +9,5 @@ public interface ITrainerRepository
     Task<Trainer> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken);
     Task DeleteTraner(Trainer trainer, CancellationToken cancellationToken);
     Task<Trainer> GetTrainerByIdAsync(Guid id, CancellationToken token);
+    Task UpdateTrainerInfoAsync(Trainer trainer, CancellationToken token);
 }
