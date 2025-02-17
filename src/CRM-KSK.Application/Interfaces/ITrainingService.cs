@@ -4,6 +4,6 @@ namespace CRM_KSK.Application.Interfaces;
 
 public interface ITrainingService
 {
-    Task AddTrainingAsync(TrainingDto trainingDto, CancellationToken token);
+    Task AddTrainingAsync(ScheduleFullDto scheduleFull, CancellationToken token);
     Task DeleteTrainingAsync(Guid id, CancellationToken token);
 }

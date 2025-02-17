@@ -380,16 +380,19 @@
                         Time = Time
                     };
             }
-            await _scheduleService.AddOrUpdateSchedule(scheduleEntity);
 
             var trainerDto = Trainers.FirstOrDefault(t => t.Id == SelectedTrainerId.Value);
 
             var selectedClientGuid = SelectedClientId.Select(id => Guid.Parse(id)).ToList();
             var clientDtos = Clients.Where(c => selectedClientGuid.Contains(c.Id)).ToList();
 
-            var training = new TrainingDto
+            var scheduleFull = new ScheduleFullDto
                 {
-                    Id = Guid.NewGuid(),
+
+                    ScheduleId = scheduleEntity.Id,
+                    Date = scheduleEntity.Date,
+                    Time = scheduleEntity.Time,
+                    TrainingId = Guid.NewGuid(),
                     TypeTrainings = SelectedTrainingType,
                     TrainerName = new ScheduleMemberDto
                     {
@@ -403,10 +406,9 @@
                         FirstName = c.FirstName,
                         LastName = c.LastName
                     }).ToList(),
-                    Schedule = scheduleEntity                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
                 };
 
-            await _trainingService.AddTrainingAsync(training);
+            await _trainingService.AddTrainingAsync(scheduleFull);
             await LoadScheduleFromApi();
             EnsureScheduleDataInitialized();
         }

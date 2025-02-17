@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
-using CRM_KSK.Core.Entities;
 
 namespace CRM_KSK.Application.Services;
 
@@ -36,15 +35,9 @@ public class ScheduleService : IScheduleService
         return scheduleDtos ?? [];
     }
 
-    public async Task AddOrUpdateSchedule(ScheduleDto scheduleDto, CancellationToken cancellationToken)
-    {
-        var schedule = _mapper.Map<Schedule>(scheduleDto);
-        await _scheduleRepository.AddOrUpdateSchedule(schedule, cancellationToken);
-    }
-
     public async Task DeleteSchedule(Guid id, CancellationToken cancellationToken)
     {
-        if(id != Guid.Empty)
+        if (id != Guid.Empty)
         {
             await _scheduleRepository.DeleteSchedule(id, cancellationToken);
         }

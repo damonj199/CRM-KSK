@@ -16,9 +16,9 @@ public class TrainingsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddTrainingAsync([FromBody] TrainingDto trainingDto, CancellationToken token)
+    public async Task<IActionResult> AddTrainingAsync([FromBody] ScheduleFullDto scheduleFull, CancellationToken token)
     {
-        await _trainingService.AddTrainingAsync(trainingDto, token);
+        await _trainingService.AddTrainingAsync(scheduleFull, token);
         return Ok();
     }
 
