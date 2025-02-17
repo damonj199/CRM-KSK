@@ -10,4 +10,5 @@ public interface IClientRepository
     Task<Client> GetClientById(Guid id, CancellationToken token);
     Task<Client> GetClientByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken);
     Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10);
+    Task UpdateClientInfoAsync(Client client, CancellationToken token);
 }

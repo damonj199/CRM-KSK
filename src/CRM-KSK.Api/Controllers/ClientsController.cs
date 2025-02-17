@@ -61,4 +61,11 @@ public class ClientsController : ControllerBase
 
         return NotFound("Клиент не найден");
     }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateClientInfo([FromBody] ClientDto clientDto, CancellationToken token)
+    {
+        await _clientService.UpdateClientInfo(clientDto, token);
+        return Ok();
+    }
 }
