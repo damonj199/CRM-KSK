@@ -173,16 +173,53 @@ a, .btn-link {
             transition: stroke-dasharray 0.05s ease-in-out;
         }
 
-.loading-progress-text {
-    position: absolute;
-    text-align: center;
-    font-weight: bold;
-    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+        .loading-progress-text {
+            position: absolute;
+            text-align: center;
+            font-weight: bold;
+            inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+        }
+
+        .loading-progress-text:after {
+            content: var(--blazor-load-percentage-text, "Loading");
+        }
+
+.color-box {
+    display: inline-block;
+    width: 100px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-left: 8px;
+    vertical-align: middle;
 }
 
-    .loading-progress-text:after {
-        content: var(--blazor-load-percentage-text, "Loading");
+.component-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+}
+
+    .component-details label {
+        font-weight: bold;
     }
+
+    .component-details input {
+        padding: 5px;
+    }
+
+    .component-details button {
+        padding: 8px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+        .component-details button:hover {
+            background-color: #0056b3;
+        }
 
 code {
     color: #c02d76;
