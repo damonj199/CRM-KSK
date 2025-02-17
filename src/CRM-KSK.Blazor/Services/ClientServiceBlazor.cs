@@ -63,5 +63,11 @@ public class ClientServiceBlazor
         var response = await _httpClient.GetFromJsonAsync<ClientDto>($"api/Clients/{id}");
         return response;
     }
+
+    public async Task<bool> UpdateClientInfo(ClientDto clientDto)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/Clients", clientDto);
+        return response.IsSuccessStatusCode;
+    }
 }
 

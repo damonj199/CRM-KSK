@@ -62,6 +62,12 @@ public class ClientService : IClientService
         await _clientRepository.DeleteClientAsync(client, cancellationToken);
     }
 
+    public async Task UpdateClientInfo(ClientDto  clientDto, CancellationToken token)
+    {
+        var client = _mapper.Map<Client>(clientDto);
+        await _clientRepository.UpdateClientInfoAsync(client, token);
+    }
+
     public (string firstName, string? lastName) SplitFullName(string fullName)
     {
         var parts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
