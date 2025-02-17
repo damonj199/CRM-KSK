@@ -14,7 +14,7 @@ public class TrainingRepository : ITrainingRepository
 
     public async Task AddTainingAsync(Training training, CancellationToken token)
     {
-        var schedule = await _context.Schedules.FindAsync(training.Schedule.Id);
+        var schedule = await _context.Schedules.FindAsync(training.ScheduleId);
         training.Schedule = schedule;
 
         var trainer = await _context.Trainers.FindAsync(training.Trainer.Id);

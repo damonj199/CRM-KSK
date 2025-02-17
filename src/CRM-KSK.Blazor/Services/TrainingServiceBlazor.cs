@@ -12,9 +12,9 @@ public class TrainingServiceBlazor
         _httpClient = httpClient;
     }
 
-    public async Task<bool> AddTrainingAsync(TrainingDto trainingDto)
+    public async Task<bool> AddTrainingAsync(ScheduleFullDto scheduleFull)
     {
-        var response = await _httpClient.PostAsJsonAsync("api/Trainings", trainingDto);
+        var response = await _httpClient.PostAsJsonAsync("api/Trainings", scheduleFull);
         return response.IsSuccessStatusCode;
     }
 
