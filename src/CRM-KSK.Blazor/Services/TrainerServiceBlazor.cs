@@ -70,4 +70,10 @@ public class TrainerServiceBlazor
         var response = await _httpClient.GetFromJsonAsync<TrainerDto>($"api/Trainers/{id}");
         return response;
     }
+
+    public async Task<bool> UpdateTrainerInfo(TrainerDto trainerDto)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/Trainers", trainerDto);
+        return response.IsSuccessStatusCode;
+    }
 }

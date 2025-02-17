@@ -1,22 +1,50 @@
 ﻿@page "/client-details"
-@inject ClientStateService ClientState
-@inject NavigationManager Navigation
-@inject TrainerStateService TrainerState
+@inject ClientStateService _clientState
+@inject NavigationManager _navigation
+@inject ClientServiceBlazor _clientService
 
 <h3>Подробная информация о клиенте</h3>
 
-@if (ClientState.SelectedClient != null)
+@if (_clientState.SelectedClient != null)
 {
-    var client = ClientState.SelectedClient;
+    var client = _clientState.SelectedClient;
 
-    <div class="card p-3">
-        <p><strong>Имя:</strong> @client.FirstName</p>
-        <p><strong>Фамилия:</strong> @client.LastName</p>
-        <p><strong>Телефон:</strong> +7 @client.Phone</p>
-        <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
-        <h5>Данные о родителях</h5>
-        <p><strong>Родитель:</strong> @client.ParentName</p>
-        <p><strong>Телефон родителя:</strong>+7 @client.ParentPhone</p>
+    <div class="component-details">
+        @if (IsEditing)
+        {
+            <label>Имя:</label>
+            <input type="text" @bind="client.FirstName" />
+
+            <label>Фамилия:</label>
+            <input type="text" @bind="client.LastName" />
+
+            <label>Телефон:</label>
+            <input type="text" @bind="client.Phone" />
+
+            <label>Дата рождения:</label>
+            <input type="date" @bind="client.DateOfBirth" />
+
+            <label>Родитель:</label>
+            <input type="text" @bind="client.ParentName" />
+
+            <label>Телофон родителя:</label>
+            <input type="text" @bind="client.ParentName" />
+
+            <button class="btn btn-success mt-3" @onclick="SaveChanges">Сохранить</button>
+            <button class="btn btn-secondary mt-3" @onclick="CancelEdit">Отмена</button>
+        }
+        else
+        {
+            <p><strong>Имя:</strong> @client.FirstName</p>
+            <p><strong>Фамилия:</strong> @client.LastName</p>
+            <p><strong>Телефон:</strong> +7 @client.Phone</p>
+            <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
+            <h5>Данные о родителях</h5>
+            <p><strong>Родитель:</strong> @client.ParentName</p>
+            <p><strong>Телефон родителя:</strong>+7 @client.ParentPhone</p>
+
+            <button class="btn btn-primary mt-3" @onclick="EditTrainer">Изменить</button>
+        }
     </div>
 }
 else
@@ -27,8 +55,56 @@ else
 
 @code {
 
+    private bool IsEditing = false;
+    private ClientDto? OriginalClientCopy;
+
+    private void EditTrainer()
+    {
+        IsEditing = true;
+        OriginalClientCopy = new ClientDto
+            {
+                FirstName = _clientState.SelectedClient.FirstName,
+                LastName = _clientState.SelectedClient.LastName,
+                Phone = _clientState.SelectedClient.Phone,
+                DateOfBirth = _clientState.SelectedClient.DateOfBirth,
+                ParentName = _clientState.SelectedClient.ParentName,
+                ParentPhone = _clientState.SelectedClient.ParentPhone
+            };
+    }
+
+    private async Task SaveChanges()
+    {
+        if (_clientState.SelectedClient != null)
+        {
+            var success = await _clientService.UpdateClientInfo(_clientState.SelectedClient);
+            if (success)
+            {
+                IsEditing = false;
+                Console.WriteLine("Изменения сохранены.");
+            }
+            else
+            {
+                Console.WriteLine("Ошибка при сохранении.");
+            }
+        }
+    }
+
+    private void CancelEdit()
+    {
+        if (OriginalClientCopy != null)
+        {
+            _clientState.SelectedClient.FirstName = OriginalClientCopy.FirstName;
+            _clientState.SelectedClient.LastName = OriginalClientCopy.LastName;
+            _clientState.SelectedClient.Phone = OriginalClientCopy.Phone;
+            _clientState.SelectedClient.DateOfBirth = OriginalClientCopy.DateOfBirth;
+            _clientState.SelectedClient.ParentName = OriginalClientCopy.ParentName;
+            _clientState.SelectedClient.ParentPhone = OriginalClientCopy.ParentPhone;
+        }
+        IsEditing = false;
+    }
+
     private void GoBack()
     {
-        Navigation.NavigateTo("/clients");
+        _navigation.NavigateTo("/clients");
     }
 }

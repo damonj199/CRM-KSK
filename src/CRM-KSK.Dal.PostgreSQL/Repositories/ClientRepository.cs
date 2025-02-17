@@ -64,4 +64,21 @@ public class ClientRepository : IClientRepository
         _logger.LogDebug("Провряем что у нас там в БД, {0}", clientExist);
         return clientExist;
     }
+
+    public async Task UpdateClientInfoAsync(Client client, CancellationToken token)
+    {
+        var existingClient = await _context.Clients.FindAsync(client.Id);
+        if(existingClient != null)
+        {
+            existingClient.FirstName = client.FirstName;
+            existingClient.LastName = client.LastName;
+            existingClient.Phone = client.Phone;
+            existingClient.DateOfBirth = client.DateOfBirth;
+            existingClient.ParentName = client.ParentName;
+            existingClient.ParentPhone = client.ParentPhone;
+
+            _context.Clients.Update(existingClient);
+        }
+        await _context.SaveChangesAsync(token);
+    }
 }
