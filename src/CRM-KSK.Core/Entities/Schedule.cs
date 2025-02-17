@@ -6,5 +6,5 @@ public class Schedule
     public DateOnly Date { get; set; }
     public TimeSpan Time { get; set; }
 
-    public ICollection<Training> Trainings { get; set; } = [];
+    public List<Training> Trainings { get; set; } = [];
 }

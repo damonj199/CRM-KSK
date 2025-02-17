@@ -2,11 +2,14 @@
 
 namespace CRM_KSK.Application.Dtos;
 
-public class TrainingDto
+public class ScheduleFullDto
 {
-    public Guid Id { get; set; }
+    public Guid ScheduleId { get; set; }
+    public DateOnly Date { get; set; }
+    public TimeSpan Time { get; set; }
+
+    public Guid TrainingId { get; set; }
     public TypeTrainings TypeTrainings { get; set; } = TypeTrainings.Unknown;
-    public ScheduleDto Schedule { get; set; } = default!;
     public ScheduleMemberDto TrainerName { get; set; } = default!;
     public List<ScheduleMemberDto> ClientsName { get; set; } = [];
 }
