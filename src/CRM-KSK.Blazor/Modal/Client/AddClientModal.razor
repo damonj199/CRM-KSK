@@ -5,7 +5,7 @@
     <EditForm Model="client" OnValidSubmit="AddClient">
         <DataAnnotationsValidator />
 
-        <div class="modal-overlay" @onclick="HandleOverlayClick" style="@(IsVisible ? "display:flex;" : "display:none;")">
+        <div class="modal-overlay" @onclick="CloseModal" style="@(IsVisible ? "display:flex;" : "display:none;")">
             <div class="modal-content" @onclick:stopPropagation="true">
                 <h3>Добавить клиента</h3>
 
@@ -24,19 +24,6 @@
                 <div class="form-group">
                     <label for="dob">Дата рождения:</label>
                     <InputDate id="dob" name="dob" @bind-Value="client.DateOfBirth" class="form-control" />
-                </div>
-                <div class="form-group">
-                    <label for="level">Уровень тренировок:</label>
-                    <InputSelect id="level" name="level" @bind-Value="client.LevelOfTraining" class="form-control">
-                        @foreach (LevelOfTraining level in Enum.GetValues(typeof(LevelOfTraining)))
-                        {
-                            <option value="@level">@level</option>
-                        }
-                    </InputSelect>
-                </div>
-                <div class="form-group">
-                    <label for="trainer">Тренер:</label>
-                    <InputText id="trainer" name="trainer" @bind-Value="client.Trainer.FirstName" class="form-control" />
                 </div>
                 <h4>Данные о родителях</h4>
                 <div class="form-group">
@@ -83,6 +70,8 @@
     private async Task CloseModal()
     {
         IsVisible = false;
+        client = new();
+        message = string.Empty;
         await IsVisibleChanged.InvokeAsync(IsVisible);
         StateHasChanged();
     }

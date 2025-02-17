@@ -1,6 +1,9 @@
 using CRM_KSK.Api.Configurations;
+using CRM_KSK.Dal.PostgreSQL;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +49,14 @@ app.UseCookiePolicy(new CookiePolicyOptions
     HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
     Secure = CookieSecurePolicy.Always
 });
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var dbContext = services.GetRequiredService<CRM_KSKDbContext>();
+
+    dbContext.Database.Migrate();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

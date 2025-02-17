@@ -22,10 +22,17 @@ public class SchedulesController : ControllerBase
         return Ok(schedules);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> AddOrUpdateScheduleAsync([FromBody] ScheduleDto scheduleDto, CancellationToken cancellationToken)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteSchedule(Guid id, CancellationToken cancellationToken)
     {
-        await _scheduleService.AddOrUpdateSchedule(scheduleDto, cancellationToken);
+        await _scheduleService.DeleteSchedule(id, cancellationToken);
         return Ok();
+    }
+
+    [HttpGet("history")]
+    public async Task<IActionResult> GetScheduleHistory([FromQuery] DateOnly start, [FromQuery] DateOnly end, CancellationToken cancellationToken)
+    {
+        var history = await _scheduleService.GetScheduleHistory(start, end, cancellationToken);
+        return Ok(history);
     }
 }

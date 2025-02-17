@@ -1,0 +1,95 @@
+﻿@page "/history"
+@inject ScheduleServiceBlazor _scheduleService
+
+<h3>История тренировок</h3>
+
+<div class="filters">
+    <label>Начальная дата:</label>
+    <input type="date" @bind="StartDate" />
+
+    <label>Конечная дата:</label>
+    <input type="date" @bind="EndDate" />
+
+    <button @onclick="LoadScheduleHistory">Показать</button>
+</div>
+
+<table class="history-table">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Время</th>
+            <th>Тренер</th>
+            <th>Клиенты</th>
+            <th>Тип тренировки</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (HistorySchedules.Any())
+        {
+            @foreach (var schedule in HistorySchedules)
+            {
+                @foreach (var training in schedule.Trainings)
+                {
+                    <tr>
+                        <td>@schedule.Date.ToString("dd.MM.yyyy")</td>
+                        <td>@schedule.Time.ToString(@"hh\:mm")</td>
+                        <td style="background-color:@training.TrainerName.Color; padding: 3px; margin:2px; border-radius:2px;">
+                            @training.TrainerName.FirstName @training.TrainerName.LastName
+                        </td>
+                        <td>
+                            @foreach (var client in training.ClientsName)
+                            {
+                                <span>@client.FirstName @client.LastName</span><br />
+                            }
+                        </td>
+                        <td>@training.TypeTrainings.GetDisplayName()</td>
+                    </tr>
+                }
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5">Нет данных за этот период</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .filters {
+    margin-bottom: 15px;
+    }
+
+    .history-table {
+    min-width: 70%;
+    border-collapse: collapse;
+    text-align: left;
+    }
+
+    .history-table th, .history-table td {
+    border: 1px solid #ccc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 5px;
+    white-space: nowrap;
+    }
+
+    .history-table th {
+    background-color: #f4f4f4;
+    }
+</style>
+
+@code {
+    private DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(-7));
+    private DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    private IReadOnlyList<ScheduleDto> HistorySchedules = [];
+
+    private async Task LoadScheduleHistory()
+    {
+        if (EndDate < StartDate)
+            return;
+
+        HistorySchedules = await _scheduleService.GetScheduleHistory(StartDate, EndDate) ?? [];
+    }
+}

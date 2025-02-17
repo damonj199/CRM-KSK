@@ -22,7 +22,6 @@ public class TrainerRepository : ITrainerRepository
     public async Task<IReadOnlyList<Trainer>> GetTrainersAsync(CancellationToken cancellationToken)
     {
         var trainits = await _context.Trainers.AsNoTracking().ToListAsync();
-
         return trainits;
     }
 
@@ -43,5 +42,28 @@ public class TrainerRepository : ITrainerRepository
     {
         _context.Trainers.Remove(trainer);
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Trainer> GetTrainerByIdAsync(Guid id, CancellationToken token)
+    {
+        var trainer = await _context.Trainers.FindAsync(id);
+        return trainer;
+    }
+
+    public async Task UpdateTrainerInfoAsync(Trainer trainer, CancellationToken token)
+    {
+        var existingTrainer = await _context.Trainers.FindAsync(trainer.Id);
+        if(existingTrainer != null)
+        {
+            existingTrainer.FirstName = trainer.FirstName;
+            existingTrainer.LastName = trainer.LastName;
+            existingTrainer.Surname = trainer.Surname;
+            existingTrainer.DateOfBirth = trainer.DateOfBirth;
+            existingTrainer.Phone = trainer.Phone;
+            existingTrainer.Color = trainer.Color;
+
+            _context.Trainers.Update(existingTrainer);
+        }
+        await _context.SaveChangesAsync(token);
     }
 }

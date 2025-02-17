@@ -17,8 +17,10 @@ public class ScheduleRepository : IScheduleRepository
     {
         var schedules = await _context.Schedules
             .Where(s => s.Date >= start && s.Date <= end)
-            .Include(t => t.Trainer)
-            .Include(c => c.Clients)
+            .Include(tr => tr.Trainings)
+                .ThenInclude(t => t.Trainer)
+            .Include(tr => tr.Trainings)
+                .ThenInclude(c => c.Clients)
             .ToListAsync(cancellationToken);
 
         return schedules;
@@ -26,7 +28,20 @@ public class ScheduleRepository : IScheduleRepository
 
     public async Task AddOrUpdateSchedule(Schedule schedule, CancellationToken cancellationToken)
     {
-        _context.Schedules.Add(schedule);
+        var existingSchedule = await _context.Schedules.FirstOrDefaultAsync(s => s.Id == schedule.Id);
+        if(existingSchedule == null)
+        {
+            _context.Schedules.Add(schedule);
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }        
+    }
+
+    public async Task DeleteSchedule(Guid id, CancellationToken cancellationToken)
+    {
+        var schedule = await _context.Schedules.FindAsync(id, cancellationToken);
+
+        _context.Schedules.Remove(schedule);
         await _context.SaveChangesAsync(cancellationToken);
     }
 }

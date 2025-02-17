@@ -50,7 +50,7 @@ public class TrainerServiceBlazor
 
         if (response.IsSuccessStatusCode)
         {
-            return "Тренер успешно добавлен!";
+            return $"Тренер {trainerDto.FirstName}, успешно добавлен!";
         }
         else
         {
@@ -63,5 +63,11 @@ public class TrainerServiceBlazor
     {
         var response = await _httpClient.DeleteAsync($"api/Trainers?firstName={firstName}&lastName={lastName}");
         return response.IsSuccessStatusCode;
+    }
+
+    public async Task<TrainerDto> GetTrainerBuId(Guid id)
+    {
+        var response = await _httpClient.GetFromJsonAsync<TrainerDto>($"api/Trainers/{id}");
+        return response;
     }
 }

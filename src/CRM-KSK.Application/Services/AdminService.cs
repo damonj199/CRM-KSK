@@ -38,17 +38,17 @@ public class AdminService : IAdminService
 
     public async Task<LoginResult> LoginAsync(LoginRequest login, CancellationToken cancellationToken)
     {
-        var user = _adminRepository.GetByEmail(login.Email);
+        var user = await _adminRepository.GetByEmail(login.Email);
 
         if (user == null)
             return LoginResult.Failure("Неверный логин или пароль! Попробуйте еще раз");
 
-        var result = _passwordHasher.Verify(login.Password, user.Result.PasswordHash);
+        var result = _passwordHasher.Verify(login.Password, user.PasswordHash);
         
         if(result == false)
             return LoginResult.Failure("Неверный логин или пароль! Попробуйте еще раз");
 
-        var token = _jwtProvider.GenerateToken(user.Result);
+        var token = _jwtProvider.GenerateToken(user);
 
         return LoginResult.Success(token);
     }
