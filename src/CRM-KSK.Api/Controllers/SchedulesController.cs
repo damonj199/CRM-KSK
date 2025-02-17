@@ -22,13 +22,6 @@ public class SchedulesController : ControllerBase
         return Ok(schedules);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> AddOrUpdateScheduleAsync([FromBody] ScheduleDto scheduleDto, CancellationToken cancellationToken)
-    {
-        await _scheduleService.AddOrUpdateSchedule(scheduleDto, cancellationToken);
-        return Ok();
-    }
-
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteSchedule(Guid id, CancellationToken cancellationToken)
     {

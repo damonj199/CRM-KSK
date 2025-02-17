@@ -10,5 +10,5 @@ public class Trainer
     public DateOnly DateOfBirth { get; set; }
     public string Color { get; set; } = "#FFFFFF";
 
-    public ICollection<Training> Trainings { get; set; } = [];
+    public List<Training> Trainings { get; set; } = [];
 }
