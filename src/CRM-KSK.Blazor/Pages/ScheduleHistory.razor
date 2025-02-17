@@ -4,8 +4,13 @@
 <h3>История тренировок</h3>
 
 <div class="filters">
-    <label>Выберите дату:</label>
-    <input type="date" @bind="SelectedDate" @bind:event="onchange" />
+    <label>Начальная дата:</label>
+    <input type="date" @bind="StartDate" />
+
+    <label>Конечная дата:</label>
+    <input type="date" @bind="EndDate" />
+
+    <button @onclick="LoadScheduleHistory">Показать</button>
 </div>
 
 <table class="history-table">
@@ -23,10 +28,23 @@
         {
             @foreach (var schedule in HistorySchedules)
             {
-                <tr>
-                    <td>@schedule.Date.ToString("dd.MM.yyyy")</td>
-                    <td>@schedule.Time.ToString(@"hh\:mm")</td>
-                </tr>
+                @foreach (var training in schedule.Trainings)
+                {
+                    <tr>
+                        <td>@schedule.Date.ToString("dd.MM.yyyy")</td>
+                        <td>@schedule.Time.ToString(@"hh\:mm")</td>
+                        <td style="background-color:@training.TrainerName.Color; padding: 3px; margin:2px; border-radius:2px;">
+                            @training.TrainerName.FirstName @training.TrainerName.LastName
+                        </td>
+                        <td>
+                            @foreach (var client in training.ClientsName)
+                            {
+                                <span>@client.FirstName @client.LastName</span><br />
+                            }
+                        </td>
+                        <td>@training.TypeTrainings.GetDisplayName()</td>
+                    </tr>
+                }
             }
         }
         else
@@ -44,14 +62,17 @@
     }
 
     .history-table {
-    width: 100%;
+    min-width: 70%;
     border-collapse: collapse;
     text-align: left;
     }
 
     .history-table th, .history-table td {
     border: 1px solid #ccc;
-    padding: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 5px;
+    white-space: nowrap;
     }
 
     .history-table th {
@@ -60,29 +81,15 @@
 </style>
 
 @code {
-    private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-7));
+    private DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(-7));
+    private DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     private IReadOnlyList<ScheduleDto> HistorySchedules = [];
-
-    private DateOnly SelectedDate
-    {
-        get => _selectedDate;
-        set
-        {
-            _selectedDate = value;
-            LoadScheduleHistory();
-        }
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadScheduleHistory();
-    }
 
     private async Task LoadScheduleHistory()
     {
-        var startDate = SelectedDate;
-        var endDate = SelectedDate.AddDays(6);
+        if (EndDate < StartDate)
+            return;
 
-        HistorySchedules = await _scheduleService.GetScheduleHistory(startDate, endDate) ?? [];
+        HistorySchedules = await _scheduleService.GetScheduleHistory(StartDate, EndDate) ?? [];
     }
 }
