@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
-using CRM_KSK.Core.Entities;
 
 namespace CRM_KSK.Application.Services;
 
@@ -27,9 +26,20 @@ public class ScheduleService : IScheduleService
         return scheduleDto ?? [];
     }
 
-    public async Task AddOrUpdateSchedule(ScheduleDto scheduleDto, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ScheduleDto>> GetScheduleHistory(DateOnly start, DateOnly end, CancellationToken cancellationToken)
     {
-        var schedule = _mapper.Map<Schedule>(scheduleDto);
-        await _scheduleRepository.AddOrUpdateSchedule(schedule, cancellationToken);
+        var schedulesHistory = await _scheduleRepository.GetWeeksSchedule(start, end, cancellationToken);
+        var sortedScheduleHistory = schedulesHistory.OrderBy(s => s.Date).ThenBy(s => s.Time).ToList();
+
+        var scheduleDtos = _mapper.Map<IReadOnlyList<ScheduleDto>>(sortedScheduleHistory);
+        return scheduleDtos ?? [];
+    }
+
+    public async Task DeleteSchedule(Guid id, CancellationToken cancellationToken)
+    {
+        if (id != Guid.Empty)
+        {
+            await _scheduleRepository.DeleteSchedule(id, cancellationToken);
+        }
     }
 }

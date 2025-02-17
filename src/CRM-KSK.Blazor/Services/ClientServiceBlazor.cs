@@ -43,7 +43,7 @@ public class ClientServiceBlazor
 
         if (response.IsSuccessStatusCode)
         {
-            return "Клиент успешно добавлен!";
+            return $"Клиент {clientDto.FirstName}, успешно добавлен!";
         }
         else
         {
@@ -56,6 +56,12 @@ public class ClientServiceBlazor
     {
         var response = await _httpClient.DeleteAsync($"api/Clients/{phoneNumber}");
         return response.IsSuccessStatusCode;
+    }
+
+    public async Task<ClientDto> GetClientById(Guid id)
+    {
+        var response = await _httpClient.GetFromJsonAsync<ClientDto>($"api/Clients/{id}");
+        return response;
     }
 }
 

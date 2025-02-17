@@ -17,8 +17,8 @@ public class TrainerDto
 
     public string Phone { get; set; }
 
-    public string? Specialization { get; set; }
-
     [Required]
     public DateOnly DateOfBirth { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    public string Color { get; set; } = default!;
 }

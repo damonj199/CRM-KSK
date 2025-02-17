@@ -18,19 +18,8 @@ public class TrainersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddTrainer([FromBody] TrainerDto trainer, CancellationToken cancellationToken)
     {
-        try
-        {
-            await _trainerService.AddTrainerAsync(trainer, cancellationToken);
-            return Ok(new { message = $"Тренер {trainer.FirstName}, успешно добавлен" });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.Message);
-        }
+        await _trainerService.AddTrainerAsync(trainer, cancellationToken);
+        return Ok(new { message = $"Тренер {trainer.FirstName}, успешно добавлен" });
     }
 
     [HttpGet]
@@ -55,16 +44,26 @@ public class TrainersController : ControllerBase
     }
 
     [HttpDelete]
-    public async Task<IActionResult> DeleteClientAsync([FromQuery] string firstName, string lastName, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteTrainerAsync([FromQuery] string firstName, string lastName, CancellationToken cancellationToken)
     {
-        try
-        {
-            await _trainerService.DeleteTrainer(firstName, lastName, cancellationToken);
-            return Ok(new { message = "Удалено" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        await _trainerService.DeleteTrainer(firstName, lastName, cancellationToken);
+        return Ok(new { message = "Удалено" });
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetTrainerByIdAsync(Guid id, CancellationToken token)
+    {
+        var trainerDto = await _trainerService.GetTrainerByIdAsync(id, token);
+        if(trainerDto != null)
+            return Ok(trainerDto);
+
+        return NotFound();
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateTrainerInfo([FromBody] TrainerDto trainerDto, CancellationToken token)
+    {
+        await _trainerService.UpdateTrainerInfoAsync(trainerDto, token);
+        return Ok();
     }
 }

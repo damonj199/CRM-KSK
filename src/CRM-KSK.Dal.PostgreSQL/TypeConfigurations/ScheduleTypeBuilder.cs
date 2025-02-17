@@ -9,12 +9,9 @@ internal sealed class ScheduleTypeBuilder : IEntityTypeConfiguration<Schedule>
     public void Configure(EntityTypeBuilder<Schedule> builder)
     {
         builder
-            .HasOne(s => s.Trainer)
-            .WithMany(t => t.Schedules);
-
-        builder
-            .HasMany(s => s.Clients)
-            .WithMany(c => c.Schedules)
-            .UsingEntity(j => j.ToTable("ScheduleClients"));
+            .HasMany(s => s.Trainings)
+            .WithOne(t => t.Schedule)
+            .HasForeignKey(t => t.ScheduleId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

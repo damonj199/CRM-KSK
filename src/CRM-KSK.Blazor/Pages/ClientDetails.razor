@@ -14,9 +14,6 @@
         <p><strong>Фамилия:</strong> @client.LastName</p>
         <p><strong>Телефон:</strong> +7 @client.Phone</p>
         <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
-        <p><strong>Уровень тренировок:</strong> @client.LevelOfTraining</p>
-        <p><strong>Тренер:</strong> <a href="/trainer-details" class="text-black" @onclick="() => ShowTrainerDetails(client.Trainer)">
-                @client.Trainer.LastName @client.Trainer.FirstName</a></p>
         <h5>Данные о родителях</h5>
         <p><strong>Родитель:</strong> @client.ParentName</p>
         <p><strong>Телефон родителя:</strong>+7 @client.ParentPhone</p>
@@ -33,11 +30,5 @@ else
     private void GoBack()
     {
         Navigation.NavigateTo("/clients");
-    }
-
-    private void ShowTrainerDetails(TrainerDto trainerDto)
-    {
-        TrainerState.SelectedTrainer = trainerDto;
-        Navigation.NavigateTo("/trainer-details");
     }
 }

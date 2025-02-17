@@ -20,7 +20,7 @@ h1:focus {
 }
 
 .modal-overlay {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -54,28 +54,6 @@ h1:focus {
     max-width: 90%;
 }
 
-.schedule-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-    .schedule-table th,
-    .schedule-table td {
-        border: 1px solid #ccc;
-        padding: 8px;
-        text-align: center;
-    }
-
-.schedule-cell {
-    min-height: 40px;
-    cursor: pointer;
-    background-color: #f9f9f9;
-}
-
-    .schedule-cell:hover {
-        background-color: #e0e0e0;
-    }
-
 .modal {
     position: fixed;
     top: 0;
@@ -100,10 +78,10 @@ h1:focus {
     margin-top: 15px;
 }
 
-    .modal-buttons button {
-        margin: 5px;
-        padding: 5px 10px;
-    }
+.modal-buttons button {
+    margin: 5px;
+    padding: 5px 10px;
+}
 
 .form-group {
     margin-bottom: 15px;

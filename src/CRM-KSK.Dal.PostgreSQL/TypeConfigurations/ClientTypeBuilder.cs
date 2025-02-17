@@ -9,12 +9,9 @@ internal sealed class ClientTypeBuilder : IEntityTypeConfiguration<Client>
     public void Configure(EntityTypeBuilder<Client> builder)
     {
         builder
-            .Property(x => x.LevelOfTraining)
-            .HasConversion<string>();
-
-        builder
             .HasOne(c => c.Membership)
             .WithOne(m => m.Client)
-            .HasForeignKey<Membership>(m => m.ClientId);
+            .HasForeignKey<Membership>(m => m.ClientId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -4,6 +4,7 @@ namespace CRM_KSK.Application.Interfaces;
 
 public interface IScheduleService
 {
-    Task AddOrUpdateSchedule(ScheduleDto scheduleDto, CancellationToken cancellationToken);
+    Task DeleteSchedule(Guid id, CancellationToken cancellationToken);
     Task<IReadOnlyList<ScheduleDto>> GetWeeksSchedule(CancellationToken cancellationToken);
+    Task<IReadOnlyList<ScheduleDto>> GetScheduleHistory(DateOnly start, DateOnly end, CancellationToken cancellationToken);
 }
