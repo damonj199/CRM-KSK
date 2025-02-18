@@ -60,7 +60,6 @@
 
             <label>Тренер:</label>
             <select @bind="SelectedTrainerId">
-                <option value="">Выберите тренера</option>
 
                 @foreach (var trainer in Trainers)
                 {
@@ -68,10 +67,10 @@
                 }
             </select>
 
-            <label>Клиенты:</label>
+            <label>Клиент:</label>
+            <input type="text" @bind="SearchClient" @bind:event="oninput" placeholder="Введите имя клиента..." />
             <select multiple @bind="SelectedClientId">
-                <option value="">Выберите клиента</option>
-                @foreach (var client in Clients)
+                @foreach (var client in FilteredClients)
                 {
                     <option value="@client.Id">@client.FirstName @client.LastName</option>
                 }
@@ -232,6 +231,12 @@
     private bool ShowTrainingsModal = false;
     private bool IsModalOpen = false;
 
+    private string SearchClient { get; set; } = string.Empty;
+    private List<ClientDto> FilteredClients => Clients
+        .OrderByDescending(c => c.FirstName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase) ||
+                                c.LastName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
     protected override async Task OnInitializedAsync()
     {
         GenerateDaysOfWeekWithDates();
@@ -359,6 +364,7 @@
         ShowTrainingsModal = false;
         SelectedTrainerId = null;
         SelectedClientId = [];
+        SelectedTrainingType = TypeTrainings.Unknown;
         await IsVisibleChanged.InvokeAsync(IsModalOpen);
         await IsVisibleChanged.InvokeAsync(ShowTrainingsModal);
     }
