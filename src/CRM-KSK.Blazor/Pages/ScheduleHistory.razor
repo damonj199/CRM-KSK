@@ -1,5 +1,6 @@
 ﻿@page "/history"
 @inject ScheduleServiceBlazor _scheduleService
+@inject TrainerServiceBlazor _trainerService
 
 <h3>История тренировок</h3>
 
@@ -10,6 +11,14 @@
     <label>Конечная дата:</label>
     <input type="date" @bind="EndDate" />
 
+    <label>Выберите тренера:</label>
+    <select @bind="SelectedTrainerId" @bind:event="onchange">
+        <option value="">Все тренеры</option>
+        @foreach (var trainer in Trainers)
+        {
+            <option value="@trainer.Id">@trainer.FirstName @trainer.LastName</option>
+        }
+    </select>
     <button @onclick="LoadScheduleHistory">Показать</button>
 </div>
 
@@ -24,9 +33,9 @@
         </tr>
     </thead>
     <tbody>
-        @if (HistorySchedules.Any())
+        @if (FilteredSchedules.Any())
         {
-            @foreach (var schedule in HistorySchedules)
+            @foreach (var schedule in FilteredSchedules)
             {
                 @foreach (var training in schedule.Trainings)
                 {
@@ -59,6 +68,9 @@
 <style>
     .filters {
     margin-bottom: 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
     }
 
     .history-table {
@@ -83,7 +95,16 @@
 @code {
     private DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(-7));
     private DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    private Guid? SelectedTrainerId;
     private IReadOnlyList<ScheduleDto> HistorySchedules = [];
+    private IReadOnlyList<ScheduleDto> FilteredSchedules = [];
+    private List<TrainerDto> Trainers = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        Trainers = await _trainerService.GetAllTrainers() ?? [];
+        await LoadScheduleHistory();
+    }
 
     private async Task LoadScheduleHistory()
     {
@@ -91,5 +112,29 @@
             return;
 
         HistorySchedules = await _scheduleService.GetScheduleHistory(StartDate, EndDate) ?? [];
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        if (SelectedTrainerId == null)
+        {
+            FilteredSchedules = HistorySchedules;
+        }
+        else
+        {
+            FilteredSchedules = HistorySchedules
+                .Select(s => new ScheduleDto
+                    {
+                        Date = s.Date,
+                        Time = s.Time,
+                        Trainings = s.Trainings
+                            .Where(t => t.TrainerName.Id == SelectedTrainerId)
+                            .ToList()
+                    })
+                .Where(s => s.Trainings.Any())
+                .ToList();
+        }
+        StateHasChanged();
     }
 }
