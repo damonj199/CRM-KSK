@@ -1,4 +1,5 @@
 ﻿using CRM_KSK.Application.Dtos;
+using CRM_KSK.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
@@ -7,14 +8,31 @@ namespace CRM_KSK.Api.Controllers;
 [Route("api/[controller]")]
 public class SchedulesController : ControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> GetScheduleAsync()
+    private readonly IScheduleService _scheduleService;
+
+    public SchedulesController(IScheduleService scheduleService)
     {
-        var schedules = new List<ScheduleDto>
-        {
-            new ScheduleDto { Day = "Понедельник", Time = DateTime.Now, ClientName = "Ivanov Ivan",
-                TrainerName = "Dariy Andreevna", TrainingType = "Individual'na", Description = "На манеже" }
-        };
+        _scheduleService = scheduleService;
+    }
+
+    [HttpGet("week")]
+    public async Task<ActionResult<List<ScheduleDto>>> GetWeeksScheduleAsync(CancellationToken cancellationToken)
+    {
+        var schedules = await _scheduleService.GetWeeksSchedule(cancellationToken);
         return Ok(schedules);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteSchedule(Guid id, CancellationToken cancellationToken)
+    {
+        await _scheduleService.DeleteSchedule(id, cancellationToken);
+        return Ok();
+    }
+
+    [HttpGet("history")]
+    public async Task<IActionResult> GetScheduleHistory([FromQuery] DateOnly start, [FromQuery] DateOnly end, CancellationToken cancellationToken)
+    {
+        var history = await _scheduleService.GetScheduleHistory(start, end, cancellationToken);
+        return Ok(history);
     }
 }

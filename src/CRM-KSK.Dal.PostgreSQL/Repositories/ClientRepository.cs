@@ -24,6 +24,12 @@ public class ClientRepository : IClientRepository
         _logger.LogInformation("Клиент добавлен!");
     }
 
+    public async Task<Client> GetClientById(Guid id, CancellationToken token)
+    {
+        var client = await _context.Clients.FindAsync(id, token);
+        return client;
+    }
+
     public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
     {
         var query = _context.Clients.AsNoTracking().AsQueryable();
@@ -34,27 +40,45 @@ public class ClientRepository : IClientRepository
         if (!string.IsNullOrWhiteSpace(lastName))
             query = query.Where(query => query.LastName.ToLower().Contains(lastName.ToLower()));
 
-        return await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+        return await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken) ?? [];
     }
 
     public async Task<Client> GetClientByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("проверяем есть ли в БД клиент с таким номером");
+        _logger.LogDebug("проверяем есть ли в БД клиент с таким номером");
         var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(n => n.Phone == phoneNumber);
-        _logger.LogInformation($"вот что в бд по этому клиенту {client}");
-        return client;
-    }
 
-    public async Task<Trainer> GetTrainerByNameAsync(string name)
-    {
-        var trainer =  await _context.Trainers.FirstOrDefaultAsync(n => n.FirstName.ToLower() == name.ToLower());
-        _logger.LogInformation($"нашли тренера, {trainer.FirstName}");
-        return trainer;
+        _logger.LogDebug("вот что в бд по этому клиенту {0}", client);
+        return client;
     }
 
     public async Task DeleteClientAsync(Client client, CancellationToken cancellationToken)
     {
         _context.Clients.Remove(client);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> ClientVerificationAsync(string phoneNumber, CancellationToken cancellationToken)
+    {
+        var clientExist = await _context.Clients.AnyAsync(c => c.Phone == phoneNumber, cancellationToken);
+        _logger.LogDebug("Провряем что у нас там в БД, {0}", clientExist);
+        return clientExist;
+    }
+
+    public async Task UpdateClientInfoAsync(Client client, CancellationToken token)
+    {
+        var existingClient = await _context.Clients.FindAsync(client.Id);
+        if(existingClient != null)
+        {
+            existingClient.FirstName = client.FirstName;
+            existingClient.LastName = client.LastName;
+            existingClient.Phone = client.Phone;
+            existingClient.DateOfBirth = client.DateOfBirth;
+            existingClient.ParentName = client.ParentName;
+            existingClient.ParentPhone = client.ParentPhone;
+
+            _context.Clients.Update(existingClient);
+        }
+        await _context.SaveChangesAsync(token);
     }
 }

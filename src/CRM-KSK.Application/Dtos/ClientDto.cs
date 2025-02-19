@@ -1,10 +1,11 @@
-﻿using CRM_KSK.Core.Enums;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace CRM_KSK.Application.Dtos;
 
 public class ClientDto
 {
+    public Guid Id { get; set; }
+
     [Required]
     public string FirstName { get; set; }
 
@@ -15,11 +16,7 @@ public class ClientDto
     public string Phone { get; set; }
 
     [Required]
-    public DateOnly DateOfBirth { get; set; }
-
-    public LevelOfTraining LevelOfTraining { get; set; } = LevelOfTraining.Newbie;
-
-    public string? TrainerName { get; set; }
+    public DateOnly DateOfBirth { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
     public string? ParentName { get; set; }
 

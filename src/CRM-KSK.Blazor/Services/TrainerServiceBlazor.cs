@@ -12,19 +12,19 @@ public class TrainerServiceBlazor
         _httpClient = httpClient;
     }
 
-    public async Task<List<TrainerDto>> GetTrainerByName(string? firstName = null, string? lastName = null)
+    public async Task<TrainerDto> GetTrainerByName(SearchNameDto nameDto)
     {
         var url = "api/Trainers/by-name";
         var queryParams = new List<string>();
 
-        if (!string.IsNullOrEmpty(firstName))
+        if (!string.IsNullOrEmpty(nameDto.FirstName))
         {
-            queryParams.Add($"firstName={Uri.EscapeDataString(firstName)}");
+            queryParams.Add($"firstName={Uri.EscapeDataString(nameDto.FirstName)}");
         }
 
-        if (!string.IsNullOrEmpty(lastName))
+        if (!string.IsNullOrEmpty(nameDto.LastName))
         {
-            queryParams.Add($"lastName={Uri.EscapeDataString(lastName)}");
+            queryParams.Add($"lastName={Uri.EscapeDataString(nameDto.LastName)}");
         }
 
         if (queryParams.Any())
@@ -32,7 +32,14 @@ public class TrainerServiceBlazor
             url += "?" + string.Join("&", queryParams);
         }
 
-        var response = await _httpClient.GetFromJsonAsync<List<TrainerDto>>(url);
+        var response = await _httpClient.GetFromJsonAsync<TrainerDto>(url);
+
+        return response;
+    }
+
+    public async Task<List<TrainerDto>> GetAllTrainers()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<TrainerDto>>("api/Trainers");
 
         return response ?? [];
     }
@@ -43,7 +50,7 @@ public class TrainerServiceBlazor
 
         if (response.IsSuccessStatusCode)
         {
-            return "Клиент успешно добавлен!";
+            return $"Тренер {trainerDto.FirstName}, успешно добавлен!";
         }
         else
         {
@@ -55,6 +62,18 @@ public class TrainerServiceBlazor
     public async Task<bool> DeleteTrainer(string firstName, string lastName)
     {
         var response = await _httpClient.DeleteAsync($"api/Trainers?firstName={firstName}&lastName={lastName}");
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<TrainerDto> GetTrainerBuId(Guid id)
+    {
+        var response = await _httpClient.GetFromJsonAsync<TrainerDto>($"api/Trainers/{id}");
+        return response;
+    }
+
+    public async Task<bool> UpdateTrainerInfo(TrainerDto trainerDto)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/Trainers", trainerDto);
         return response.IsSuccessStatusCode;
     }
 }

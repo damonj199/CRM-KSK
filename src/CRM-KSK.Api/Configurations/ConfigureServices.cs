@@ -4,7 +4,7 @@ using CRM_KSK.Dal.PostgreSQL;
 using CRM_KSK.Dal.PostgreSQL.Repositories;
 using CRM_KSK.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
+using System.Text.Json.Serialization;
 
 namespace CRM_KSK.Api.Configurations;
 
@@ -12,7 +12,10 @@ public static class ConfigureServices
 {
     public static void ConfigureService(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddControllers();
+        services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
         services.AddCors(options =>
         {
             options.AddPolicy("AllowAllOrigins",
@@ -38,6 +41,10 @@ public static class ConfigureServices
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<ITrainerService, TrainerService>();
         services.AddScoped<ITrainerRepository, TrainerRepository>();
+        services.AddScoped<ITrainingService, TrainingService>();
+        services.AddScoped<ITrainingRepository, TrainingRepository>();
+        services.AddScoped<IScheduleService, ScheduleService>();
+        services.AddScoped<IScheduleRepository, ScheduleRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
     }

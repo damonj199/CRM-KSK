@@ -2,14 +2,14 @@
 
 @if (IsVisible)
 {
-        <div class="modal-overlay" style="@(IsVisible ? "display:flex;" : "display:none;")">
-            <div class="modal-content">
+    <div class="modal-overlay" @onclick="HandleOverlayClick" style="@(IsVisible ? "display:flex;" : "display:none;")">
+        <div class="modal-content" @onclick:stopPropagation="true">
 
                 <h2>Удалить клиента</h2>
 
                 <form @onsubmit="DeleteClient">
                     <div class="form-group">
-                        <label for="phone">Номер телефона</label>
+                        <label for="phone">Телефон: +7 </label>
                         <input id="phone" name="phone" type="tel" @bind="_phoneNumber" required />
                     </div>
                     <div class="form-actions">
@@ -48,7 +48,13 @@
 
     private async Task CloseModal()
     {
+        _phoneNumber = string.Empty;
         IsVisible = false;
         await IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+
+    private async Task HandleOverlayClick()
+    {
+        await CloseModal();
     }
 }

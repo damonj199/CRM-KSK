@@ -1,39 +1,110 @@
 ﻿@page "/client-details"
-@inject ClientStateService ClientState
+@inject ClientStateService _clientState
+@inject NavigationManager _navigation
+@inject ClientServiceBlazor _clientService
 
 <h3>Подробная информация о клиенте</h3>
 
-@if(_client != null)
+@if (_clientState.SelectedClient != null)
 {
-    <div class="card p-3">
-        <p><strong>Имя:</strong> @_client.FirstName</p>
-        <p><strong>Фамилия:</strong> @_client.LastName</p>
-        <p><strong>Телефон:</strong> @_client.Phone</p>
-        <p><strong>Дата рождения:</strong> @_client.DateOfBirth.ToString("dd.MM.yyyy")</p>
-        <p><strong>Уровень тренировок:</strong> @_client.LevelOfTraining</p>
-        <p><strong>Тренер:</strong> @_client.TrainerName</p>
-        <h5>Данные о родителях</h5>
-        <p><strong>Родитель:</strong> @_client.ParentName</p>
-        <p><strong>Телефон родителя:</strong> @_client.ParentPhone</p>
+    var client = _clientState.SelectedClient;
+
+    <div class="component-details">
+        @if (IsEditing)
+        {
+            <label>Имя:</label>
+            <input type="text" @bind="client.FirstName" />
+
+            <label>Фамилия:</label>
+            <input type="text" @bind="client.LastName" />
+
+            <label>Телефон:</label>
+            <input type="text" @bind="client.Phone" />
+
+            <label>Дата рождения:</label>
+            <input type="date" @bind="client.DateOfBirth" />
+
+            <label>Родитель:</label>
+            <input type="text" @bind="client.ParentName" />
+
+            <label>Телофон родителя:</label>
+            <input type="text" @bind="client.ParentName" />
+
+            <button class="btn btn-success mt-3" @onclick="SaveChanges">Сохранить</button>
+            <button class="btn btn-secondary mt-3" @onclick="CancelEdit">Отмена</button>
+        }
+        else
+        {
+            <p><strong>Имя:</strong> @client.FirstName</p>
+            <p><strong>Фамилия:</strong> @client.LastName</p>
+            <p><strong>Телефон:</strong> +7 @client.Phone</p>
+            <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
+            <h5>Данные о родителях</h5>
+            <p><strong>Родитель:</strong> @client.ParentName</p>
+            <p><strong>Телефон родителя:</strong>+7 @client.ParentPhone</p>
+
+            <button class="btn btn-primary mt-3" @onclick="EditTrainer">Изменить</button>
+        }
     </div>
 }
 else
 {
-    <p>Выберите клиента для просмотра информации.</p>
+    <p class="alert alert-warning">Клиент не выбран. Перейдите на страницу <a href="/clients">управления клиентами</a>.</p>
 }
+<button class="btn btn-secondary mt-3" @onclick="GoBack">Назад</button>
 
 @code {
-    [Parameter] public EventCallback OnClose { get; set; }
-    
-    private ClientDto _client;
 
-    private async Task CloseDetails()
+    private bool IsEditing = false;
+    private ClientDto? OriginalClientCopy;
+
+    private void EditTrainer()
     {
-        await OnClose.InvokeAsync();
+        IsEditing = true;
+        OriginalClientCopy = new ClientDto
+            {
+                FirstName = _clientState.SelectedClient.FirstName,
+                LastName = _clientState.SelectedClient.LastName,
+                Phone = _clientState.SelectedClient.Phone,
+                DateOfBirth = _clientState.SelectedClient.DateOfBirth,
+                ParentName = _clientState.SelectedClient.ParentName,
+                ParentPhone = _clientState.SelectedClient.ParentPhone
+            };
     }
 
-    protected override void OnInitialized()
+    private async Task SaveChanges()
     {
-        _client = ClientState.SelectedClient;
+        if (_clientState.SelectedClient != null)
+        {
+            var success = await _clientService.UpdateClientInfo(_clientState.SelectedClient);
+            if (success)
+            {
+                IsEditing = false;
+                Console.WriteLine("Изменения сохранены.");
+            }
+            else
+            {
+                Console.WriteLine("Ошибка при сохранении.");
+            }
+        }
+    }
+
+    private void CancelEdit()
+    {
+        if (OriginalClientCopy != null)
+        {
+            _clientState.SelectedClient.FirstName = OriginalClientCopy.FirstName;
+            _clientState.SelectedClient.LastName = OriginalClientCopy.LastName;
+            _clientState.SelectedClient.Phone = OriginalClientCopy.Phone;
+            _clientState.SelectedClient.DateOfBirth = OriginalClientCopy.DateOfBirth;
+            _clientState.SelectedClient.ParentName = OriginalClientCopy.ParentName;
+            _clientState.SelectedClient.ParentPhone = OriginalClientCopy.ParentPhone;
+        }
+        IsEditing = false;
+    }
+
+    private void GoBack()
+    {
+        _navigation.NavigateTo("/clients");
     }
 }

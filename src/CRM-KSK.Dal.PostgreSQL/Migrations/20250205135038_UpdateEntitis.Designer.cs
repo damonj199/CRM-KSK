@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    [Migration("20250120151837_InitialMagrations")]
-    partial class InitialMagrations
+    [Migration("20250205135038_UpdateEntitis")]
+    partial class UpdateEntitis
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -79,6 +79,11 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("lastName");
 
+                    b.Property<string>("LevelOfTraining")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("levelOfTraining");
+
                     b.Property<string>("ParentName")
                         .HasColumnType("text")
                         .HasColumnName("parentName");
@@ -91,27 +96,61 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("phone");
 
+                    b.Property<Guid?>("ScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scheduleId");
+
                     b.Property<Guid?>("TrainerId")
                         .HasColumnType("uuid")
                         .HasColumnName("trainerId");
 
-                    b.Property<int?>("TrainingId")
-                        .HasColumnType("integer")
-                        .HasColumnName("trainingId");
-
                     b.HasKey("Id")
                         .HasName("pK_clients");
+
+                    b.HasIndex("ScheduleId")
+                        .HasDatabaseName("iX_clients_scheduleId");
 
                     b.HasIndex("TrainerId")
                         .HasDatabaseName("iX_clients_trainerId");
 
-                    b.HasIndex("TrainingId")
-                        .HasDatabaseName("iX_clients_trainingId");
-
                     b.ToTable("clients", (string)null);
                 });
 
-            modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>
+            modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("clientId");
+
+                    b.Property<DateTime>("DateEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dateEnd");
+
+                    b.Property<DateOnly>("DateStart")
+                        .HasColumnType("date")
+                        .HasColumnName("dateStart");
+
+                    b.Property<string>("StatusMembership")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("statusMembership");
+
+                    b.HasKey("Id")
+                        .HasName("pK_memberships");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique()
+                        .HasDatabaseName("iX_memberships_clientId");
+
+                    b.ToTable("memberships", (string)null);
+                });
+
+            modelBuilder.Entity("CRM_KSK.Core.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -122,42 +161,64 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("clientId");
 
-                    b.Property<string>("ClientName")
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<Guid?>("MembershipId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("membershipId");
+
+                    b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("clientName");
+                        .HasColumnName("paymentMethod");
 
-                    b.Property<string>("Day")
-                        .HasColumnType("text")
-                        .HasColumnName("day");
+                    b.Property<decimal>("Summa")
+                        .HasColumnType("numeric")
+                        .HasColumnName("summa");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                    b.HasKey("Id")
+                        .HasName("pK_payment");
 
-                    b.Property<DateTime>("Time")
-                        .HasColumnType("timestamp with time zone")
+                    b.HasIndex("ClientId")
+                        .HasDatabaseName("iX_payment_clientId");
+
+                    b.HasIndex("MembershipId")
+                        .HasDatabaseName("iX_payment_membershipId");
+
+                    b.ToTable("payment", (string)null);
+                });
+
+            modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("clientId");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<TimeSpan>("Time")
+                        .HasColumnType("interval")
                         .HasColumnName("time");
 
-                    b.Property<Guid?>("TrainerId")
+                    b.Property<Guid>("TrainerId")
                         .HasColumnType("uuid")
                         .HasColumnName("trainerId");
 
-                    b.Property<string>("TrainerName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("trainerName");
-
-                    b.Property<string>("TrainingType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("trainingType");
+                    b.Property<int>("TypeTrainings")
+                        .HasColumnType("integer")
+                        .HasColumnName("typeTrainings");
 
                     b.HasKey("Id")
                         .HasName("pK_schedules");
-
-                    b.HasIndex("ClientId")
-                        .HasDatabaseName("iX_schedules_clientId");
 
                     b.HasIndex("TrainerId")
                         .HasDatabaseName("iX_schedules_trainerId");
@@ -177,17 +238,14 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnName("dateOfBirth");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("firstName");
 
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("lastName");
 
                     b.Property<string>("Phone")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("phone");
 
@@ -196,7 +254,6 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnName("specialization");
 
                     b.Property<string>("Surname")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("surname");
 
@@ -206,90 +263,73 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.ToTable("trainers", (string)null);
                 });
 
-            modelBuilder.Entity("CRM_KSK.Core.Entities.Training", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("title");
-
-                    b.Property<Guid>("TrainerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("trainerId");
-
-                    b.HasKey("Id")
-                        .HasName("pK_trainings");
-
-                    b.HasIndex("TrainerId")
-                        .HasDatabaseName("iX_trainings_trainerId");
-
-                    b.ToTable("trainings", (string)null);
-                });
-
             modelBuilder.Entity("CRM_KSK.Core.Entities.Client", b =>
                 {
+                    b.HasOne("CRM_KSK.Core.Entities.Schedule", null)
+                        .WithMany("Clients")
+                        .HasForeignKey("ScheduleId")
+                        .HasConstraintName("fK_clients_schedules_scheduleId");
+
                     b.HasOne("CRM_KSK.Core.Entities.Trainer", "Trainer")
                         .WithMany("Clients")
                         .HasForeignKey("TrainerId")
                         .HasConstraintName("fK_clients_trainers_trainerId");
 
-                    b.HasOne("CRM_KSK.Core.Entities.Training", null)
-                        .WithMany("Clients")
-                        .HasForeignKey("TrainingId")
-                        .HasConstraintName("fK_clients_trainings_trainingId");
-
                     b.Navigation("Trainer");
                 });
 
-            modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>
+            modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
                 {
-                    b.HasOne("CRM_KSK.Core.Entities.Client", null)
-                        .WithMany("Schedules")
-                        .HasForeignKey("ClientId")
-                        .HasConstraintName("fK_schedules_clients_clientId");
+                    b.HasOne("CRM_KSK.Core.Entities.Client", "Client")
+                        .WithOne("Membership")
+                        .HasForeignKey("CRM_KSK.Core.Entities.Membership", "ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fK_memberships_clients_clientId");
 
-                    b.HasOne("CRM_KSK.Core.Entities.Trainer", null)
-                        .WithMany("Schedules")
-                        .HasForeignKey("TrainerId")
-                        .HasConstraintName("fK_schedules_trainers_trainerId");
+                    b.Navigation("Client");
                 });
 
-            modelBuilder.Entity("CRM_KSK.Core.Entities.Training", b =>
+            modelBuilder.Entity("CRM_KSK.Core.Entities.Payment", b =>
+                {
+                    b.HasOne("CRM_KSK.Core.Entities.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .HasConstraintName("fK_payment_clients_clientId");
+
+                    b.HasOne("CRM_KSK.Core.Entities.Membership", "Membership")
+                        .WithMany()
+                        .HasForeignKey("MembershipId")
+                        .HasConstraintName("fK_payment_memberships_membershipId");
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Membership");
+                });
+
+            modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>
                 {
                     b.HasOne("CRM_KSK.Core.Entities.Trainer", "Trainer")
                         .WithMany()
                         .HasForeignKey("TrainerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fK_trainings_trainers_trainerId");
+                        .HasConstraintName("fK_schedules_trainers_trainerId");
 
                     b.Navigation("Trainer");
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Client", b =>
                 {
-                    b.Navigation("Schedules");
+                    b.Navigation("Membership");
+                });
+
+            modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>
+                {
+                    b.Navigation("Clients");
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Trainer", b =>
-                {
-                    b.Navigation("Clients");
-
-                    b.Navigation("Schedules");
-                });
-
-            modelBuilder.Entity("CRM_KSK.Core.Entities.Training", b =>
                 {
                     b.Navigation("Clients");
                 });

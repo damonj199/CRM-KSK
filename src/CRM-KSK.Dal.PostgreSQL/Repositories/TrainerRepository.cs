@@ -19,7 +19,13 @@ public class TrainerRepository : ITrainerRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<Trainer>> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Trainer>> GetTrainersAsync(CancellationToken cancellationToken)
+    {
+        var trainits = await _context.Trainers.AsNoTracking().ToListAsync();
+        return trainits;
+    }
+
+    public async Task<Trainer> GetTrainerByNameAsync(string firstName, string lastName, CancellationToken cancellationToken)
     {
         var query = _context.Trainers.AsQueryable();
 
@@ -29,12 +35,35 @@ public class TrainerRepository : ITrainerRepository
         if (!string.IsNullOrWhiteSpace(lastName))
             query = query.Where(query => query.LastName.ToLower().Contains(lastName.ToLower()));
 
-        return await query.ToListAsync();
+        return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task DeleteTraner(Trainer trainer, CancellationToken cancellationToken)
     {
         _context.Trainers.Remove(trainer);
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Trainer> GetTrainerByIdAsync(Guid id, CancellationToken token)
+    {
+        var trainer = await _context.Trainers.FindAsync(id);
+        return trainer;
+    }
+
+    public async Task UpdateTrainerInfoAsync(Trainer trainer, CancellationToken token)
+    {
+        var existingTrainer = await _context.Trainers.FindAsync(trainer.Id);
+        if(existingTrainer != null)
+        {
+            existingTrainer.FirstName = trainer.FirstName;
+            existingTrainer.LastName = trainer.LastName;
+            existingTrainer.Surname = trainer.Surname;
+            existingTrainer.DateOfBirth = trainer.DateOfBirth;
+            existingTrainer.Phone = trainer.Phone;
+            existingTrainer.Color = trainer.Color;
+
+            _context.Trainers.Update(existingTrainer);
+        }
+        await _context.SaveChangesAsync(token);
     }
 }
