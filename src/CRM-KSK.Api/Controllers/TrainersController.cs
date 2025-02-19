@@ -18,46 +18,52 @@ public class TrainersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddTrainer([FromBody] TrainerDto trainer, CancellationToken cancellationToken)
     {
-        try
-        {
-            string trainerNew = await _trainerService.AddTrainerAsync(trainer, cancellationToken);
-            return Ok(new { message = $"Тренер {trainer.FirstName}, успешно добавлен" });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.Message);
-        }
+        await _trainerService.AddTrainerAsync(trainer, cancellationToken);
+        return Ok(new { message = $"Тренер {trainer.FirstName}, успешно добавлен" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetTrainersAsync(CancellationToken cancellationToken)
+    {
+        var trainers = await _trainerService.GetTrainersAsync(cancellationToken);
+
+        if (trainers == null)
+            return BadRequest(new { message = "Тренеры не найден" });
+
+        return Ok(trainers);
     }
 
     [HttpGet("by-name")]
-    public async Task<IActionResult> GetTrainerByNameAsync(
-        [FromQuery] string? firstName = null,
-        [FromQuery] string? lastName = null, 
-        CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetTrainerByName([FromQuery] SearchNameDto nameDto, CancellationToken cancellationToken)
     {
-        var client = await _trainerService.GetTrainerAsync(firstName, lastName, cancellationToken);
+        var trainer = await _trainerService.GetTrainerByName(nameDto.FirstName, nameDto.LastName, cancellationToken);
+        if (trainer == null)
+            return BadRequest(new { message = "тренер не найден" });
 
-        if (client == null)
-            return BadRequest(new { message = "Клиент не найден" });
-
-        return Ok(client);
+        return Ok(trainer);
     }
 
     [HttpDelete]
-    public async Task<IActionResult> DeleteClientAsync([FromQuery] string firstName, string lastName, CancellationToken cancellationToken)
+    public async Task<IActionResult> DeleteTrainerAsync([FromQuery] string firstName, string lastName, CancellationToken cancellationToken)
     {
-        try
-        {
-            await _trainerService.DeleteTrainer(firstName, lastName, cancellationToken);
-            return Ok(new { message = "Удалено" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        await _trainerService.DeleteTrainer(firstName, lastName, cancellationToken);
+        return Ok(new { message = "Удалено" });
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetTrainerByIdAsync(Guid id, CancellationToken token)
+    {
+        var trainerDto = await _trainerService.GetTrainerByIdAsync(id, token);
+        if(trainerDto != null)
+            return Ok(trainerDto);
+
+        return NotFound();
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateTrainerInfo([FromBody] TrainerDto trainerDto, CancellationToken token)
+    {
+        await _trainerService.UpdateTrainerInfoAsync(trainerDto, token);
+        return Ok();
     }
 }

@@ -7,8 +7,8 @@ public class Trainer
     public string LastName { get; set; }
     public string Surname { get; set; }
     public string Phone { get; set; }
-    public string? Specialization { get; set; }
     public DateOnly DateOfBirth { get; set; }
-    public ICollection<Client> Clients { get; set; } = [];
-    public ICollection<Schedule> Schedules { get; set; } = [];
+    public string Color { get; set; } = "#FFFFFF";
+
+    public List<Training> Trainings { get; set; } = [];
 }

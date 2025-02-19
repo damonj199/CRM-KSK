@@ -2,7 +2,7 @@
 
 public class ClientStateService
 {
-    public ClientDto SelectedClient { get; private set; }
+    public ClientDto SelectedClient { get; set; }
 
     public void SetClient(ClientDto client)
     {

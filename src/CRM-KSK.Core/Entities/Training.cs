@@ -4,10 +4,12 @@ namespace CRM_KSK.Core.Entities;
 
 public class Training
 {
-    public int Id { get; set; }
-    public string? Title { get; set; }
-    public DateTime Date { get; set; }
-    public Trainer Trainer { get; set; }
-    public TypeTrainings TypeTrainings { get; set; } = TypeTrainings.Individual;
-    public ICollection<Client> Clients { get; set; } = [];
+    public Guid Id { get; set; }
+    public TypeTrainings TypeTrainings { get; set; } = TypeTrainings.Unknown;
+
+    public Guid TrainerId { get; set; }
+    public Trainer Trainer { get; set; } = default!;
+    public List<Client> Clients { get; set; } = [];
+    public Guid ScheduleId { get; set; }
+    public Schedule Schedule { get; set; } = default!;
 }

@@ -12,10 +12,20 @@ public class MapperProfile : Profile
         CreateMap<RegisterRequest, Admin>();
         CreateMap<Client, ClientDto>();
         CreateMap<ClientDto, Client>()
-            .ForMember(dest => dest.Trainer, opt => opt.Ignore())
-            .ForMember(dest => dest.Schedules, opt => opt.Ignore())
             .ForMember(dest => dest.Membership, opt => opt.Ignore());
-        CreateMap<TrainerDto, Trainer>();
-        CreateMap<Trainer, TrainerDto>();
+        CreateMap<TrainerDto, Trainer>().ReverseMap();
+        CreateMap<Training, TrainingDto>()
+            .ForMember(dest => dest.TrainerName, opt => opt.MapFrom(src => src.Trainer))
+            .ForMember(dest => dest.ClientsName, opt => opt.MapFrom(src => src.Clients))
+            .ReverseMap();
+        CreateMap<Trainer, ScheduleMemberDto>().ReverseMap();
+        CreateMap<Client, ScheduleMemberDto>().ReverseMap();
+        CreateMap<Schedule, ScheduleDto>().ReverseMap();
+        CreateMap<ScheduleFullDto, Training>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.TrainingId))
+            .ForMember(dest => dest.Trainer, opt => opt.MapFrom(src => src.TrainerName))
+            .ForMember(dest => dest.Clients, opt => opt.MapFrom(src => src.ClientsName));
+        CreateMap<ScheduleFullDto, Schedule>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.ScheduleId));
     }
 }
