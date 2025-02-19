@@ -1,6 +1,7 @@
 ﻿@page "/history"
 @inject ScheduleServiceBlazor _scheduleService
 @inject TrainerServiceBlazor _trainerService
+@inject ClientServiceBlazor _clientService
 
 <h3>История тренировок</h3>
 
@@ -11,12 +12,22 @@
     <label>Конечная дата:</label>
     <input type="date" @bind="EndDate" />
 
-    <label>Выберите тренера:</label>
+    <label>Тренера:</label>
     <select @bind="SelectedTrainerId" @bind:event="onchange">
         <option value="">Все тренеры</option>
         @foreach (var trainer in Trainers)
         {
             <option value="@trainer.Id">@trainer.FirstName @trainer.LastName</option>
+        }
+    </select>
+
+    <label>Клиента:</label>
+    <input type="text" @bind="ClientSearchText" @bind:event="oninput" placeholder="Введите имя или фамилию" />
+    <select @bind="SelectedClientId" @bind:event="onchange">
+        <option value="">Все клиенты</option>
+        @foreach (var client in FilteredClients)
+        {
+            <option value="@client.Id">@client.FirstName @client.LastName</option>
         }
     </select>
     <button @onclick="LoadScheduleHistory">Показать</button>
@@ -40,7 +51,8 @@
                 @foreach (var training in schedule.Trainings)
                 {
                     <tr>
-                        <td>@schedule.Date.ToString("dd.MM.yyyy")</td>
+                        <td>@schedule.Date.ToString("dd.MM.yyyy", new CultureInfo("ru-RU")) - 
+                            @schedule.Date.ToString("dddd", new CultureInfo("ru-RU"))</td>
                         <td>@schedule.Time.ToString(@"hh\:mm")</td>
                         <td style="background-color:@training.TrainerName.Color; padding: 3px; margin:2px; border-radius:2px;">
                             @training.TrainerName.FirstName @training.TrainerName.LastName
@@ -74,7 +86,7 @@
     }
 
     .history-table {
-    min-width: 70%;
+    min-width: 80%;
     border-collapse: collapse;
     text-align: left;
     }
@@ -95,14 +107,23 @@
 @code {
     private DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(-7));
     private DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    private string ClientSearchText { get; set; } = string.Empty;
+
     private Guid? SelectedTrainerId;
+    private Guid? SelectedClientId;
+
     private IReadOnlyList<ScheduleDto> HistorySchedules = [];
     private IReadOnlyList<ScheduleDto> FilteredSchedules = [];
-    private List<TrainerDto> Trainers = [];
+    private IReadOnlyList<ClientDto> FilteredClients = [];
+    private IReadOnlyList<TrainerDto> Trainers = [];
+    private IReadOnlyList<ClientDto> Clients = [];
 
     protected override async Task OnInitializedAsync()
     {
         Trainers = await _trainerService.GetAllTrainers() ?? [];
+        Clients = await _clientService.GetClientsByNameAsync() ?? [];
+        FilteredClients = Clients;
+
         await LoadScheduleHistory();
     }
 
@@ -112,29 +133,42 @@
             return;
 
         HistorySchedules = await _scheduleService.GetScheduleHistory(StartDate, EndDate) ?? [];
+
         ApplyFilters();
+        FilterClients();
     }
 
     private void ApplyFilters()
     {
-        if (SelectedTrainerId == null)
+        FilteredSchedules = HistorySchedules
+            .Select(s => new ScheduleDto
+                {
+                    Date = s.Date,
+                    Time = s.Time,
+                    Trainings = s.Trainings
+                        .Where(t =>
+                            (SelectedTrainerId == null || t.TrainerName.Id == SelectedTrainerId) &&
+                            (SelectedClientId == null || t.ClientsName.Any(c => c.Id == SelectedClientId)))
+                        .ToList()
+                })
+            .Where(s => s.Trainings.Any())
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private void FilterClients()
+    {
+        if (string.IsNullOrWhiteSpace(ClientSearchText))
         {
-            FilteredSchedules = HistorySchedules;
+            FilteredClients = Clients;
         }
         else
         {
-            FilteredSchedules = HistorySchedules
-                .Select(s => new ScheduleDto
-                    {
-                        Date = s.Date,
-                        Time = s.Time,
-                        Trainings = s.Trainings
-                            .Where(t => t.TrainerName.Id == SelectedTrainerId)
-                            .ToList()
-                    })
-                .Where(s => s.Trainings.Any())
+            var search = ClientSearchText.Trim().ToLower();
+            FilteredClients = Clients
+                .Where(c => c.FirstName.ToLower().Contains(search) || c.LastName.ToLower().Contains(search))
                 .ToList();
         }
-        StateHasChanged();
     }
 }
