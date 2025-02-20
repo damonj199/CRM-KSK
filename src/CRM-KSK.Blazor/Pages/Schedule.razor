@@ -72,7 +72,10 @@
             <select multiple @bind="SelectedClientId">
                 @foreach (var client in FilteredClients)
                 {
-                    <option value="@client.Id">@client.FirstName @client.LastName</option>
+                    <option value="@client.Id">@client.FirstName @client.LastName - 
+                    (@(client.Memberships.Any() ? string.Join(", ", client.Memberships
+                           .Select(m => m.TypeTrainings.GetDisplayName())) : " "))
+                    </option>
                 }
             </select>
 

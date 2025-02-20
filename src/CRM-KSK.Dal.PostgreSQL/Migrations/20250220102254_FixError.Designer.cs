@@ -3,6 +3,7 @@ using System;
 using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    partial class CRM_KSKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250220102254_FixError")]
+    partial class FixError
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -166,6 +169,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasName("pK_memberships");
 
                     b.HasIndex("ClientId")
+                        .IsUnique()
                         .HasDatabaseName("iX_memberships_clientId");
 
                     b.ToTable("memberships", (string)null);
@@ -287,8 +291,8 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
                 {
                     b.HasOne("CRM_KSK.Core.Entities.Client", "Client")
-                        .WithMany("Membership")
-                        .HasForeignKey("ClientId")
+                        .WithOne("Membership")
+                        .HasForeignKey("CRM_KSK.Core.Entities.Membership", "ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fK_memberships_clients_clientId");

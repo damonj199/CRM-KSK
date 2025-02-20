@@ -34,7 +34,7 @@
                         {
                             <li class="list-group-item">
                                 <a href="/trainer-details" class="text-primary" @onclick="() => ShowTrainerDetails(trainer)">
-                                    @trainer.FirstName @trainer.LastName +7 (@trainer.Phone)
+                                    @trainer.FirstName @trainer.LastName @FormatPhoneNumber(trainer.Phone)
                                 </a>
                             </li>
                         }
@@ -84,6 +84,11 @@
     {
         TrainerState.SelectedTrainer = trainer;
         Navigation.NavigateTo("/trainer-details");
+    }
+
+    private string FormatPhoneNumber(string phone)
+    {
+        return $"+7 ({phone.Substring(0, 3)}) {phone.Substring(3, 3)}-{phone.Substring(6, 2)}-{phone.Substring(8, 2)}";
     }
 
     private async Task HandleOverlayClick()

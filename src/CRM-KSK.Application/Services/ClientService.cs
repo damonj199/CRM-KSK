@@ -58,6 +58,12 @@ public class ClientService : IClientService
 
     public async Task<IReadOnlyList<ClientDto>> GetClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
     {
+        if(firstName == null && lastName == null)
+        {
+            var clients = await _clientRepository.GetAllClientsAsync(cancellationToken);
+            var clientsDto = _mapper.Map<IReadOnlyList<ClientDto>>(clients);
+            return clientsDto ?? [];
+        }
         var clientEntity = await _clientRepository.SearchClientByNameAsync(firstName, lastName, cancellationToken, pageNumber, pageSize);
 
         var clientDtos = _mapper.Map<IReadOnlyList<ClientDto>>(clientEntity);

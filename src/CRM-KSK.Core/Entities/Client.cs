@@ -10,6 +10,6 @@ public class Client
     public string? ParentName { get; set; }
     public string? ParentPhone { get; set; }
 
-    public Membership? Membership { get; set; }
+    public List<Membership> Memberships { get; set; } = [];
     public List<Training> Trainings { get; set; } = [];
 }

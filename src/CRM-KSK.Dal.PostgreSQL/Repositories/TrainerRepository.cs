@@ -61,8 +61,6 @@ public class TrainerRepository : ITrainerRepository
             existingTrainer.DateOfBirth = trainer.DateOfBirth;
             existingTrainer.Phone = trainer.Phone;
             existingTrainer.Color = trainer.Color;
-
-            _context.Trainers.Update(existingTrainer);
         }
         await _context.SaveChangesAsync(token);
     }
