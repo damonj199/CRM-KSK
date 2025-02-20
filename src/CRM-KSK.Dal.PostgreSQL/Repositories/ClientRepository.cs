@@ -26,7 +26,7 @@ public class ClientRepository : IClientRepository
 
     public async Task<Client> GetClientById(Guid id, CancellationToken token)
     {
-        var client = await _context.Clients.FindAsync(id, token);
+        var client = await _context.Clients.Include(m => m.Memberships).FirstOrDefaultAsync(c => c.Id == id, token);
         return client;
     }
 
@@ -34,6 +34,15 @@ public class ClientRepository : IClientRepository
     {
         var person = await _context.BirthDays.ToListAsync(token);
         return person;
+    }
+
+    public async Task<List<Client>> GetAllClientsAsync(CancellationToken token)
+    {
+        var clients = await _context.Clients
+            .Include(m => m.Memberships)
+            .ToListAsync(token);
+
+        return clients ?? [];
     }
 
     public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
@@ -82,8 +91,6 @@ public class ClientRepository : IClientRepository
             existingClient.DateOfBirth = client.DateOfBirth;
             existingClient.ParentName = client.ParentName;
             existingClient.ParentPhone = client.ParentPhone;
-
-            _context.Clients.Update(existingClient);
         }
         await _context.SaveChangesAsync(token);
     }

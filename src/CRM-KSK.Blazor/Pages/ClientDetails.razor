@@ -2,6 +2,7 @@
 @inject ClientStateService _clientState
 @inject NavigationManager _navigation
 @inject ClientServiceBlazor _clientService
+@inject MembershipServiceBlazor _membershipService
 
 <h3>Подробная информация о клиенте</h3>
 
@@ -37,15 +38,63 @@
         {
             <p><strong>Имя:</strong> @client.FirstName</p>
             <p><strong>Фамилия:</strong> @client.LastName</p>
-            <p><strong>Телефон:</strong> +7 @client.Phone</p>
+            <p><strong>Телефон:</strong> @FormatPhoneNumber(client.Phone)</p>
             <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
+
             <h5>Данные о родителях</h5>
             <p><strong>Родитель:</strong> @client.ParentName</p>
-            <p><strong>Телефон родителя:</strong>+7 @client.ParentPhone</p>
+            <p><strong>Телефон родителя:</strong>@FormatPhoneNumber(client.ParentPhone)</p>
+            @if (Memberships.Any())
+            {
+                <ul>
+                    @foreach (var membership in Memberships)
+                    {
+                        <li>
+                            <strong>Статус:</strong> @membership.StatusMembership<br />
+                            <strong>Дата начала:</strong> @membership.DateStart<br />
+                            <strong>Дата окончания:</strong> @membership.DateEnd<br />
+                            <strong>Тренировки:</strong> @membership.AmountTraining<br />
+                            <strong>Тип:</strong> @membership.TypeTrainings.GetDisplayName()
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>Абонементов пока нет.</p>
+            }
 
-            <button class="btn btn-primary mt-3" @onclick="EditTrainer">Изменить</button>
+            <button class="btn btn-success" @onclick="() => IsModalOpen = true" >Добавить абонемент</button>
+            <button class="btn btn-primary mt-2" @onclick="EditTrainer">Изменить</button>
         }
     </div>
+    @if (IsModalOpen)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <h4>Добавить абонемент</h4>
+                <label>Дата начала:</label>
+                <input type="date" @bind="NewMembership.DateStart" />
+
+                <label>Дата окончания:</label>
+                <input type="date" @bind="NewMembership.DateEnd" />
+
+                <label>Количество тренировок:</label>
+                <input type="number" @bind="NewMembership.AmountTraining" />
+
+                <label>Тип тренировок:</label>
+                <select @bind="NewMembership.TypeTrainings">
+                    @foreach (var type in Enum.GetValues(typeof(TypeTrainings)))
+                    {
+                        <option value="@type">@((type as Enum).GetDisplayName())</option>
+                    }
+                </select>
+
+                <button @onclick="AddMembership" class="btn btn-success mt-2">Сохранить</button>
+                <button @onclick="() => IsModalOpen = false" class="btn btn-secondary mt-2">Отмена</button>
+            </div>
+        </div>
+    }
 }
 else
 {
@@ -56,7 +105,30 @@ else
 @code {
 
     private bool IsEditing = false;
+    private bool IsModalOpen = false;
+    private bool IsVisible = false;
+
+    private MembershipDto NewMembership = new();
+    private List<MembershipDto> Memberships = [];
     private ClientDto? OriginalClientCopy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_clientState.SelectedClient == null)
+        {
+            Console.WriteLine("Ошибка id == null");
+            return;
+        }
+        Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
+    }
+
+    private async Task AddMembership()
+    {
+        NewMembership.ClientId = _clientState.SelectedClient.Id;
+        await _membershipService.AddMembership(NewMembership);
+        Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
+        IsModalOpen = false;
+    }
 
     private void EditTrainer()
     {
@@ -101,6 +173,14 @@ else
             _clientState.SelectedClient.ParentPhone = OriginalClientCopy.ParentPhone;
         }
         IsEditing = false;
+    }
+
+    private string FormatPhoneNumber(string phone)
+    {
+        if (string.IsNullOrEmpty(phone) || phone.Length != 10)
+            return phone;
+
+        return $"+7 ({phone.Substring(0, 3)}) {phone.Substring(3, 3)}-{phone.Substring(6, 2)}-{phone.Substring(8, 2)}";
     }
 
     private void GoBack()

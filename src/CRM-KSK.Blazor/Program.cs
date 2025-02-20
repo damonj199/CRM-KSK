@@ -12,6 +12,7 @@ builder.Services.AddScoped<ClientServiceBlazor>();
 builder.Services.AddScoped<TrainerServiceBlazor>();
 builder.Services.AddScoped<ScheduleServiceBlazor>();
 builder.Services.AddScoped<TrainingServiceBlazor>();
+builder.Services.AddScoped<MembershipServiceBlazor>();
 builder.Services.AddSingleton<ClientStateService>();
 builder.Services.AddSingleton<TrainerStateService>();
 

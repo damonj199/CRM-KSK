@@ -38,7 +38,7 @@
             <p><strong>Имя:</strong> @trainer.FirstName</p>
             <p><strong>Фамилия:</strong> @trainer.LastName</p>
             <p><strong>Отчество:</strong> @trainer.Surname</p>
-            <p><strong>Телефон:</strong> +7 @trainer.Phone</p>
+            <p><strong>Телефон:</strong> @FormatPhoneNumber(trainer.Phone)</p>
             <p><strong>Дата рождения:</strong> @trainer.DateOfBirth.ToShortDateString()</p>
             <p><strong>Цвет:</strong> <span class="color-box" style="background-color: @trainer.Color;"></span></p>
 
@@ -99,6 +99,11 @@ else
             _trainerState.SelectedTrainer.Color = OriginalTrainerCopy.Color;
         }
         IsEditing = false;
+    }
+
+    private string FormatPhoneNumber(string phone)
+    {
+        return $"+7 ({phone.Substring(0, 3)}) {phone.Substring(3, 3)}-{phone.Substring(6, 2)}-{phone.Substring(8, 2)}";
     }
 
     private void GoBack()

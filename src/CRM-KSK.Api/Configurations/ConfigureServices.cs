@@ -43,6 +43,8 @@ public static class ConfigureServices
         services.AddScoped<ITrainerRepository, TrainerRepository>();
         services.AddScoped<ITrainingService, TrainingService>();
         services.AddScoped<ITrainingRepository, TrainingRepository>();
+        services.AddScoped<IMembershipService, MembershipService>();
+        services.AddScoped<IMembershipRepository, MembershipRepository>();
         services.AddScoped<IScheduleService, ScheduleService>();
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();

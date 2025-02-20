@@ -9,9 +9,8 @@ internal sealed class ClientTypeBuilder : IEntityTypeConfiguration<Client>
     public void Configure(EntityTypeBuilder<Client> builder)
     {
         builder
-            .HasOne(c => c.Membership)
+            .HasMany(c => c.Memberships)
             .WithOne(m => m.Client)
-            .HasForeignKey<Membership>(m => m.ClientId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
