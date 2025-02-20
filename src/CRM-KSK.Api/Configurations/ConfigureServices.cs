@@ -47,5 +47,7 @@ public static class ConfigureServices
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddSingleton<IProcessBirthdays, ProcessBirthdays>();
+        services.AddHostedService<BirthdayNotificationBackgroundService>();
     }
 }

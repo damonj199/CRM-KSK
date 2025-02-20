@@ -37,6 +37,12 @@ public class ClientServiceBlazor
         return response ?? [];
     }
 
+    public async Task<List<BirthdayDto>> GetFromAllBodAsync()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<BirthdayDto>>("api/Clients/birthdays");
+        return response ?? [];
+    }
+
     public async Task<string> AddClientAsync(ClientDto clientDto)
     {
         var response = await _httpClient.PostAsJsonAsync("api/Clients", clientDto);

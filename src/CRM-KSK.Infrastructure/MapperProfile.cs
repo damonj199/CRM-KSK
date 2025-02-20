@@ -27,5 +27,6 @@ public class MapperProfile : Profile
             .ForMember(dest => dest.Clients, opt => opt.MapFrom(src => src.ClientsName));
         CreateMap<ScheduleFullDto, Schedule>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.ScheduleId));
+        CreateMap<BirthdayNotification, BirthdayDto>().ReverseMap();
     }
 }

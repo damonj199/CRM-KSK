@@ -45,11 +45,11 @@ public class ClientsController : ControllerBase
         return Ok(client);
     }
 
-    [HttpDelete("{Phone}")]
-    public async Task<IActionResult> DeleteClient(string phone, CancellationToken cancellationToken)
+    [HttpGet("birthdays")]
+    public async Task<IActionResult> GetAllFromBod(CancellationToken token)
     {
-        await _clientService.DeleteClientAsync(phone, cancellationToken);
-        return Ok(new { message = "Удалено" });
+        var birthdays = await _clientService.GetAllFromBodAsync(token);
+        return Ok(birthdays);
     }
 
     [HttpGet("{id:guid}")]
@@ -67,5 +67,12 @@ public class ClientsController : ControllerBase
     {
         await _clientService.UpdateClientInfo(clientDto, token);
         return Ok();
+    }
+
+    [HttpDelete("{Phone}")]
+    public async Task<IActionResult> DeleteClient(string phone, CancellationToken cancellationToken)
+    {
+        await _clientService.DeleteClientAsync(phone, cancellationToken);
+        return Ok(new { message = "Удалено" });
     }
 }
