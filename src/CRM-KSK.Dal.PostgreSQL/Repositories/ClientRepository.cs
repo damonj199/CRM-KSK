@@ -30,6 +30,12 @@ public class ClientRepository : IClientRepository
         return client;
     }
 
+    public async Task<List<BirthdayNotification>> GetAllFromBodAsync(CancellationToken token)
+    {
+        var person = await _context.BirthDays.ToListAsync(token);
+        return person;
+    }
+
     public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
     {
         var query = _context.Clients.AsNoTracking().AsQueryable();

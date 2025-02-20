@@ -44,6 +44,18 @@ public class ClientService : IClientService
         return clientDto;
     }
 
+    public async Task<List<BirthdayDto>> GetAllFromBodAsync(CancellationToken token)
+    {
+        var person = await _clientRepository.GetAllFromBodAsync(token);
+        if(person != null)
+        {
+            var personDto = _mapper.Map<List<BirthdayDto>>(person);
+            return personDto;
+        }
+
+        return [];
+    }
+
     public async Task<IReadOnlyList<ClientDto>> GetClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
     {
         var clientEntity = await _clientRepository.SearchClientByNameAsync(firstName, lastName, cancellationToken, pageNumber, pageSize);

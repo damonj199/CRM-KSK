@@ -13,6 +13,7 @@ public class CRM_KSKDbContext : DbContext
     public DbSet<Training> Trainings { get; set; }
     public DbSet<Schedule> Schedules { get; set; }
     public DbSet<Trainer> Trainers { get; set; }
+    public DbSet<BirthdayNotification> BirthDays { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

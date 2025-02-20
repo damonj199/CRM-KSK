@@ -6,6 +6,7 @@ public interface IClientService
 {
     Task<string> AddClientAsync(ClientDto clientDto, CancellationToken cancellationToken);
     Task DeleteClientAsync(string phoneNumber, CancellationToken cancellationToken);
+    Task<List<BirthdayDto>> GetAllFromBodAsync(CancellationToken token);
     Task<ClientDto> GetClientById(Guid id, CancellationToken token);
     Task<IReadOnlyList<ClientDto>> GetClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10);
     Task UpdateClientInfo(ClientDto clientDto, CancellationToken token);
