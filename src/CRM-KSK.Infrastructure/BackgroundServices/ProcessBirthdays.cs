@@ -3,7 +3,7 @@ using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace CRM_KSK.Infrastructure;
+namespace CRM_KSK.Infrastructure.BackgroundServices;
 
 public class ProcessBirthdays : IProcessBirthdays
 {

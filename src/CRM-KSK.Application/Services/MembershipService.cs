@@ -19,9 +19,9 @@ public class MembershipService : IMembershipService
         _membershipRepository = membershipRepository;
     }
 
-    public async Task AddMembershipAsync(MembershipDto membershipDto, CancellationToken token)
+    public async Task AddMembershipAsync(List<MembershipDto> membershipsDto, CancellationToken token)
     {
-        var membership = _mapper.Map<Membership>(membershipDto);
+        var membership = _mapper.Map<List<Membership>>(membershipsDto);
         await _membershipRepository.AddMembershipAsync(membership, token);
     }
 
@@ -39,6 +39,14 @@ public class MembershipService : IMembershipService
         var membershipDto = _mapper.Map<MembershipDto>(membership);
 
         return membershipDto;
+    }
+
+    public async Task<List<MembershipDto>> GetExpiringMembershipsAsync(CancellationToken token)
+    {
+        var memberships = await _membershipRepository.GetExpiringMembershipAsync(token);
+        var membershipsDto = _mapper.Map<List<MembershipDto>>(memberships);
+
+        return membershipsDto ?? [];
     }
 
     public async Task UpdateMembershipAsync(MembershipDto membershipDto, CancellationToken token)
