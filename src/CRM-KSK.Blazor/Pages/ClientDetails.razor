@@ -29,10 +29,10 @@
             <input type="text" @bind="client.ParentName" />
 
             <label>Телофон родителя:</label>
-            <input type="text" @bind="client.ParentName" />
+            <input type="text" @bind="client.ParentPhone" />
 
-            <button class="btn btn-success mt-3" @onclick="SaveChanges">Сохранить</button>
-            <button class="btn btn-secondary mt-3" @onclick="CancelEdit">Отмена</button>
+            <button class="btn btn-success mt-2" @onclick="SaveChanges">Сохранить</button>
+            <button class="btn btn-secondary mt-2" @onclick="CancelEdit">Отмена</button>
         }
         else
         {
@@ -44,17 +44,23 @@
             <h5>Данные о родителях</h5>
             <p><strong>Родитель:</strong> @client.ParentName</p>
             <p><strong>Телефон родителя:</strong>@FormatPhoneNumber(client.ParentPhone)</p>
+
             @if (Memberships.Any())
             {
                 <ul>
                     @foreach (var membership in Memberships)
                     {
-                        <li>
-                            <strong>Статус:</strong> @membership.StatusMembership<br />
-                            <strong>Дата начала:</strong> @membership.DateStart<br />
-                            <strong>Дата окончания:</strong> @membership.DateEnd<br />
-                            <strong>Тренировки:</strong> @membership.AmountTraining<br />
-                            <strong>Тип:</strong> @membership.TypeTrainings.GetDisplayName()
+                        <li class="mb-2">
+                            <div>
+                                <strong>Статус:</strong> @membership.StatusMembership<br />
+                                <strong>Дата начала:</strong> @membership.DateStart<br />
+                                <strong>Дата окончания:</strong> @membership.DateEnd<br />
+                                <strong>Тренировки:</strong> @membership.AmountTraining<br />
+                                <strong>Тип:</strong> @membership.TypeTrainings.GetDisplayName()
+                                <button class="btn btn-link text-danger p-0 ms-2" title="Удалить абонемент"
+                                @onclick="() => ConfirmDelete(membership)"><strong>X</strong>
+                                </button>
+                            </div>
                         </li>
                     }
                 </ul>
@@ -68,6 +74,7 @@
             <button class="btn btn-primary mt-2" @onclick="EditTrainer">Изменить</button>
         }
     </div>
+
     @if (IsModalOpen)
     {
         <div class="modal-overlay">
@@ -102,6 +109,30 @@ else
 }
 <button class="btn btn-secondary mt-3" @onclick="GoBack">Назад</button>
 
+<style>
+    .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+    }
+
+    .modal-dialog {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 300px;
+    width: 100%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+</style>
+
 @code {
 
     private bool IsEditing = false;
@@ -109,6 +140,7 @@ else
     private bool IsVisible = false;
 
     private MembershipDto NewMembership = new();
+    private List<MembershipDto> NewMemberships = [];
     private List<MembershipDto> Memberships = [];
     private ClientDto? OriginalClientCopy;
 
@@ -125,9 +157,19 @@ else
     private async Task AddMembership()
     {
         NewMembership.ClientId = _clientState.SelectedClient.Id;
-        await _membershipService.AddMembership(NewMembership);
+        NewMemberships.Add(NewMembership);
+
+        await _membershipService.AddMembership(NewMemberships);
         Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
         IsModalOpen = false;
+        NewMemberships.Clear();
+    }
+
+    private async Task ConfirmDelete(MembershipDto membership)
+    {
+        Console.WriteLine("срабатывает");
+        await _membershipService.DeleteMembership(membership.Id);
+        StateHasChanged();
     }
 
     private void EditTrainer()

@@ -38,7 +38,7 @@ public class TrainersController : ControllerBase
     {
         var trainer = await _trainerService.GetTrainerByName(nameDto.FirstName, nameDto.LastName, cancellationToken);
         if (trainer == null)
-            return BadRequest(new { message = "тренер не найден" });
+            return NotFound(new { message = "тренер не найден" });
 
         return Ok(trainer);
     }

@@ -1,5 +1,6 @@
 ﻿using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Core.Entities;
+using CRM_KSK.Core.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace CRM_KSK.Dal.PostgreSQL.Repositories;
@@ -13,9 +14,9 @@ public class MembershipRepository : IMembershipRepository
         _context = context;
     }
 
-    public async Task AddMembershipAsync(Membership membership, CancellationToken token)
+    public async Task AddMembershipAsync(List<Membership> memberships, CancellationToken token)
     {
-        _context.Memberships.Add(membership);
+        _context.Memberships.AddRange(memberships);
         await _context.SaveChangesAsync(token);
     }
 
@@ -26,6 +27,30 @@ public class MembershipRepository : IMembershipRepository
             .ToListAsync(token);
 
         return memberships ?? [];
+    }
+
+    public async Task<Membership> GetMembershipByClientAndTypeAsync(Guid id, TypeTrainings type, CancellationToken token)
+    {
+        var membership = await _context.Memberships
+            .Where(c => c.ClientId == id
+                        && c.TypeTrainings == type)
+            .FirstOrDefaultAsync(token);
+
+        return membership;
+    }
+
+    public async Task<List<Membership>> GetExpiringMembershipAsync(CancellationToken token)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var expiringPeriod = today.AddDays(3);
+
+        var expiringMembership = await _context.Memberships
+            .Where(m => m.DateEnd <= expiringPeriod
+                || m.AmountTraining <= 2)
+            .Include(c => c.Client)
+            .ToListAsync(token);
+
+        return expiringMembership ?? [];
     }
 
     public async Task<Membership> GetMembershipByIdAsync(Guid id, CancellationToken token)

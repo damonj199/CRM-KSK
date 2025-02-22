@@ -16,12 +16,13 @@ public class ClientRepository : IClientRepository
         _logger = logger;
     }
 
-    public async Task AddClientAsync(Client client, CancellationToken cancellationToken)
+    public async Task<Guid> AddClientAsync(Client client, CancellationToken cancellationToken)
     {
         _logger.LogInformation("передаем клиента на добавление в БД");
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(cancellationToken); 
         _logger.LogInformation("Клиент добавлен!");
+        return client.Id;
     }
 
     public async Task<Client> GetClientById(Guid id, CancellationToken token)
@@ -36,7 +37,7 @@ public class ClientRepository : IClientRepository
         return person;
     }
 
-    public async Task<List<Client>> GetAllClientsAsync(CancellationToken token)
+    public async Task<List<Client>> GetAllClientsWithMembershipAsync(CancellationToken token)
     {
         var clients = await _context.Clients
             .Include(m => m.Memberships)

@@ -10,6 +10,7 @@ public class MembershipDto
     public int AmountTraining { get; set; }
     public StatusMembership StatusMembership { get; set; } = StatusMembership.Активный;
     public TypeTrainings TypeTrainings { get; set; } = TypeTrainings.Unknown;
-
+       
     public Guid ClientId { get; set; }
+    public ClientDto? Client { get; set; }
 }
