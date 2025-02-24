@@ -3,6 +3,7 @@ using System;
 using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    partial class CRM_KSKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250219124059_AddTableBirthdays")]
+    partial class AddTableBirthdays
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -125,9 +128,9 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnName("phone");
 
                     b.HasKey("Id")
-                        .HasName("pK_clients");
+                        .HasName("pK_client");
 
-                    b.ToTable("clients", (string)null);
+                    b.ToTable("client", (string)null);
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
@@ -163,12 +166,13 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnName("typeTrainings");
 
                     b.HasKey("Id")
-                        .HasName("pK_memberships");
+                        .HasName("pK_membership");
 
                     b.HasIndex("ClientId")
-                        .HasDatabaseName("iX_memberships_clientId");
+                        .IsUnique()
+                        .HasDatabaseName("iX_membership_clientId");
 
-                    b.ToTable("memberships", (string)null);
+                    b.ToTable("membership", (string)null);
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>
@@ -287,11 +291,11 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
                 {
                     b.HasOne("CRM_KSK.Core.Entities.Client", "Client")
-                        .WithMany("Membership")
-                        .HasForeignKey("ClientId")
+                        .WithOne("Membership")
+                        .HasForeignKey("CRM_KSK.Core.Entities.Membership", "ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fK_memberships_clients_clientId");
+                        .HasConstraintName("fK_membership_client_clientId");
 
                     b.Navigation("Client");
                 });
@@ -324,7 +328,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasForeignKey("ClientsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fK_clientTraining_clients_clientsId");
+                        .HasConstraintName("fK_clientTraining_client_clientsId");
 
                     b.HasOne("CRM_KSK.Core.Entities.Training", null)
                         .WithMany()

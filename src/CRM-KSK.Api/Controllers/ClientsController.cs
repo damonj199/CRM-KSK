@@ -31,6 +31,20 @@ public class ClientsController : ControllerBase
         }
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAllClients(CancellationToken token)
+    {
+        var clients = await _clientService.GetAllClientsAsync(token);
+        return Ok(clients);
+    }
+
+    [HttpGet("for-schedule")]
+    public async Task<IActionResult> GetClientsForSchedules(CancellationToken token)
+    {
+        var clients = await _clientService.GetClientsForScheduleAsync(token);
+        return Ok(clients);
+    }
+
     [HttpGet("by-name")]
     public async Task<IActionResult> GetClientByName(
         [FromQuery] string? firstName = null,
@@ -45,11 +59,11 @@ public class ClientsController : ControllerBase
         return Ok(client);
     }
 
-    [HttpDelete("{Phone}")]
-    public async Task<IActionResult> DeleteClient(string phone, CancellationToken cancellationToken)
+    [HttpGet("birthdays")]
+    public async Task<IActionResult> GetAllFromBod(CancellationToken token)
     {
-        await _clientService.DeleteClientAsync(phone, cancellationToken);
-        return Ok(new { message = "Удалено" });
+        var birthdays = await _clientService.GetAllFromBodAsync(token);
+        return Ok(birthdays);
     }
 
     [HttpGet("{id:guid}")]
@@ -67,5 +81,12 @@ public class ClientsController : ControllerBase
     {
         await _clientService.UpdateClientInfo(clientDto, token);
         return Ok();
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteClient(Guid id, CancellationToken cancellationToken)
+    {
+        await _clientService.DeleteClientAsync(id, cancellationToken);
+        return Ok(new { message = "Удалено" });
     }
 }

@@ -12,7 +12,7 @@ public class MapperProfile : Profile
         CreateMap<RegisterRequest, Admin>();
         CreateMap<Client, ClientDto>();
         CreateMap<ClientDto, Client>()
-            .ForMember(dest => dest.Membership, opt => opt.Ignore());
+            .ForMember(dest => dest.Memberships, opt => opt.Ignore());
         CreateMap<TrainerDto, Trainer>().ReverseMap();
         CreateMap<Training, TrainingDto>()
             .ForMember(dest => dest.TrainerName, opt => opt.MapFrom(src => src.Trainer))
@@ -27,5 +27,7 @@ public class MapperProfile : Profile
             .ForMember(dest => dest.Clients, opt => opt.MapFrom(src => src.ClientsName));
         CreateMap<ScheduleFullDto, Schedule>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.ScheduleId));
+        CreateMap<BirthdayNotification, BirthdayDto>().ReverseMap();
+        CreateMap<Membership, MembershipDto>().ReverseMap();
     }
 }

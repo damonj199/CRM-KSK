@@ -19,7 +19,7 @@
                 </div>
                 <div class="form-group">
                     <label for="phone">Телефон: +7 </label>
-                    <InputText id="phone" name="phone" @bind-Value="client.Phone" class="form-control" maxLength="10"/>
+                    <InputText id="phone" name="phone" @bind-Value="client.Phone" class="form-control" minLength="10" maxLength="10" />
                 </div>
                 <div class="form-group">
                     <label for="dob">Дата рождения:</label>
@@ -31,11 +31,12 @@
                     <InputText id="parentName" name="parentName" @bind-Value="client.ParentName" class="form-control" />
                 </div>
                 <div class="form-group">
-                    <label for="parentPhone">Телефон для связи:</label>
-                    <InputText id="parentPhone" name="parentPhone" @bind-Value="client.ParentPhone" class="form-control" />
+                    <label for="parentPhone">Телефон для связи: +7</label>
+                    <InputText id="parentPhone" name="parentPhone" @bind-Value="client.ParentPhone" class="form-control" minLength="10" maxLength="10" />
                 </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                <button type="button" class="btn btn-primary" @onclick="() => IsModalOpen = true">Добавить абонемент</button>
+                <div class="form-actions mt-2" >
+                    <button type="submit" class="btn btn-success">Сохранить</button>
                     <button type="button" class="btn btn-secondary" @onclick="CloseModal">Отмена</button>
                 </div>
 
@@ -47,12 +48,41 @@
         </div>
     </EditForm>
 }
+@if (IsModalOpen)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h4>Добавить абонемент</h4>
+            <label>Дата начала:</label>
+            <input type="date" @bind="NewMembership.DateStart" />
+
+            <label>Дата окончания:</label>
+            <input type="date" @bind="NewMembership.DateEnd" />
+
+            <label>Количество тренировок:</label>
+            <input type="number" @bind="NewMembership.AmountTraining" />
+
+            <label>Тип тренировок:</label>
+            <select @bind="NewMembership.TypeTrainings">
+                @foreach (var type in Enum.GetValues(typeof(TypeTrainings)))
+                {
+                    <option value="@type">@((type as Enum).GetDisplayName())</option>
+                }
+            </select>
+
+            <button @onclick="AddMembership" class="btn btn-success mt-2">Сохранить</button>
+            <button @onclick="() => IsModalOpen = false" class="btn btn-secondary mt-2">Отмена</button>
+        </div>
+    </div>
+}
 
 @code {
+    [Parameter] public bool IsModalOpen { get; set; }
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
     [Parameter] public EventCallback OnClientAdded { get; set; }
 
+    private MembershipDto NewMembership = new();
     private ClientDto client = new();
     private string message = string.Empty;
 
@@ -65,6 +95,12 @@
             await OnClientAdded.InvokeAsync();
             await CloseModal();
         }
+    }
+
+    private void AddMembership()
+    {
+        client.Memberships.Add(NewMembership);
+        IsModalOpen = false;
     }
 
     private async Task CloseModal()

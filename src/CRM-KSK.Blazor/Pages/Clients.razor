@@ -1,28 +1,81 @@
 ﻿@page "/clients"
+@inject NavigationManager _navigation
+@inject MembershipServiceBlazor _membershipService
+@inject ClientStateService _clientState
 
 <h3>Управление клиентами</h3>
 
 <div class="button-container">
     <button class="btn btn-primary" @onclick="ShowAddClientModal">Добавить клиента</button>
     <button class="btn btn-secondary" @onclick="ShowFindClientModal">Найти клиента</button>
-    <button class="btn btn-danger" @onclick="ShowDeleteClientModal">Удалить клиента</button>
 </div>
 
-<AddClientModal @bind-IsVisible="isAddClientModalVisible" OnClientAdded="OnClientAdded" />
+<AddClientModal @bind-IsVisible="isAddClientModalVisible" />
 <SearchClientModal @bind-IsVisible="isSearchClientModalVisible" />
-<DeleteClientModal @bind-IsVisible="isDeleteClientModalVisible" />
+
+<h4 class="text-center text-primary mb-4 mt-3">
+    Клиенты с заканчивающимися абонементами
+</h4>
+
+@if (SortedExpiringMemberships != null && SortedExpiringMemberships.Any())
+{
+    <div class="d-flex flex-wrap justify-content-center">
+        @foreach (var membership in SortedExpiringMemberships)
+        {
+            
+            var daysRemaining = (membership.DateEnd.ToDateTime(new TimeOnly(0, 0)) - DateTime.Today).Days;
+            bool highlight = (daysRemaining == 1 || membership.AmountTraining <= 1);
+            string cardClass = highlight ? "card border-danger mb-3" : "card mb-3";
+            <div class="@cardClass" style="width: 18rem; margin: 10px;" 
+                a href="/client-datails" @onclick="() => ShowClientDetails(membership.Client)">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        @membership.Client.FirstName @membership.Client.LastName
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">
+                        <strong>@membership.TypeTrainings.GetDisplayName()</strong>
+                    </h6>
+                    <p class="card-text">
+                        Осталось занятий: <strong>@membership.AmountTraining</strong><br />
+                        Дата окончания: <strong>@membership.DateEnd</strong>
+                    </p>
+                    @if (highlight)
+                    {
+                        <span class="badge bg-danger">Внимание!</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p class="text-center">Нет абонементов, заканчивающихся в ближайшее время.</p>
+}
 
 @code {
     private bool isAddClientModalVisible;
     private bool isSearchClientModalVisible;
-    private bool isDeleteClientModalVisible;
 
     private void ShowAddClientModal() => isAddClientModalVisible = true;
     private void ShowFindClientModal() => isSearchClientModalVisible = true;
-    private void ShowDeleteClientModal() => isDeleteClientModalVisible = true;
 
-    private void OnClientAdded()
+    private List<MembershipDto> SortedExpiringMemberships = [];
+
+    protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("Клиент добавлен.");
+        var expiringMemberships = await _membershipService.GetExpiringMemberships();
+
+        SortedExpiringMemberships = expiringMemberships
+        .OrderBy(m => m.DateEnd.Day)
+        .ThenBy(m => m.AmountTraining)
+        .ToList();
+    }
+
+    private void ShowClientDetails(ClientDto client)
+    {
+
+        _clientState.SelectedClient = client;
+        _navigation.NavigateTo("/client-details");
     }
 }

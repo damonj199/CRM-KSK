@@ -10,8 +10,8 @@ internal sealed class MemberschipTypeBuilder : IEntityTypeConfiguration<Membersh
     {
         builder
             .HasOne(m => m.Client)
-            .WithOne(c => c.Membership)
-            .HasForeignKey<Membership>(m => m.ClientId)
+            .WithMany(c => c.Memberships)
+            .HasForeignKey(m => m.ClientId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder
