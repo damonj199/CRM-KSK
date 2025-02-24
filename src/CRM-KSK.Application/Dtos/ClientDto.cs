@@ -22,4 +22,6 @@ public class ClientDto
 
     public string? ParentPhone { get; set; }
 
+    public List<MembershipDto> Memberships { get; set; } = [];
+
 }

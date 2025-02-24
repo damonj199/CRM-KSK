@@ -9,7 +9,7 @@ public class CRM_KSKDbContext : DbContext
 
     public DbSet<Admin> Admins { get; set; }
     public DbSet<Client> Clients { get; set; }
-    public DbSet<Client> Memberships { get; set; }
+    public DbSet<Membership> Memberships { get; set; }
     public DbSet<Training> Trainings { get; set; }
     public DbSet<Schedule> Schedules { get; set; }
     public DbSet<Trainer> Trainers { get; set; }

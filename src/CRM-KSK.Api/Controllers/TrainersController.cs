@@ -38,16 +38,9 @@ public class TrainersController : ControllerBase
     {
         var trainer = await _trainerService.GetTrainerByName(nameDto.FirstName, nameDto.LastName, cancellationToken);
         if (trainer == null)
-            return BadRequest(new { message = "тренер не найден" });
+            return NotFound(new { message = "тренер не найден" });
 
         return Ok(trainer);
-    }
-
-    [HttpDelete]
-    public async Task<IActionResult> DeleteTrainerAsync([FromQuery] string firstName, string lastName, CancellationToken cancellationToken)
-    {
-        await _trainerService.DeleteTrainer(firstName, lastName, cancellationToken);
-        return Ok(new { message = "Удалено" });
     }
 
     [HttpGet("{id:guid}")]
@@ -65,5 +58,12 @@ public class TrainersController : ControllerBase
     {
         await _trainerService.UpdateTrainerInfoAsync(trainerDto, token);
         return Ok();
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteTrainerAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await _trainerService.DeleteTrainer(id, cancellationToken);
+        return Ok(new { message = "Удалено" });
     }
 }
