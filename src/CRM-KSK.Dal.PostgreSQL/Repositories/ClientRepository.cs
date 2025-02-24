@@ -16,18 +16,42 @@ public class ClientRepository : IClientRepository
         _logger = logger;
     }
 
-    public async Task AddClientAsync(Client client, CancellationToken cancellationToken)
+    public async Task<Guid> AddClientAsync(Client client, CancellationToken cancellationToken)
     {
         _logger.LogInformation("передаем клиента на добавление в БД");
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(cancellationToken); 
         _logger.LogInformation("Клиент добавлен!");
+        return client.Id;
     }
 
     public async Task<Client> GetClientById(Guid id, CancellationToken token)
     {
-        var client = await _context.Clients.FindAsync(id, token);
+        var client = await _context.Clients.Include(m => m.Memberships).FirstOrDefaultAsync(c => c.Id == id, token);
         return client;
+    }
+
+    public async Task<List<BirthdayNotification>> GetAllFromBodAsync(CancellationToken token)
+    {
+        var person = await _context.BirthDays.ToListAsync(token);
+        return person;
+    }
+
+    public async Task<List<Client>> GetAllClientsAsync(CancellationToken token)
+    {
+        var clients = await _context.Clients.ToListAsync(token);
+
+        return clients ?? [];
+    }
+
+    public async Task<List<Client>> GetClientsForScheduleAsync(CancellationToken token)
+    {
+        var clients = await _context.Clients
+            .Include(c => c.Memberships)
+            .Where(m => m.Memberships.Any())
+            .ToListAsync(token);
+
+        return clients ?? [];
     }
 
     public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
@@ -52,8 +76,11 @@ public class ClientRepository : IClientRepository
         return client;
     }
 
-    public async Task DeleteClientAsync(Client client, CancellationToken cancellationToken)
+    public async Task DeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {
+        var client = new Client { Id = id };
+
+        _context.Clients.Attach(client);
         _context.Clients.Remove(client);
         await _context.SaveChangesAsync();
     }
@@ -76,8 +103,6 @@ public class ClientRepository : IClientRepository
             existingClient.DateOfBirth = client.DateOfBirth;
             existingClient.ParentName = client.ParentName;
             existingClient.ParentPhone = client.ParentPhone;
-
-            _context.Clients.Update(existingClient);
         }
         await _context.SaveChangesAsync(token);
     }

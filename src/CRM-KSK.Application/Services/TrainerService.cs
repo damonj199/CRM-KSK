@@ -45,15 +45,6 @@ public class TrainerService : ITrainerService
         return trainerDto;
     }
 
-    public async Task DeleteTrainer(string firstName, string lastName, CancellationToken cancellationToken)
-    {
-        var trainer = await _trainerRepository.GetTrainerByNameAsync(firstName, lastName, cancellationToken);
-        if (trainer == null)
-            throw new Exception("Тренер не найден");
-
-        await _trainerRepository.DeleteTraner(trainer, cancellationToken);
-    }
-
     public async Task<TrainerDto> GetTrainerByIdAsync(Guid id, CancellationToken token)
     {
         var trainer = await _trainerRepository.GetTrainerByIdAsync(id, token);
@@ -70,4 +61,8 @@ public class TrainerService : ITrainerService
         await _trainerRepository.UpdateTrainerInfoAsync(trainer, token);
     }
 
+    public async Task DeleteTrainer(Guid id, CancellationToken cancellationToken)
+    {
+        await _trainerRepository.DeleteTraner(id, cancellationToken);
+    }
 }

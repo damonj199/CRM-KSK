@@ -38,12 +38,6 @@ public class TrainerRepository : ITrainerRepository
         return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task DeleteTraner(Trainer trainer, CancellationToken cancellationToken)
-    {
-        _context.Trainers.Remove(trainer);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
     public async Task<Trainer> GetTrainerByIdAsync(Guid id, CancellationToken token)
     {
         var trainer = await _context.Trainers.FindAsync(id);
@@ -61,9 +55,16 @@ public class TrainerRepository : ITrainerRepository
             existingTrainer.DateOfBirth = trainer.DateOfBirth;
             existingTrainer.Phone = trainer.Phone;
             existingTrainer.Color = trainer.Color;
-
-            _context.Trainers.Update(existingTrainer);
         }
         await _context.SaveChangesAsync(token);
+    }
+
+    public async Task DeleteTraner(Guid id, CancellationToken cancellationToken)
+    {
+        var trainer = new Trainer { Id = id };
+
+        _context.Trainers.Attach(trainer);
+        _context.Trainers.Remove(trainer);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

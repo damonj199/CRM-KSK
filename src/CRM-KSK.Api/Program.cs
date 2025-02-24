@@ -1,21 +1,28 @@
 using CRM_KSK.Api.Configurations;
-using CRM_KSK.Dal.PostgreSQL;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
-using System;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        Path.Combine("logs", "myapp.txt"),
+        rollingInterval: RollingInterval.Day,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+    )
+    .CreateLogger();
+
+if (!Directory.Exists("logs"))
+{
+    Directory.CreateDirectory("logs");
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
-Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-            .Enrich.FromLogContext()
-            .WriteTo.Console()
-            .WriteTo.File("../logs/myapp.txt", rollingInterval: RollingInterval.Day,
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-            .CreateLogger();
 builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
 
 var isDev = builder.Environment.IsDevelopment();
 if (isDev)
@@ -49,14 +56,6 @@ app.UseCookiePolicy(new CookiePolicyOptions
     HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
     Secure = CookieSecurePolicy.Always
 });
-
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var dbContext = services.GetRequiredService<CRM_KSKDbContext>();
-
-    dbContext.Database.Migrate();
-}
 
 app.UseAuthentication();
 app.UseAuthorization();

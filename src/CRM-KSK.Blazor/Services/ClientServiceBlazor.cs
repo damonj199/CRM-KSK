@@ -1,5 +1,4 @@
 ﻿using CRM_KSK.Application.Dtos;
-using System;
 using System.Net.Http.Json;
 
 namespace CRM_KSK.Blazor.Services;
@@ -11,6 +10,18 @@ public class ClientServiceBlazor
     public ClientServiceBlazor(HttpClient httpClient)
     {
         _httpClient = httpClient;
+    }
+
+    public async Task<List<ClientDto>> GetAllClientsAsync()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients/");
+        return response ?? [];
+    }
+
+    public async Task<List<ClientDto>> GetClientsForSchedulesAsync()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients/for-schedule");
+        return response ?? [];
     }
 
     public async Task<IReadOnlyList<ClientDto>> GetClientsByNameAsync(string? firstName = null, string? lastName = null)
@@ -37,6 +48,12 @@ public class ClientServiceBlazor
         return response ?? [];
     }
 
+    public async Task<List<BirthdayDto>> GetFromAllBodAsync()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<BirthdayDto>>("api/Clients/birthdays");
+        return response ?? [];
+    }
+
     public async Task<string> AddClientAsync(ClientDto clientDto)
     {
         var response = await _httpClient.PostAsJsonAsync("api/Clients", clientDto);
@@ -52,9 +69,9 @@ public class ClientServiceBlazor
         }
     }
 
-    public async Task<bool> DeleteClientAsync(string phoneNumber)
+    public async Task<bool> DeleteClientAsync(Guid id)
     {
-        var response = await _httpClient.DeleteAsync($"api/Clients/{phoneNumber}");
+        var response = await _httpClient.DeleteAsync($"api/Clients/{id}");
         return response.IsSuccessStatusCode;
     }
 

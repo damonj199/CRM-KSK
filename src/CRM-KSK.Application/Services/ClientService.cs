@@ -3,20 +3,24 @@ using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Core.Entities;
 using Microsoft.Extensions.Logging;
+using System.Transactions;
 
 namespace CRM_KSK.Application.Services;
 
 public class ClientService : IClientService
 {
     private readonly IClientRepository _clientRepository;
+    private readonly IMembershipRepository _membershipRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ClientService> _logger;
 
-    public ClientService(IClientRepository clientRepository, IMapper mapper, ILogger<ClientService> logger)
+    public ClientService(IClientRepository clientRepository, IMapper mapper,
+        ILogger<ClientService> logger, IMembershipRepository membershipRepository)
     {
         _clientRepository = clientRepository;
         _mapper = mapper;
         _logger = logger;
+        _membershipRepository = membershipRepository;
     }
 
     public async Task<string> AddClientAsync(ClientDto clientDto, CancellationToken cancellationToken)
@@ -25,13 +29,32 @@ public class ClientService : IClientService
         var existingClient = await _clientRepository.ClientVerificationAsync(clientDto.Phone, cancellationToken);
 
         if (existingClient)
-            throw new InvalidOperationException("Клиент уже зарегистрирован");
+            return "Клиент уже зарегистрирован";
 
-        var clientEntity = _mapper.Map<Client>(clientDto);
+        var transactionOptions = new TransactionOptions
+        {
+            IsolationLevel = IsolationLevel.ReadCommitted
+        };
 
-        _logger.LogDebug("все проверки пройдены, добавляем нового клиента");
-        await _clientRepository.AddClientAsync(clientEntity, cancellationToken);
-        return clientEntity.FirstName;
+        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        {
+            var clientEntity = _mapper.Map<Client>(clientDto);
+            var newClientId = await _clientRepository.AddClientAsync(clientEntity, cancellationToken);
+
+            var membershipDto = clientDto.Memberships;
+
+            var memberships = _mapper.Map<List<Membership>>(clientDto.Memberships);
+
+            foreach(var membership in memberships)
+            {
+                membership.ClientId = newClientId;
+            }
+            await _membershipRepository.AddMembershipAsync(memberships, cancellationToken);
+
+            scope.Complete();
+
+            return clientEntity.FirstName;
+        }
     }
 
     public async Task<ClientDto> GetClientById(Guid id, CancellationToken token)
@@ -44,8 +67,42 @@ public class ClientService : IClientService
         return clientDto;
     }
 
+    public async Task<List<BirthdayDto>> GetAllFromBodAsync(CancellationToken token)
+    {
+        var person = await _clientRepository.GetAllFromBodAsync(token);
+        if(person != null)
+        {
+            var personDto = _mapper.Map<List<BirthdayDto>>(person);
+            return personDto;
+        }
+
+        return [];
+    }
+
+    public async Task<List<ClientDto>> GetAllClientsAsync(CancellationToken token)
+    {
+        var clients = await _clientRepository.GetAllClientsAsync(token);
+        var clientsDto = _mapper.Map<List<ClientDto>>(clients);
+
+        return clientsDto ?? [];
+    }
+
+    public async Task<List<ClientDto>> GetClientsForScheduleAsync(CancellationToken token)
+    {
+        var clients = await _clientRepository.GetClientsForScheduleAsync(token);
+        var clientsDto = _mapper.Map<List<ClientDto>>(clients);
+
+        return clientsDto ?? [];
+    }
+
     public async Task<IReadOnlyList<ClientDto>> GetClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
     {
+        if(firstName == null && lastName == null)
+        {
+            var clients = await _clientRepository.GetAllClientsAsync(cancellationToken);
+            var clientsDto = _mapper.Map<IReadOnlyList<ClientDto>>(clients);
+            return clientsDto ?? [];
+        }
         var clientEntity = await _clientRepository.SearchClientByNameAsync(firstName, lastName, cancellationToken, pageNumber, pageSize);
 
         var clientDtos = _mapper.Map<IReadOnlyList<ClientDto>>(clientEntity);
@@ -53,13 +110,9 @@ public class ClientService : IClientService
         return clientDtos ?? [];
     }
 
-    public async Task DeleteClientAsync(string phoneNumber, CancellationToken cancellationToken)
+    public async Task DeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {
-        var client = await _clientRepository.GetClientByPhoneNumberAsync(phoneNumber, cancellationToken);
-        if (client == null)
-            throw new Exception("Клиент с указанным номером телефона не найден.");
-
-        await _clientRepository.DeleteClientAsync(client, cancellationToken);
+        await _clientRepository.DeleteClientAsync(id, cancellationToken);
     }
 
     public async Task UpdateClientInfo(ClientDto  clientDto, CancellationToken token)
