@@ -12,6 +12,18 @@ public class ClientServiceBlazor
         _httpClient = httpClient;
     }
 
+    public async Task<List<ClientDto>> GetAllClientsAsync()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients/");
+        return response ?? [];
+    }
+
+    public async Task<List<ClientDto>> GetClientsForSchedulesAsync()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients/for-schedule");
+        return response ?? [];
+    }
+
     public async Task<IReadOnlyList<ClientDto>> GetClientsByNameAsync(string? firstName = null, string? lastName = null)
     {
         var url = "api/Clients/by-name";
@@ -57,9 +69,9 @@ public class ClientServiceBlazor
         }
     }
 
-    public async Task<bool> DeleteClientAsync(string phoneNumber)
+    public async Task<bool> DeleteClientAsync(Guid id)
     {
-        var response = await _httpClient.DeleteAsync($"api/Clients/{phoneNumber}");
+        var response = await _httpClient.DeleteAsync($"api/Clients/{id}");
         return response.IsSuccessStatusCode;
     }
 

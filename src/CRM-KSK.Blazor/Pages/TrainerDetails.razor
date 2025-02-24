@@ -50,6 +50,7 @@ else
 {
     <p class="alert alert-warning">Тренер не выбран. Перейдите на страницу <a href="/trainers">управления клиентами</a>.</p>
 }
+<button class="btn btn-danger mt-3" @onclick="DeleteTrainer">❌ Удалить тренера</button>
 <button class="btn btn-secondary mt-3" @onclick="GoBack">Назад</button>
 
 @code {
@@ -104,6 +105,12 @@ else
     private string FormatPhoneNumber(string phone)
     {
         return $"+7 ({phone.Substring(0, 3)}) {phone.Substring(3, 3)}-{phone.Substring(6, 2)}-{phone.Substring(8, 2)}";
+    }
+
+    private async Task DeleteTrainer()
+    {
+        await _trainerService.DeleteTrainer(_trainerState.SelectedTrainer.Id);
+        GoBack();
     }
 
     private void GoBack()

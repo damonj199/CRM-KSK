@@ -74,7 +74,9 @@
                 {
                     <option value="@client.Id">@client.FirstName @client.LastName - 
                     (@(client.Memberships.Any() ? string.Join(", ", client.Memberships
-                           .Select(m => m.TypeTrainings.GetDisplayName())) : " "))
+                           .Select(m => m.TypeTrainings.GetDisplayName())) : " ")) - 
+                        @(client.Memberships.Any() ? string.Join(", ", client.Memberships
+                        .Select(m => m.AmountTraining)) : " ")
                     </option>
                 }
             </select>
@@ -276,7 +278,7 @@
     private async Task LoadDataFromApi()
     {
         Trainers = await _trainerService.GetAllTrainers() ?? [];
-        Clients = await _clientService.GetClientsByNameAsync() ?? [];
+        Clients = await _clientService.GetClientsForSchedulesAsync() ?? [];
     }
 
     private async Task LoadScheduleFromApi()

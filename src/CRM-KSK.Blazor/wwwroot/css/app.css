@@ -45,11 +45,18 @@ h1:focus {
     animation: fadeIn 0.3s ease-in-out;
 }
 
+.search-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
 .modal-content {
     background: #fff;
     padding: 25px;
     border-radius: 12px;
-    width: 400px;
+    min-width: 400px;
+    width: auto;
     max-width: 90%;
     text-align: center;
     box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
