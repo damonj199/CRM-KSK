@@ -50,15 +50,15 @@
                 <ul>
                     @foreach (var membership in Memberships)
                     {
-                        <li class="mb-2">
+                        <li class="mb-1">
                             <div>
                                 <strong>Статус:</strong> @membership.StatusMembership<br />
                                 <strong>Дата начала:</strong> @membership.DateStart<br />
                                 <strong>Дата окончания:</strong> @membership.DateEnd<br />
                                 <strong>Тренировки:</strong> @membership.AmountTraining<br />
                                 <strong>Тип:</strong> @membership.TypeTrainings.GetDisplayName()
-                                <button class="btn btn-link text-danger p-0 ms-2" title="Удалить абонемент"
-                                @onclick="() => ConfirmDelete(membership)"><strong>X</strong>
+                                <button class="btn btn-danger mt-3" title="Удалить абонемент"
+                                @onclick="() => ConfirmDelete(membership)">Удалить
                                 </button>
                             </div>
                         </li>
@@ -74,6 +74,8 @@
             <button class="btn btn-primary mt-2" @onclick="EditTrainer">Изменить</button>
         }
     </div>
+
+    <button class="btn btn-danger mt-3" @onclick="() => IsDeleteConfirmOpen = true">❌ Удалить клиента</button>
 
     @if (IsModalOpen)
     {
@@ -99,6 +101,18 @@
 
                 <button @onclick="AddMembership" class="btn btn-success mt-2">Сохранить</button>
                 <button @onclick="() => IsModalOpen = false" class="btn btn-secondary mt-2">Отмена</button>
+            </div>
+        </div>
+    }
+
+    @if (IsDeleteConfirmOpen)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <h4>Подтверждение удаления</h4>
+                <p>Вы действительно хотите удалить клиента?</p>
+                <button class="btn btn-danger mt-2" @onclick="DeleteClient">Удалить</button>
+                <button class="btn btn-secondary mt-2" @onclick="() => IsDeleteConfirmOpen = false">Отмена</button>
             </div>
         </div>
     }
@@ -137,7 +151,7 @@ else
 
     private bool IsEditing = false;
     private bool IsModalOpen = false;
-    private bool IsVisible = false;
+    private bool IsDeleteConfirmOpen = false;
 
     private MembershipDto NewMembership = new();
     private List<MembershipDto> NewMemberships = [];
@@ -167,9 +181,16 @@ else
 
     private async Task ConfirmDelete(MembershipDto membership)
     {
-        Console.WriteLine("срабатывает");
         await _membershipService.DeleteMembership(membership.Id);
+        Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
         StateHasChanged();
+    }
+
+    private async Task DeleteClient()
+    {
+        await _clientService.DeleteClientAsync(_clientState.SelectedClient.Id);
+        IsDeleteConfirmOpen = false;
+        GoBack();
     }
 
     private void EditTrainer()

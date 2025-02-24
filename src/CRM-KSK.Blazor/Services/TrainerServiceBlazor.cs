@@ -59,12 +59,6 @@ public class TrainerServiceBlazor
         }
     }
 
-    public async Task<bool> DeleteTrainer(string firstName, string lastName)
-    {
-        var response = await _httpClient.DeleteAsync($"api/Trainers?firstName={firstName}&lastName={lastName}");
-        return response.IsSuccessStatusCode;
-    }
-
     public async Task<TrainerDto> GetTrainerBuId(Guid id)
     {
         var response = await _httpClient.GetFromJsonAsync<TrainerDto>($"api/Trainers/{id}");
@@ -74,6 +68,12 @@ public class TrainerServiceBlazor
     public async Task<bool> UpdateTrainerInfo(TrainerDto trainerDto)
     {
         var response = await _httpClient.PutAsJsonAsync($"api/Trainers", trainerDto);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> DeleteTrainer(Guid id)
+    {
+        var response = await _httpClient.DeleteAsync($"api/Trainers/{id}");
         return response.IsSuccessStatusCode;
     }
 }

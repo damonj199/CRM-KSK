@@ -79,11 +79,27 @@ public class ClientService : IClientService
         return [];
     }
 
+    public async Task<List<ClientDto>> GetAllClientsAsync(CancellationToken token)
+    {
+        var clients = await _clientRepository.GetAllClientsAsync(token);
+        var clientsDto = _mapper.Map<List<ClientDto>>(clients);
+
+        return clientsDto ?? [];
+    }
+
+    public async Task<List<ClientDto>> GetClientsForScheduleAsync(CancellationToken token)
+    {
+        var clients = await _clientRepository.GetClientsForScheduleAsync(token);
+        var clientsDto = _mapper.Map<List<ClientDto>>(clients);
+
+        return clientsDto ?? [];
+    }
+
     public async Task<IReadOnlyList<ClientDto>> GetClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
     {
         if(firstName == null && lastName == null)
         {
-            var clients = await _clientRepository.GetAllClientsWithMembershipAsync(cancellationToken);
+            var clients = await _clientRepository.GetAllClientsAsync(cancellationToken);
             var clientsDto = _mapper.Map<IReadOnlyList<ClientDto>>(clients);
             return clientsDto ?? [];
         }
@@ -94,13 +110,9 @@ public class ClientService : IClientService
         return clientDtos ?? [];
     }
 
-    public async Task DeleteClientAsync(string phoneNumber, CancellationToken cancellationToken)
+    public async Task DeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {
-        var client = await _clientRepository.GetClientByPhoneNumberAsync(phoneNumber, cancellationToken);
-        if (client == null)
-            throw new Exception("Клиент с указанным номером телефона не найден.");
-
-        await _clientRepository.DeleteClientAsync(client, cancellationToken);
+        await _clientRepository.DeleteClientAsync(id, cancellationToken);
     }
 
     public async Task UpdateClientInfo(ClientDto  clientDto, CancellationToken token)

@@ -1,5 +1,6 @@
 ﻿using CRM_KSK.Core.Entities;
 using CRM_KSK.Dal.PostgreSQL;
+using CRM_KSK.Dal.PostgreSQL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,22 @@ public class ProcessBirthdays : IProcessBirthdays
     public ProcessBirthdays(IServiceProvider service)
     {
         _service = service;
+    }
+
+    public async Task SeedClients(CancellationToken token)
+    {
+        using(var scope = _service.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<CRM_KSKDbContext>();
+
+            if (dbContext.Clients.Any())
+            {
+                var clients = ClientSeeder.GenerateClients(2000);
+                await dbContext.Clients.AddRangeAsync(clients);
+                await dbContext.SaveChangesAsync(token);
+            }
+        }
+
     }
 
     public async Task ProcessBodAsync(CancellationToken token)

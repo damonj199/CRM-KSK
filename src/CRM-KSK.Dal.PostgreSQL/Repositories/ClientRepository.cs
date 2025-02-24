@@ -37,10 +37,18 @@ public class ClientRepository : IClientRepository
         return person;
     }
 
-    public async Task<List<Client>> GetAllClientsWithMembershipAsync(CancellationToken token)
+    public async Task<List<Client>> GetAllClientsAsync(CancellationToken token)
+    {
+        var clients = await _context.Clients.ToListAsync(token);
+
+        return clients ?? [];
+    }
+
+    public async Task<List<Client>> GetClientsForScheduleAsync(CancellationToken token)
     {
         var clients = await _context.Clients
-            .Include(m => m.Memberships)
+            .Include(c => c.Memberships)
+            .Where(m => m.Memberships.Any())
             .ToListAsync(token);
 
         return clients ?? [];
@@ -68,8 +76,11 @@ public class ClientRepository : IClientRepository
         return client;
     }
 
-    public async Task DeleteClientAsync(Client client, CancellationToken cancellationToken)
+    public async Task DeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {
+        var client = new Client { Id = id };
+
+        _context.Clients.Attach(client);
         _context.Clients.Remove(client);
         await _context.SaveChangesAsync();
     }

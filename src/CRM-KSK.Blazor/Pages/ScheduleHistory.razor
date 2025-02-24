@@ -121,7 +121,7 @@
     protected override async Task OnInitializedAsync()
     {
         Trainers = await _trainerService.GetAllTrainers() ?? [];
-        Clients = await _clientService.GetClientsByNameAsync() ?? [];
+        Clients = await _clientService.GetAllClientsAsync() ?? [];
         FilteredClients = Clients;
 
         await LoadScheduleHistory();
