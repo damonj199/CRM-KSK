@@ -5,24 +5,15 @@
 <div class="button-container">
 <button class="btn btn-primary" @onclick="ShowAddTrainerModal">Добавить тренера</button>
 <button class="btn btn-secondary" @onclick="ShowFindTrainerModal">Найти тренера</button>
-<button class="btn btn-danger" @onclick="ShowDeleteTrainerModal">Удалить тренера</button>
 </div>
 
-<AddTrainerModal @bind-IsVisible="isAddTrainerModalVisible" OnTrainerAdded="OnTrainerAdded" />
+<AddTrainerModal @bind-IsVisible="isAddTrainerModalVisible" />
 <SearchTrainerModal @bind-IsVisible="isSearchTrainerModalVisible" />
-<DeleteTrainerModal @bind-IsVisible="isDeleteTrainerModalVisible" />
 
 @code {
     private bool isAddTrainerModalVisible;
     private bool isSearchTrainerModalVisible;
-    private bool isDeleteTrainerModalVisible;
 
     private void ShowAddTrainerModal() => isAddTrainerModalVisible = true;
     private void ShowFindTrainerModal() => isSearchTrainerModalVisible = true;
-    private void ShowDeleteTrainerModal() => isDeleteTrainerModalVisible = true;
-
-    private void OnTrainerAdded()
-    {
-        Console.WriteLine("Тренер добавлен.");
-    }
 }

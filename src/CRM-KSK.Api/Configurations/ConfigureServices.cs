@@ -3,6 +3,7 @@ using CRM_KSK.Application.Services;
 using CRM_KSK.Dal.PostgreSQL;
 using CRM_KSK.Dal.PostgreSQL.Repositories;
 using CRM_KSK.Infrastructure;
+using CRM_KSK.Infrastructure.BackgroundServices;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -43,11 +44,14 @@ public static class ConfigureServices
         services.AddScoped<ITrainerRepository, TrainerRepository>();
         services.AddScoped<ITrainingService, TrainingService>();
         services.AddScoped<ITrainingRepository, TrainingRepository>();
+        services.AddScoped<IMembershipService, MembershipService>();
+        services.AddScoped<IMembershipRepository, MembershipRepository>();
         services.AddScoped<IScheduleService, ScheduleService>();
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IProcessBirthdays, ProcessBirthdays>();
+        services.AddSingleton<IWorkWithMembership, WorkWithMembership>();
         services.AddHostedService<BirthdayNotificationBackgroundService>();
     }
 }

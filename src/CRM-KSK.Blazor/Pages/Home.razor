@@ -22,10 +22,11 @@ else
             <div class="birthday-card @(IsBirthdayToday(birthday) ? "today" : (IsBirthdayPassed(birthday) ? "passed" : ""))">
                 <h4>@birthday.Name</h4>
                 <p>
-                    <strong>Дата рождения:</strong>
+                    <strong>Дата рождения:</strong><br />
                     @birthday.Birthday.ToString("dd MMMM", new CultureInfo("ru-RU"))
                 </p>
-                <p><strong>Телефон: </strong> +7 @birthday.Phone</p>
+                <p><strong>Телефон:</strong><br />
+                    @FormatPhoneNumber(birthday.Phone)</p>
                 <p><strong>Тип:</strong> @birthday.PersonType</p>
             </div>
         }
@@ -35,49 +36,49 @@ else
 <style>
 
     .birthday-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        margin-top: 20px;
-        justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 20px;
+    justify-content: center;
     }
 
     .birthday-card {
-        background: #e0f7fa;
-        border: 1px solid #b2ebf2;
-        border-radius: 8px;
-        padding: 16px;
-        width: 220px;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
+    background: #e0f7fa;
+    border: 1px solid #b2ebf2;
+    border-radius: 8px;
+    padding: 16px;
+    width: 220px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
     }
 
-        .birthday-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        
-        .birthday-card.today {
-            background: #ffecb3; 
-            border: 2px solid #ffc107;
-        }
-        
-        .birthday-card.passed {
-            background: #e0e0e0;
-            border: 1px solid #bdbdbd;
-            color: #757575;
-        }
+    .birthday-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
 
-        .birthday-card h4 {
-            margin-bottom: 8px;
-            color: #00796b;
-        }
+    .birthday-card.today {
+    background: #ffecb3; 
+    border: 2px solid #ffc107;
+    }
 
-        .birthday-card p {
-            margin: 4px 0;
-            color: #004d40;
-        }
+    .birthday-card.passed {
+    background: #e0e0e0;
+    border: 1px solid #bdbdbd;
+    color: #757575;
+    }
+
+    .birthday-card h4 {
+    margin-bottom: 8px;
+    color: #00796b;
+    }
+
+    .birthday-card p {
+    margin: 4px 0;
+    color: #004d40;
+    }
 </style>
 
 @code {
@@ -102,5 +103,10 @@ else
         var today = DateTime.Today;
 
         return birthday.Birthday.Month == today.Month && birthday.Birthday.Day < today.Day;
+    }
+
+    private string FormatPhoneNumber(string phone)
+    {
+        return $"+7 ({phone.Substring(0, 3)}) {phone.Substring(3, 3)}-{phone.Substring(6, 2)}-{phone.Substring(8, 2)}";
     }
 }
