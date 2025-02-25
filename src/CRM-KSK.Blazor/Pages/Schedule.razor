@@ -7,8 +7,23 @@
 @inject ClientStateService _clientState
 @inject NavigationManager _navigation
 
-<h3>Расписание тренировок</h3>
-<a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
+<div class="row align-items-center mb-3">
+    <div class="col-4">
+        <a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
+    </div>
+    <div class="col-4 text-center">
+        <h3>Расписание тренировок</h3>
+    </div>
+    <div class="col-4 text-end">
+        <button class="btn btn-secondary me-2" @onclick="LoadPreviousWeek" disabled="@(!CanLoadPreviousWeek)">
+            &#8592;
+        </button>
+        <button class="btn btn-secondary" @onclick="LoadNextWeek">
+            &#8594;
+        </button>
+    </div>
+</div>
+
 
 <div class="table-conrainer">
     <table class="schedule-table">
@@ -215,6 +230,8 @@
 
 @code {
     [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    private DateTime currentWeekStart;
+
 
     private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "22:00");
     private List<string> DaysOfWeekWithDates = new();
@@ -244,6 +261,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        currentWeekStart = GetStartOfWeek(DateTime.Today, DateTime.Today.DayOfWeek);
         GenerateDaysOfWeekWithDates();
         await LoadDataFromApi();
         await LoadScheduleFromApi();
@@ -269,10 +287,38 @@
 
     private void GenerateDaysOfWeekWithDates()
     {
-        var today = DateTime.Today;
         DaysOfWeekWithDates = Enumerable.Range(0, 7)
-            .Select(i => today.AddDays(i).ToString("dddd, dd MMMM"))
+            .Select(i => currentWeekStart.AddDays(i).ToString("dddd, dd MMMM"))
             .ToList();
+    }
+
+    private async Task LoadNextWeek()
+    {
+        currentWeekStart = currentWeekStart.AddDays(7);
+        GenerateDaysOfWeekWithDates();
+        await LoadScheduleFromApi();
+        EnsureScheduleDataInitialized();
+    }
+
+    private bool CanLoadPreviousWeek => currentWeekStart > GetStartOfWeek(DateTime.Today, DateTime.Today.DayOfWeek);
+
+    private async Task LoadPreviousWeek()
+    {
+        var newWeekStart = currentWeekStart.AddDays(-7);
+        if (newWeekStart < GetStartOfWeek(DateTime.Today, DateTime.Today.DayOfWeek))
+        {
+            return;
+        }
+        currentWeekStart = newWeekStart;
+        GenerateDaysOfWeekWithDates();
+        await LoadScheduleFromApi();
+        EnsureScheduleDataInitialized();
+    }
+
+    private DateTime GetStartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.AddDays(-diff).Date;
     }
 
     private async Task LoadDataFromApi()
@@ -283,7 +329,7 @@
 
     private async Task LoadScheduleFromApi()
     {
-        Schedules = await _scheduleService.GetWeeksSchedule();
+        Schedules = await _scheduleService.GetWeeksSchedule(currentWeekStart);
         ScheduleData.Clear();
         LoadUI();
     }

@@ -15,12 +15,11 @@ public class ScheduleService : IScheduleService
         _mapper = mapper;
     }
 
-    public async Task<IReadOnlyList<ScheduleDto>> GetWeeksSchedule(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ScheduleDto>> GetWeeksSchedule(DateOnly weekStart, CancellationToken cancellationToken)
     {
-        var startOfWeek = DateOnly.FromDateTime(DateTime.Today);
-        var endOfWeek = startOfWeek.AddDays(6);
+        var endOfWeek = weekStart.AddDays(6);
 
-        var schedules = await _scheduleRepository.GetWeeksSchedule(startOfWeek, endOfWeek, cancellationToken);
+        var schedules = await _scheduleRepository.GetWeeksSchedule(weekStart, endOfWeek, cancellationToken);
         var scheduleDto = _mapper.Map<IReadOnlyList<ScheduleDto>>(schedules);
 
         return scheduleDto ?? [];
