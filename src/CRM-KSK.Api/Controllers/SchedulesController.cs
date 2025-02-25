@@ -16,9 +16,9 @@ public class SchedulesController : ControllerBase
     }
 
     [HttpGet("week")]
-    public async Task<ActionResult<List<ScheduleDto>>> GetWeeksScheduleAsync(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<ScheduleDto>>> GetWeeksScheduleAsync([FromQuery] DateOnly weekStart, CancellationToken cancellationToken)
     {
-        var schedules = await _scheduleService.GetWeeksSchedule(cancellationToken);
+        var schedules = await _scheduleService.GetWeeksSchedule(weekStart, cancellationToken);
         return Ok(schedules);
     }
 
