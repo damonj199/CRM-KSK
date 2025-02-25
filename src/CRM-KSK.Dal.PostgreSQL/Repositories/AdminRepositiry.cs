@@ -13,14 +13,14 @@ public class AdminRepositiry : IAdminRepository
         _context = context;
     }
 
-    public async Task<Admin> AddAdmin(Guid id, string firstName, string lastName, string email, string passwordHash, CancellationToken cancellationToken)
+    public async Task<Admin> AddAdmin(Guid id, string firstName, string lastName, string phone, string passwordHash, CancellationToken cancellationToken)
     {
         var adminEntity = new Admin()
         {
             Id = id,
             FirstName = firstName,
             LastName = lastName,
-            Email = email,
+            Phone = phone,
             PasswordHash = passwordHash
         };
         await _context.Admins.AddAsync(adminEntity);
@@ -29,11 +29,11 @@ public class AdminRepositiry : IAdminRepository
         return adminEntity;
     }
 
-    public async Task<Admin> GetByEmail(string email)
+    public async Task<Admin> GetByPhone(string phone, CancellationToken cancellationToken)
     {
         var admin = await _context.Admins
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Email == email);
+            .FirstOrDefaultAsync(x => x.Phone == phone);
 
         return admin;
     }

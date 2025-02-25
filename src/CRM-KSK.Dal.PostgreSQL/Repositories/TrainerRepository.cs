@@ -38,6 +38,14 @@ public class TrainerRepository : ITrainerRepository
         return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<Trainer> GetTrainerByPhone(string phone, CancellationToken token)
+    {
+        var trainer = await _context.Trainers
+            .FirstOrDefaultAsync(t => t.Phone == phone);
+
+        return trainer;
+    }
+
     public async Task<Trainer> GetTrainerByIdAsync(Guid id, CancellationToken token)
     {
         var trainer = await _context.Trainers.FindAsync(id);

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CRM_KSK.Core.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace CRM_KSK.Application.Dtos;
 
@@ -14,5 +15,7 @@ public class AdminDto
     public string PasswordHash { get; set; }
 
     [Required]
-    public string Email { get; set; }
+    public string Phone { get; set; }
+
+    public Roles Role { get; set; } = Roles.Admin;
 }

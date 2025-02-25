@@ -1,4 +1,5 @@
 using CRM_KSK.Api.Configurations;
+using CRM_KSK.Api.Extensions;
 using Serilog;
 using Serilog.Events;
 
@@ -37,6 +38,7 @@ builder.Host.UseDefaultServiceProvider(options =>
 });
 
 builder.Services.ConfigureService(builder.Configuration);
+builder.Services.AddApiAuthentication(builder.Configuration);
 
 var app = builder.Build();
 

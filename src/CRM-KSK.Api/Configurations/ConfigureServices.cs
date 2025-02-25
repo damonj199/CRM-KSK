@@ -1,4 +1,5 @@
-﻿using CRM_KSK.Application.Interfaces;
+﻿using CRM_KSK.Api.Extensions;
+using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Application.Services;
 using CRM_KSK.Dal.PostgreSQL;
 using CRM_KSK.Dal.PostgreSQL.Repositories;
@@ -13,6 +14,8 @@ public static class ConfigureServices
 {
     public static void ConfigureService(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
+
         services.AddControllers().AddJsonOptions(options =>
         {
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -25,7 +28,6 @@ public static class ConfigureServices
                     .AllowAnyHeader()
                     .AllowAnyMethod());
         });
-        services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();

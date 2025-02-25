@@ -1,5 +1,6 @@
 ﻿using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Application.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
@@ -16,6 +17,7 @@ public class AdminsController : ControllerBase
     }
 
     [HttpPost("register")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> Register([FromQuery] RegisterRequest registerRequest, CancellationToken cancellationToken)
     {
         var result = await _adminService.RegisterAsync(registerRequest, cancellationToken);
@@ -28,7 +30,7 @@ public class AdminsController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromQuery] LoginRequest loginRequest, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest, CancellationToken cancellationToken)
     {
         var result = await _adminService.LoginAsync(loginRequest, cancellationToken);
 
