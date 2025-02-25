@@ -12,9 +12,10 @@ public class ScheduleServiceBlazor
         _httpClient = httpClient;
     }
 
-    public async Task<IReadOnlyList<ScheduleDto>> GetWeeksSchedule()
+    public async Task<IReadOnlyList<ScheduleDto>> GetWeeksSchedule(DateTime weekStart)
     {
-        var schedule = await _httpClient.GetFromJsonAsync<IReadOnlyList<ScheduleDto>>("api/Schedules/week");
+        DateOnly start = DateOnly.FromDateTime(weekStart);
+        var schedule = await _httpClient.GetFromJsonAsync<IReadOnlyList<ScheduleDto>>($"api/Schedules/week?weekStart={start:yyyy-MM-dd}");
 
         return schedule ?? [];
     }
