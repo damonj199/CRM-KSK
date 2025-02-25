@@ -10,4 +10,5 @@ public interface ITrainerRepository
     Task DeleteTraner(Guid id, CancellationToken cancellationToken);
     Task<Trainer> GetTrainerByIdAsync(Guid id, CancellationToken token);
     Task UpdateTrainerInfoAsync(Trainer trainer, CancellationToken token);
+    Task<Trainer> GetTrainerByPhone(string phone, CancellationToken token);
 }
