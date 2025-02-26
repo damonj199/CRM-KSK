@@ -1,16 +1,98 @@
-﻿@inherits LayoutComponentBase
+﻿@using System.Security.Claims
+@inherits LayoutComponentBase
+@inject HttpClient _http
+@inject IJSRuntime JSRuntime
+@inject NavigationManager _navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
-
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        <div class="top-row">
+            <AuthorizeView>
+                <Authorized>
+                    <div class="welcome-message">
+                        <h3>Добро пожаловать, @context.User.Identity.Name!</h3>
+                        <p>Ваша роль: @context.User.FindFirst(ClaimTypes.Role)?.Value</p>
+                    </div>
+                    <button class="btn btn-danger logout-button" @onclick="Logout">Выйти</button>
+                </Authorized>
+                <NotAuthorized>
+                    <p>Пожалуйста,<a href="/login">войдите</a> в систему.</p>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
-
+        
         <article class="content px-4">
             @Body
         </article>
     </main>
 </div>
+
+<style>
+    .top-row {
+        background-color: #f8f9fa;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .welcome-message {
+        text-align: center;
+        flex-grow: 1;
+    }
+
+        .welcome-message h3 {
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        .welcome-message p {
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+    .logout-button {
+        margin-left: auto;
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+
+    @@media (max-width: 768px) {
+        .top-row {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .logout-button {
+            margin-top: 10px;
+            margin-left: 0;
+        }
+    }
+</style>
+
+@code {
+
+    private async Task Logout()
+    {
+        await _http.PostAsync("api/Admins/logout", null);
+        await ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserLogoutAsync();
+
+        _navigation.NavigateTo("/login", true);
+    }
+}

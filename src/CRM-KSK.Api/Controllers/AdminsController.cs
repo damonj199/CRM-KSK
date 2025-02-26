@@ -1,6 +1,7 @@
 ﻿using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Application.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
@@ -36,10 +37,23 @@ public class AdminsController : ControllerBase
 
         if (result.Succeeded)
         {
-            HttpContext.Response.Cookies.Append("jwt", result.Token);
-            return Ok(new { token = result.Token });
+            HttpContext.Response.Cookies.Append("jwt", result.Token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddHours(1)
+            });
+            return Ok(new { result.Token });
         }
-
         return Unauthorized(new { message = result.ErrorMessage });
     }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete("jwt");
+        return Ok();
+    }
+
 }

@@ -19,6 +19,7 @@ public class JwtProvider : IJwtProvider
     {
         var claims = new List<Claim>
         {
+            new Claim(ClaimTypes.Name, user.FirstName),
             new Claim(ClaimTypes.Role, user.Role.ToString())
         };
 
@@ -29,7 +30,7 @@ public class JwtProvider : IJwtProvider
         var toket = new JwtSecurityToken(
             claims: claims.ToArray(),
             signingCredentials: signingCredentials,
-            expires: DateTime.UtcNow.AddHours(_options.ExpitesHours));
+            expires: DateTime.UtcNow.AddHours(12));
 
         var tokinValue = new JwtSecurityTokenHandler().WriteToken(toket);
 

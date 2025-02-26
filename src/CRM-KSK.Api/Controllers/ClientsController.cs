@@ -1,10 +1,11 @@
 ﻿using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
 
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ClientsController : ControllerBase
@@ -17,6 +18,7 @@ public class ClientsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> AddClient([FromBody] ClientDto client, CancellationToken cancellationToken)
     {
         var clientNew = await _clientService.AddClientAsync(client, cancellationToken);
@@ -77,6 +79,7 @@ public class ClientsController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> UpdateClientInfo([FromBody] ClientDto clientDto, CancellationToken token)
     {
         await _clientService.UpdateClientInfo(clientDto, token);
@@ -84,6 +87,7 @@ public class ClientsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteClient(Guid id, CancellationToken cancellationToken)
     {
         await _clientService.DeleteClientAsync(id, cancellationToken);

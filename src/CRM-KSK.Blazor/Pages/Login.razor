@@ -1,61 +1,69 @@
 ﻿@page "/login"
-@using CRM_KSK.Application.Models
+@using System.IdentityModel.Tokens.Jwt
 @inject HttpClient _http
 @inject NavigationManager _navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Авторизация</PageTitle>
 
 <h3>Вход в систему</h3>
 
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger">@errorMessage</div>
-}
-
-<EditForm Model="loginModel" OnValidSubmit="HandleValidSubmit">
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
     <DataAnnotationsValidator />
     <ValidationSummary />
-    <div class="form-group">
-        <label>Номер телефона:</label>
-        <InputText class="form-control" @bind-Value="loginModel.Phone" />
+
+    <div>
+        <label for="phone">Номер телефона:</label>
+        <InputText id="phone" @bind-Value="loginModel.Phone" />
     </div>
-    <div class="form-group">
-        <label>Пароль:</label>
-        <InputText type="password" class="form-control" @bind-Value="loginModel.Password" />
+
+    <div>
+        <label for="password">Пароль:</label>
+        <InputText id="password" type="password" @bind-Value="loginModel.Password" />
     </div>
-    <button type="submit" class="btn btn-primary">Войти</button>
+
+    <button type="submit">Войти</button>
 </EditForm>
 
 @code {
     private LoginRequest loginModel = new();
-    private string errorMessage = string.Empty;
 
-    private async Task HandleValidSubmit()
+    private async Task HandleLogin()
     {
-        errorMessage = string.Empty;
-        try
-        {
-            var response = await _http.PostAsJsonAsync("api/Admins/login", loginModel);
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
+        var response = await _http.PostAsJsonAsync("api/Admins/login", loginModel);
 
-                _navigation.NavigateTo("/");
+        if (response.IsSuccessStatusCode)
+        {
+            var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+            var jwt = loginResponse.Token;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.ReadJwtToken(jwt);
+            var res = token.ValidTo < DateTime.UtcNow;
+
+            if (token.ValidTo < DateTime.UtcNow)
+            {
+                Console.WriteLine("Токен истёк");
             }
             else
             {
-                errorMessage = "Неверный номер телефона или пароль";
+                Console.WriteLine("Токен действителен");
             }
+
+            await ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthenticationAsync(jwt);
+
+            _navigation.NavigateTo("/", true);
         }
-        catch (Exception ex)
+        else
         {
-            errorMessage = $"Ошибка: {ex.Message}";
+            Console.WriteLine("Ошибка аутентификации");
         }
     }
 
-    public class AuthResponse
+    public class LoginResponse
     {
         public string Token { get; set; }
     }
-
 }

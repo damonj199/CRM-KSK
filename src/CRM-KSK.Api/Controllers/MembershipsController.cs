@@ -1,9 +1,11 @@
 ﻿using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class MembershipsController : ControllerBase
@@ -16,6 +18,7 @@ public class MembershipsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> AddMembershipAsync([FromBody] List<MembershipDto> membership, CancellationToken token)
     {
         await _membershipService.AddMembershipAsync(membership, token);
@@ -51,6 +54,7 @@ public class MembershipsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteMembershipAsync(Guid id, CancellationToken token)
     {
         await _membershipService.DeleteMembershipAsync(id, token);
