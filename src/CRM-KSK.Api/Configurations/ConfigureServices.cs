@@ -15,6 +15,7 @@ public static class ConfigureServices
     public static void ConfigureService(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
+        services.AddApiAuthentication(configuration);
 
         services.AddControllers().AddJsonOptions(options =>
         {
@@ -23,10 +24,13 @@ public static class ConfigureServices
         services.AddCors(options =>
         {
             options.AddPolicy("AllowAllOrigins",
-                builder => builder
-                    .WithOrigins("https://localhost:7028")
-                    .AllowAnyHeader()
-                    .AllowAnyMethod());
+                builder =>
+                {
+                    builder.WithOrigins("https://localhost:7028")
+                           .AllowAnyHeader()
+                           .AllowAnyMethod()
+                           .AllowCredentials();
+                });
         });
 
         services.AddEndpointsApiExplorer();

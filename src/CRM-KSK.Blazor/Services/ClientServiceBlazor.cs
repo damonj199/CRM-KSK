@@ -7,9 +7,9 @@ public class ClientServiceBlazor
 {
     private readonly HttpClient _httpClient;
 
-    public ClientServiceBlazor(HttpClient httpClient)
+    public ClientServiceBlazor(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient("ApiClient");
     }
 
     public async Task<List<ClientDto>> GetAllClientsAsync()

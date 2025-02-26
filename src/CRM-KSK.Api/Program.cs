@@ -38,7 +38,6 @@ builder.Host.UseDefaultServiceProvider(options =>
 });
 
 builder.Services.ConfigureService(builder.Configuration);
-builder.Services.AddApiAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
@@ -54,15 +53,15 @@ app.UseHttpsRedirection();
 
 app.UseCookiePolicy(new CookiePolicyOptions
 {
-    MinimumSameSitePolicy = SameSiteMode.Strict,
     HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
-    Secure = CookieSecurePolicy.Always
+    Secure = CookieSecurePolicy.Always,
+    MinimumSameSitePolicy = SameSiteMode.None
 });
+app.UseCors("AllowAllOrigins");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseCors("AllowAllOrigins");
 app.MapControllers();
 
 app.Run();

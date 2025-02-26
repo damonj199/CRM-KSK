@@ -1,9 +1,11 @@
 ﻿using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
 
+[Authorize]
 [Controller]
 [Route("api/[controller]")]
 public class TrainersController : ControllerBase
@@ -16,6 +18,7 @@ public class TrainersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> AddTrainer([FromBody] TrainerDto trainer, CancellationToken cancellationToken)
     {
         await _trainerService.AddTrainerAsync(trainer, cancellationToken);
@@ -54,6 +57,7 @@ public class TrainersController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> UpdateTrainerInfo([FromBody] TrainerDto trainerDto, CancellationToken token)
     {
         await _trainerService.UpdateTrainerInfoAsync(trainerDto, token);
@@ -61,6 +65,7 @@ public class TrainersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteTrainerAsync(Guid id, CancellationToken cancellationToken)
     {
         await _trainerService.DeleteTrainer(id, cancellationToken);
