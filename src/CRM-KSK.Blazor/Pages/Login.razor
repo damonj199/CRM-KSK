@@ -7,30 +7,109 @@
 
 <PageTitle>Авторизация</PageTitle>
 
-<h3>Вход в систему</h3>
+<div class="text-center text-white p-3" style="background-color: rgba(0, 0, 0, 0.5); border-radius: 10px;">
+    <h3>Для дальнейшей работы войдите в систему</h3>
+</div>
 
-<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Вход в систему</h3>
+                </div>
+                <div class="card-body">
+                    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
 
-    <div>
-        <label for="phone">Номер телефона:</label>
-        <InputText id="phone" @bind-Value="loginModel.Phone" />
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Номер телефона:</label>
+                            <InputText id="phone" class="form-control" @bind-Value="loginModel.Phone" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль:</label>
+                            <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Войти</button>
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">
+                            @errorMessage
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <div>
-        <label for="password">Пароль:</label>
-        <InputText id="password" type="password" @bind-Value="loginModel.Password" />
-    </div>
+<style>
+    body {
+        background-image: url('images/background.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 100vh;
+        margin: 0;
+    }
 
-    <button type="submit">Войти</button>
-</EditForm>
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+        }
+
+    .card {
+        background-color: rgba(255, 255, 255, 0.9);
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-header {
+        background-color: #007bff;
+        color: white;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+</style>
 
 @code {
     private LoginRequest loginModel = new();
+    private string errorMessage = string.Empty;
 
     private async Task HandleLogin()
     {
+        errorMessage = string.Empty;
+
         var response = await _http.PostAsJsonAsync("api/Admins/login", loginModel);
 
         if (response.IsSuccessStatusCode)
@@ -39,22 +118,17 @@
 
             var jwt = loginResponse.Token;
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.ReadJwtToken(jwt);
-            var res = token.ValidTo < DateTime.UtcNow;
-
-            if (token.ValidTo < DateTime.UtcNow)
-            {
-                Console.WriteLine("Токен истёк");
-            }
-            else
-            {
-                Console.WriteLine("Токен действителен");
-            }
-
             await ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthenticationAsync(jwt);
 
             _navigation.NavigateTo("/", true);
+        }
+        else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            errorMessage = "Неверный номер телефона или пароль.";
+        }
+        else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            errorMessage = "У вас нет доступа к этой странице.";
         }
         else
         {

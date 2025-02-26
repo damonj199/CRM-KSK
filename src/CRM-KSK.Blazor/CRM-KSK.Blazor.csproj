@@ -26,4 +26,8 @@
     <ProjectReference Include="..\CRM-KSK.Core\CRM-KSK.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
 </Project>
