@@ -1,4 +1,5 @@
 ﻿using CRM_KSK.Application.Interfaces;
+using CRM_KSK.Core;
 using CRM_KSK.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,6 +65,16 @@ public class TrainerRepository : ITrainerRepository
             existingTrainer.Phone = trainer.Phone;
             existingTrainer.Color = trainer.Color;
         }
+        await _context.SaveChangesAsync(token);
+    }
+
+    public async Task UpdatePasswordAsync(Trainer trainer, CancellationToken token)
+    {
+        _context.Trainers
+            .Where(t => t.Id == trainer.Id)
+            .ExecuteUpdate(u => u
+                .SetProperty(p => p.PasswordHash, trainer.PasswordHash));
+
         await _context.SaveChangesAsync(token);
     }
 

@@ -42,8 +42,8 @@ public static class ConfigureServices
             .UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
             .UseCamelCaseNamingConvention());
 
-        services.AddScoped<IAdminService, AdminService>();
-        services.AddScoped<IAdminRepository, AdminRepositiry>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAuthRepository, AuthRepositiry>();
         services.AddScoped<IClientService, ClientService>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<ITrainerService, TrainerService>();

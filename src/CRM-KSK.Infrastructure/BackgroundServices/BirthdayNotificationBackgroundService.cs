@@ -36,8 +36,6 @@ public sealed class BirthdayNotificationBackgroundService : BackgroundService
 
                 await Task.Delay(delay, stoppingToken);
 
-                await _processBirthdays.SeedClients(stoppingToken);
-
                 await _processBirthdays.ProcessBodAsync(stoppingToken);
 
                 await _workWithMembership.DeductTrainingsFromMemberships(stoppingToken);

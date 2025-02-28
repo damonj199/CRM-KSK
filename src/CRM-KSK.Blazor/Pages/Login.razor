@@ -7,13 +7,9 @@
 
 <PageTitle>Авторизация</PageTitle>
 
-<div class="text-center text-white p-3" style="background-color: rgba(0, 0, 0, 0.5); border-radius: 10px;">
-    <h3>Для дальнейшей работы войдите в систему</h3>
-</div>
-
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-3">
             <div class="card">
                 <div class="card-header">
                     <h3 class="text-center">Вход в систему</h3>
@@ -69,6 +65,17 @@
             z-index: -1;
         }
 
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
     .card {
         background-color: rgba(255, 255, 255, 0.9);
         border: none;
@@ -100,6 +107,21 @@
             opacity: 1;
         }
     }
+
+    .text-center {
+        animation: fadeIn 1s ease-in-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
 </style>
 
 @code {
@@ -110,12 +132,12 @@
     {
         errorMessage = string.Empty;
 
-        var response = await _http.PostAsJsonAsync("api/Admins/login", loginModel);
+        var response = await _http.PostAsJsonAsync("api/Auth/login", loginModel);
 
         if (response.IsSuccessStatusCode)
         {
             var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
-
+        
             var jwt = loginResponse.Token;
 
             await ((CustomAuthenticationStateProvider)AuthStateProvider).NotifyUserAuthenticationAsync(jwt);

@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CRM_KSK.Dal.PostgreSQL.Repositories;
 
-public class AdminRepositiry : IAdminRepository
+public class AuthRepositiry : IAuthRepository
 {
     private readonly CRM_KSKDbContext _context;
 
-    public AdminRepositiry(CRM_KSKDbContext context)
+    public AuthRepositiry(CRM_KSKDbContext context)
     {
         _context = context;
     }
@@ -36,5 +36,21 @@ public class AdminRepositiry : IAdminRepository
             .FirstOrDefaultAsync(x => x.Phone == phone);
 
         return admin;
+    }
+
+    public async Task<Admin> GetAdminByIdAsync(Guid id, CancellationToken token)
+    {
+        var admin = await _context.Admins.FindAsync(id, token);
+        return admin;
+    }
+
+    public async Task UpdatePasswordAsync(Admin admin, CancellationToken token)
+    {
+        _context.Admins
+            .Where(u => u.Id == admin.Id)
+            .ExecuteUpdate(u => u
+                .SetProperty(p => p.PasswordHash, admin.PasswordHash));
+
+        await _context.SaveChangesAsync(token);
     }
 }
