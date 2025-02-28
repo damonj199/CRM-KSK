@@ -2,6 +2,7 @@
 using CRM_KSK.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CRM_KSK.Api.Controllers;
 
@@ -57,11 +58,23 @@ public class TrainersController : ControllerBase
     }
 
     [HttpPut]
-    [Authorize(Policy = "AdminPolicy")]
+    [Authorize]
     public async Task<IActionResult> UpdateTrainerInfo([FromBody] TrainerDto trainerDto, CancellationToken token)
     {
+        if(User.FindFirst(ClaimTypes.Role)?.Value != "Admin")
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+                return Unauthorized("Не удалось определить пользователя");
+
+            if (trainerDto.Id.ToString() != userId)
+                return Forbid("Вы можете редактировать только свой профиль");
+        }
+
         await _trainerService.UpdateTrainerInfoAsync(trainerDto, token);
-        return Ok();
+
+        return Ok(new { message = $"Данный для {trainerDto.FirstName} обновлены"});
     }
 
     [HttpDelete("{id:guid}")]

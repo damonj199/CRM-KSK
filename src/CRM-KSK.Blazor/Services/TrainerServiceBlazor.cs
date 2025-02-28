@@ -76,4 +76,10 @@ public class TrainerServiceBlazor
         var response = await _httpClient.DeleteAsync($"api/Trainers/{id}");
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<bool> UpdatePassword(UpdatePasswordDto update)
+    {
+        var response = await _httpClient.PatchAsJsonAsync($"api/Auth/password", update);
+        return response.IsSuccessStatusCode;
+    }
 }
