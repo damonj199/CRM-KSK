@@ -13,6 +13,7 @@ public class Trainer : IUser
     public string Color { get; set; } = "#FFFFFF";
     public Roles Role { get; set; } = Roles.Trainer;
     public string PasswordHash { get; set; }
+    public bool IsDeleted { get; set; } = false;
 
     public List<Training> Trainings { get; set; } = [];
 }
