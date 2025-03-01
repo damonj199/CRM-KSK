@@ -10,6 +10,7 @@ public class Membership
     public int AmountTraining { get; set; }
     public StatusMembership StatusMembership { get; set; } = StatusMembership.Активный;
     public TypeTrainings TypeTrainings { get; set; } = TypeTrainings.Unknown;
+    public bool IsOneTimeTraining { get; set; } = false;
 
     public Guid ClientId { get; set; }
     public Client Client { get; set; } = default!;
