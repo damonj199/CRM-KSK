@@ -26,7 +26,7 @@ public static class ConfigureServices
             options.AddPolicy("AllowAllOrigins",
                 builder =>
                 {
-                    builder.WithOrigins("https://localhost:7028")
+                    builder.WithOrigins("http://localhost:8080")
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials();
