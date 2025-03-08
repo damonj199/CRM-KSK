@@ -53,6 +53,22 @@ public class TrainerRepository : ITrainerRepository
         return trainer;
     }
 
+    public async Task<List<BirthdayNotification>> GetTrainerWithBirthDaysThisMonthAsync(int month, CancellationToken token)
+    {
+        var trainerBod = await _context.Trainers
+            .Where(t => t.DateOfBirth.Month == month)
+            .Select(t => new BirthdayNotification
+            {
+                PersonId = t.Id,
+                PersonType = "Тренер",
+                Name = $"{t.FirstName} {t.LastName}",
+                Phone = t.Phone,
+                Birthday = t.DateOfBirth
+            }).ToListAsync(token);
+
+        return trainerBod ?? [];
+    }
+
     public async Task UpdateTrainerInfoAsync(Trainer trainer, CancellationToken token)
     {
         var existingTrainer = await _context.Trainers.FindAsync(trainer.Id);
