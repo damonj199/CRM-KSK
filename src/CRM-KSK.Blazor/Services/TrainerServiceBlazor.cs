@@ -7,9 +7,9 @@ public class TrainerServiceBlazor
 {
     private readonly HttpClient _httpClient;
 
-    public TrainerServiceBlazor(HttpClient httpClient)
+    public TrainerServiceBlazor(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient("ApiClient");
     }
 
     public async Task<TrainerDto> GetTrainerByName(SearchNameDto nameDto)
@@ -74,6 +74,12 @@ public class TrainerServiceBlazor
     public async Task<bool> DeleteTrainer(Guid id)
     {
         var response = await _httpClient.DeleteAsync($"api/Trainers/{id}");
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UpdatePassword(UpdatePasswordDto update)
+    {
+        var response = await _httpClient.PatchAsJsonAsync($"api/Auth/password", update);
         return response.IsSuccessStatusCode;
     }
 }

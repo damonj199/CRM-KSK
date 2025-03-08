@@ -1,4 +1,5 @@
-﻿using CRM_KSK.Core.Entities;
+﻿using CRM_KSK.Core;
+using CRM_KSK.Core.Entities;
 
 namespace CRM_KSK.Application.Interfaces;
 
@@ -10,4 +11,7 @@ public interface ITrainerRepository
     Task DeleteTraner(Guid id, CancellationToken cancellationToken);
     Task<Trainer> GetTrainerByIdAsync(Guid id, CancellationToken token);
     Task UpdateTrainerInfoAsync(Trainer trainer, CancellationToken token);
+    Task<Trainer> GetTrainerByPhone(string phone, CancellationToken token);
+    Task UpdatePasswordAsync(Trainer trainrt, CancellationToken token);
+    Task<List<BirthdayNotification>> GetTrainerWithBirthDaysThisMonthAsync(int month, CancellationToken token);
 }

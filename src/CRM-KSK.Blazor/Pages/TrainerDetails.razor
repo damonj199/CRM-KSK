@@ -60,6 +60,7 @@ else
     private void EditTrainer()
     {
         IsEditing = true;
+
         OriginalTrainerCopy = new TrainerDto
             {
                 FirstName = _trainerState.SelectedTrainer.FirstName,
@@ -67,7 +68,7 @@ else
                 Surname = _trainerState.SelectedTrainer.Surname,
                 Phone = _trainerState.SelectedTrainer.Phone,
                 DateOfBirth = _trainerState.SelectedTrainer.DateOfBirth,
-                Color = _trainerState.SelectedTrainer.Color
+                Color = _trainerState.SelectedTrainer.Color,
             };
     }
 

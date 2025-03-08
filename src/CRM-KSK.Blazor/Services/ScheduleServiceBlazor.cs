@@ -7,9 +7,9 @@ public class ScheduleServiceBlazor
 {
     private readonly HttpClient _httpClient;
 
-    public ScheduleServiceBlazor(HttpClient httpClient)
+    public ScheduleServiceBlazor(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient("ApiClient");
     }
 
     public async Task<IReadOnlyList<ScheduleDto>> GetWeeksSchedule(DateTime weekStart)

@@ -52,13 +52,13 @@
                     {
                         <li class="mb-1">
                             <div>
-                                <strong>Статус:</strong> @membership.StatusMembership<br />
+                                <strong>Статус:</strong> @(membership.IsOneTimeTraining ? "Разовый" : @membership.StatusMembership)<br />
                                 <strong>Дата начала:</strong> @membership.DateStart<br />
                                 <strong>Дата окончания:</strong> @membership.DateEnd<br />
                                 <strong>Тренировки:</strong> @membership.AmountTraining<br />
                                 <strong>Тип:</strong> @membership.TypeTrainings.GetDisplayName()
-                                <button class="btn btn-danger mt-3" title="Удалить абонемент"
-                                @onclick="() => ConfirmDelete(membership)">Удалить
+                                <button class="btn btn-danger" title="Удалить абонемент"
+                                @onclick="() => ConfirmDelete(membership)">X
                                 </button>
                             </div>
                         </li>
@@ -75,21 +75,28 @@
         }
     </div>
 
-    <button class="btn btn-danger mt-3" @onclick="() => IsDeleteConfirmOpen = true">❌ Удалить клиента</button>
+    <button class="btn btn-danger mt-3" @onclick="() => IsDeleteClientOpen = true">❌ Удалить клиента</button>
 
     @if (IsModalOpen)
     {
         <div class="modal-overlay">
             <div class="modal-content">
                 <h4>Добавить абонемент</h4>
+
                 <label>Дата начала:</label>
-                <input type="date" @bind="NewMembership.DateStart" />
+                <input type="date" @bind="NewMembership.DateStart" disabled="@NewMembership.IsOneTimeTraining" />
 
                 <label>Дата окончания:</label>
-                <input type="date" @bind="NewMembership.DateEnd" />
+                <input type="date" @bind="NewMembership.DateEnd" disabled="@NewMembership.IsOneTimeTraining" />
+
+                <label class="toggle-switch">
+                    <input type="checkbox" checked="@NewMembership.IsOneTimeTraining" @onchange="ToggleOneTimeTraining" />
+                    <span class="slider"></span>
+                    <span class="toggle-label">Разовая тренировка</span>
+                </label>
 
                 <label>Количество тренировок:</label>
-                <input type="number" @bind="NewMembership.AmountTraining" />
+                <input type="number" @bind="NewMembership.AmountTraining" disabled="@NewMembership.IsOneTimeTraining" />
 
                 <label>Тип тренировок:</label>
                 <select @bind="NewMembership.TypeTrainings">
@@ -105,14 +112,14 @@
         </div>
     }
 
-    @if (IsDeleteConfirmOpen)
+    @if (IsDeleteClientOpen)
     {
         <div class="modal-overlay">
             <div class="modal-content">
                 <h4>Подтверждение удаления</h4>
                 <p>Вы действительно хотите удалить клиента?</p>
                 <button class="btn btn-danger mt-2" @onclick="DeleteClient">Удалить</button>
-                <button class="btn btn-secondary mt-2" @onclick="() => IsDeleteConfirmOpen = false">Отмена</button>
+                <button class="btn btn-secondary mt-2" @onclick="() => IsDeleteClientOpen = false">Отмена</button>
             </div>
         </div>
     }
@@ -145,13 +152,59 @@ else
     width: 100%;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     }
+
+    .toggle-switch {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    }
+
+    .toggle-switch input {
+    display: none;
+    }
+
+    .slider {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 25px;
+    background-color: #ccc;
+    border-radius: 25px;
+    transition: background-color 0.3s;
+    cursor: pointer;
+    }
+
+    .slider::before {
+    content: "";
+    position: absolute;
+    height: 21px;
+    width: 21px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    }
+
+    input:checked + .slider {
+    background-color: #2196F3;
+    }
+
+    input:checked + .slider::before {
+    transform: translateX(25px);
+    }
+
+    .toggle-label {
+    margin-left: 10px;
+    font-size: 14px;
+    }
 </style>
 
 @code {
 
     private bool IsEditing = false;
     private bool IsModalOpen = false;
-    private bool IsDeleteConfirmOpen = false;
+    private bool IsDeleteClientOpen = false;
 
     private MembershipDto NewMembership = new();
     private List<MembershipDto> NewMemberships = [];
@@ -179,6 +232,17 @@ else
         NewMemberships.Clear();
     }
 
+    private void ToggleOneTimeTraining(ChangeEventArgs e)
+    {
+        NewMembership.IsOneTimeTraining = (bool)e.Value;
+
+        if (NewMembership.IsOneTimeTraining)
+        {
+            NewMembership.AmountTraining = 1;
+            NewMembership.DateEnd = NewMembership.DateStart;
+        }
+    }
+
     private async Task ConfirmDelete(MembershipDto membership)
     {
         await _membershipService.DeleteMembership(membership.Id);
@@ -189,7 +253,7 @@ else
     private async Task DeleteClient()
     {
         await _clientService.DeleteClientAsync(_clientState.SelectedClient.Id);
-        IsDeleteConfirmOpen = false;
+        IsDeleteClientOpen = false;
         GoBack();
     }
 

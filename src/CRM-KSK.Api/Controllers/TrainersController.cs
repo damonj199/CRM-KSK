@@ -1,9 +1,12 @@
 ﻿using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CRM_KSK.Api.Controllers;
 
+[Authorize]
 [Controller]
 [Route("api/[controller]")]
 public class TrainersController : ControllerBase
@@ -16,6 +19,7 @@ public class TrainersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> AddTrainer([FromBody] TrainerDto trainer, CancellationToken cancellationToken)
     {
         await _trainerService.AddTrainerAsync(trainer, cancellationToken);
@@ -54,13 +58,27 @@ public class TrainersController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize]
     public async Task<IActionResult> UpdateTrainerInfo([FromBody] TrainerDto trainerDto, CancellationToken token)
     {
+        if(User.FindFirst(ClaimTypes.Role)?.Value != "Admin")
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+                return Unauthorized("Не удалось определить пользователя");
+
+            if (trainerDto.Id.ToString() != userId)
+                return Forbid("Вы можете редактировать только свой профиль");
+        }
+
         await _trainerService.UpdateTrainerInfoAsync(trainerDto, token);
-        return Ok();
+
+        return Ok(new { message = $"Данный для {trainerDto.FirstName} обновлены"});
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteTrainerAsync(Guid id, CancellationToken cancellationToken)
     {
         await _trainerService.DeleteTrainer(id, cancellationToken);

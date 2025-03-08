@@ -106,7 +106,7 @@
 
 @code {
     private DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(-7));
-    private DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    private DateOnly EndDate { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
     private string ClientSearchText { get; set; } = string.Empty;
 
     private Guid? SelectedTrainerId;
