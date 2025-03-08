@@ -13,4 +13,5 @@ public interface ITrainerRepository
     Task UpdateTrainerInfoAsync(Trainer trainer, CancellationToken token);
     Task<Trainer> GetTrainerByPhone(string phone, CancellationToken token);
     Task UpdatePasswordAsync(Trainer trainrt, CancellationToken token);
+    Task<List<BirthdayNotification>> GetTrainerWithBirthDaysThisMonthAsync(int month, CancellationToken token);
 }

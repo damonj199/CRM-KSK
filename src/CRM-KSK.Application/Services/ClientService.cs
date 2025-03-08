@@ -11,16 +11,19 @@ public class ClientService : IClientService
 {
     private readonly IClientRepository _clientRepository;
     private readonly IMembershipRepository _membershipRepository;
+    private readonly IBirtDaysRepository _birtDaysRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ClientService> _logger;
 
     public ClientService(IClientRepository clientRepository, IMapper mapper,
-        ILogger<ClientService> logger, IMembershipRepository membershipRepository)
+        ILogger<ClientService> logger, IMembershipRepository membershipRepository,
+        IBirtDaysRepository birtDaysRepository)
     {
         _clientRepository = clientRepository;
+        _membershipRepository = membershipRepository;
+        _birtDaysRepository = birtDaysRepository;
         _mapper = mapper;
         _logger = logger;
-        _membershipRepository = membershipRepository;
     }
 
     public async Task<string> AddClientAsync(ClientDto clientDto, CancellationToken cancellationToken)
@@ -69,7 +72,7 @@ public class ClientService : IClientService
 
     public async Task<List<BirthdayDto>> GetAllFromBodAsync(CancellationToken token)
     {
-        var person = await _clientRepository.GetAllFromBodAsync(token);
+        var person = await _birtDaysRepository.GetAllFromBodAsync(token);
         if(person != null)
         {
             var personDto = _mapper.Map<List<BirthdayDto>>(person);
@@ -119,16 +122,5 @@ public class ClientService : IClientService
     {
         var client = _mapper.Map<Client>(clientDto);
         await _clientRepository.UpdateClientInfoAsync(client, token);
-    }
-
-    public (string firstName, string? lastName) SplitFullName(string fullName)
-    {
-        var parts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
-
-        return parts.Length switch
-        {
-            1 => (parts[0], null),
-            2 => (parts[0], parts[1])
-        };
     }
 }
