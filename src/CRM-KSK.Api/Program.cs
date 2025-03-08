@@ -26,10 +26,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
 var isDev = builder.Environment.IsDevelopment();
-if (isDev)
-{
-    builder.Configuration.AddUserSecrets<Program>();
-}
+
 builder.Configuration.AddEnvironmentVariables();
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -38,16 +35,14 @@ builder.Host.UseDefaultServiceProvider(options =>
 });
 
 builder.Services.ConfigureService(builder.Configuration);
+builder.WebHost.UseUrls("http://+:5000");
 
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
