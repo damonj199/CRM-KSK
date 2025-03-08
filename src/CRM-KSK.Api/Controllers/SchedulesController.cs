@@ -1,9 +1,11 @@
 ﻿using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class SchedulesController : ControllerBase
@@ -23,6 +25,7 @@ public class SchedulesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteSchedule(Guid id, CancellationToken cancellationToken)
     {
         await _scheduleService.DeleteSchedule(id, cancellationToken);

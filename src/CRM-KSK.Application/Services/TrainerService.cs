@@ -2,18 +2,24 @@
 using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Core.Entities;
+using Microsoft.Extensions.Configuration;
 
 namespace CRM_KSK.Application.Services;
 
 public class TrainerService : ITrainerService
 {
     private readonly ITrainerRepository _trainerRepository;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly IMapper _mapper;
+    private readonly string _dafaultPassword;
 
-    public TrainerService(ITrainerRepository trainerRepository, IMapper mapper)
+    public TrainerService(ITrainerRepository trainerRepository, IMapper mapper,
+        IPasswordHasher passwordHasher, IConfiguration configuration)
     {
         _trainerRepository = trainerRepository;
+        _passwordHasher = passwordHasher;
         _mapper = mapper;
+        _dafaultPassword = configuration["DefaultSettings:DefaultPassword"];
     }
 
     public async Task AddTrainerAsync(TrainerDto trainerDto, CancellationToken cancellationToken)
@@ -24,6 +30,7 @@ public class TrainerService : ITrainerService
             throw new Exception("Тренер уже есть в системе");
 
         var trainerEntity = _mapper.Map<Trainer>(trainerDto);
+        trainerEntity.PasswordHash = _passwordHasher.Generate(_dafaultPassword);
 
         await _trainerRepository.AddTrainerAsync(trainerEntity, cancellationToken);
     }
@@ -57,6 +64,8 @@ public class TrainerService : ITrainerService
 
     public async Task UpdateTrainerInfoAsync(TrainerDto trainerDto, CancellationToken token)
     {
+        var tren = await GetTrainerByIdAsync(trainerDto.Id, token);
+
         var trainer = _mapper.Map<Trainer>(trainerDto);
         await _trainerRepository.UpdateTrainerInfoAsync(trainer, token);
     }

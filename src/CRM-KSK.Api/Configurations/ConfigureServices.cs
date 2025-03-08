@@ -1,4 +1,5 @@
-﻿using CRM_KSK.Application.Interfaces;
+﻿using CRM_KSK.Api.Extensions;
+using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Application.Services;
 using CRM_KSK.Dal.PostgreSQL;
 using CRM_KSK.Dal.PostgreSQL.Repositories;
@@ -13,6 +14,9 @@ public static class ConfigureServices
 {
     public static void ConfigureService(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
+        services.AddApiAuthentication(configuration);
+
         services.AddControllers().AddJsonOptions(options =>
         {
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -20,12 +24,14 @@ public static class ConfigureServices
         services.AddCors(options =>
         {
             options.AddPolicy("AllowAllOrigins",
-                builder => builder
-                    .WithOrigins("https://localhost:7028")
-                    .AllowAnyHeader()
-                    .AllowAnyMethod());
+                builder =>
+                {
+                    builder.WithOrigins("http://localhost:8080")
+                           .AllowAnyHeader()
+                           .AllowAnyMethod()
+                           .AllowCredentials();
+                });
         });
-        services.Configure<JwtOptions>(configuration.GetSection(nameof(JwtOptions)));
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
@@ -36,8 +42,8 @@ public static class ConfigureServices
             .UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
             .UseCamelCaseNamingConvention());
 
-        services.AddScoped<IAdminService, AdminService>();
-        services.AddScoped<IAdminRepository, AdminRepositiry>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAuthRepository, AuthRepositiry>();
         services.AddScoped<IClientService, ClientService>();
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<ITrainerService, TrainerService>();
@@ -48,6 +54,7 @@ public static class ConfigureServices
         services.AddScoped<IMembershipRepository, MembershipRepository>();
         services.AddScoped<IScheduleService, ScheduleService>();
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
+        services.AddScoped<IBirtDaysRepository, BirtDaysRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IProcessBirthdays, ProcessBirthdays>();

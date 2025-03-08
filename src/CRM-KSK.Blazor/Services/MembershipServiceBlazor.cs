@@ -1,4 +1,5 @@
 ﻿using CRM_KSK.Application.Dtos;
+using System.Net.Http;
 using System.Net.Http.Json;
 
 namespace CRM_KSK.Blazor.Services;
@@ -7,9 +8,9 @@ public class MembershipServiceBlazor
 {
     private readonly HttpClient _httpClient;
 
-    public MembershipServiceBlazor(HttpClient httpClient)
+    public MembershipServiceBlazor(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient("ApiClient");
     }
 
     public async Task<bool> AddMembership(List<MembershipDto> membershipsDto)

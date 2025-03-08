@@ -7,9 +7,9 @@ public class TrainingServiceBlazor
 {
     private readonly HttpClient _httpClient;
 
-    public TrainingServiceBlazor(HttpClient httpClient)
+    public TrainingServiceBlazor(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient("ApiClient");
     }
 
     public async Task<bool> AddTrainingAsync(ScheduleFullDto scheduleFull)

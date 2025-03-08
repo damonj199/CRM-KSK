@@ -29,11 +29,6 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("email");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("text")
@@ -48,6 +43,15 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("passwordHash");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("phone");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
 
                     b.HasKey("Id")
                         .HasName("pK_admins");
@@ -153,6 +157,10 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("date")
                         .HasColumnName("dateStart");
 
+                    b.Property<bool>("IsOneTimeTraining")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isOneTimeTraining");
+
                     b.Property<string>("StatusMembership")
                         .IsRequired()
                         .HasColumnType("text")
@@ -213,15 +221,28 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("firstName");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDeleted");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("lastName");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("passwordHash");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("phone");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer")
+                        .HasColumnName("role");
 
                     b.Property<string>("Surname")
                         .IsRequired()
@@ -287,7 +308,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
                 {
                     b.HasOne("CRM_KSK.Core.Entities.Client", "Client")
-                        .WithMany("Membership")
+                        .WithMany("Memberships")
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -336,7 +357,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Client", b =>
                 {
-                    b.Navigation("Membership");
+                    b.Navigation("Memberships");
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>

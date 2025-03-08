@@ -1,4 +1,5 @@
 using CRM_KSK.Api.Configurations;
+using CRM_KSK.Api.Extensions;
 using Serilog;
 using Serilog.Events;
 
@@ -25,10 +26,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
 var isDev = builder.Environment.IsDevelopment();
-if (isDev)
-{
-    builder.Configuration.AddUserSecrets<Program>();
-}
+
 builder.Configuration.AddEnvironmentVariables();
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -37,30 +35,28 @@ builder.Host.UseDefaultServiceProvider(options =>
 });
 
 builder.Services.ConfigureService(builder.Configuration);
+builder.WebHost.UseUrls("http://+:5000");
 
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
 app.UseCookiePolicy(new CookiePolicyOptions
 {
-    MinimumSameSitePolicy = SameSiteMode.Strict,
     HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
-    Secure = CookieSecurePolicy.Always
+    Secure = CookieSecurePolicy.Always,
+    MinimumSameSitePolicy = SameSiteMode.None
 });
+app.UseCors("AllowAllOrigins");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseCors("AllowAllOrigins");
 app.MapControllers();
 
 app.Run();

@@ -91,7 +91,7 @@
                     (@(client.Memberships.Any() ? string.Join(", ", client.Memberships
                            .Select(m => m.TypeTrainings.GetDisplayName())) : " ")) - 
                         @(client.Memberships.Any() ? string.Join(", ", client.Memberships
-                        .Select(m => m.AmountTraining)) : " ")
+                        .Select(m => m.IsOneTimeTraining ? "1P" : m.AmountTraining.ToString())) : " ")
                     </option>
                 }
             </select>

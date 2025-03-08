@@ -1,5 +1,5 @@
 ﻿using CRM_KSK.Application.Interfaces;
-using CRM_KSK.Core.Entities;
+using CRM_KSK.Core;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,18 +15,23 @@ public class JwtProvider : IJwtProvider
     {
         _options = options.Value;
     }
-    public string GenerateToken(Admin admin)
+    public string GenerateToken(IUser user)
     {
-        Claim[] claims = [new("adminId", admin.Id.ToString())];
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.FirstName),
+            new Claim(ClaimTypes.Role, user.Role.ToString())
+        };
 
         var signingCredentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey)),
             SecurityAlgorithms.HmacSha256);
 
         var toket = new JwtSecurityToken(
-            claims: claims,
+            claims: claims.ToArray(),
             signingCredentials: signingCredentials,
-            expires: DateTime.UtcNow.AddHours(_options.ExpitesHours));
+            expires: DateTime.UtcNow.AddHours(12));
 
         var tokinValue = new JwtSecurityTokenHandler().WriteToken(toket);
 

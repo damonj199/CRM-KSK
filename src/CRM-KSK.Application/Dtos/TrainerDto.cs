@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CRM_KSK.Core.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace CRM_KSK.Application.Dtos;
 
@@ -16,6 +17,8 @@ public class TrainerDto
     public string Surname { get; set; }
 
     public string Phone { get; set; }
+
+    public Roles Role { get; set; } = Roles.Trainer;
 
     [Required]
     public DateOnly DateOfBirth { get; set; } = DateOnly.FromDateTime(DateTime.Today);
