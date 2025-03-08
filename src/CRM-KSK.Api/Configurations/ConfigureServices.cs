@@ -26,7 +26,7 @@ public static class ConfigureServices
             options.AddPolicy("AllowAllOrigins",
                 builder =>
                 {
-                    builder.WithOrigins("https://localhost:7028")
+                    builder.WithOrigins("http://localhost:8080")
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials();
@@ -54,6 +54,7 @@ public static class ConfigureServices
         services.AddScoped<IMembershipRepository, MembershipRepository>();
         services.AddScoped<IScheduleService, ScheduleService>();
         services.AddScoped<IScheduleRepository, ScheduleRepository>();
+        services.AddScoped<IBirtDaysRepository, BirtDaysRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IProcessBirthdays, ProcessBirthdays>();

@@ -13,6 +13,17 @@ public class ScheduleRepository : IScheduleRepository
         _context = context;
     }
 
+    public async Task AddOrUpdateSchedule(Schedule schedule, CancellationToken cancellationToken)
+    {
+        var existingSchedule = await _context.Schedules.FirstOrDefaultAsync(s => s.Id == schedule.Id);
+        if (existingSchedule == null)
+        {
+            _context.Schedules.Add(schedule);
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
     public async Task<IReadOnlyList<Schedule>> GetWeeksSchedule(DateOnly start, DateOnly end, CancellationToken cancellationToken)
     {
         var schedules = await _context.Schedules
@@ -26,15 +37,15 @@ public class ScheduleRepository : IScheduleRepository
         return schedules;
     }
 
-    public async Task AddOrUpdateSchedule(Schedule schedule, CancellationToken cancellationToken)
+    public async Task<List<Schedule>> GetYesterdaysScheduleAsync(DateOnly day, CancellationToken token)
     {
-        var existingSchedule = await _context.Schedules.FirstOrDefaultAsync(s => s.Id == schedule.Id);
-        if(existingSchedule == null)
-        {
-            _context.Schedules.Add(schedule);
+        var schedules = await _context.Schedules
+            .Where(t => t.Date == day)
+            .Include(c => c.Trainings)
+                .ThenInclude(c => c.Clients)
+            .ToListAsync(token);
 
-            await _context.SaveChangesAsync(cancellationToken);
-        }        
+        return schedules ?? [];
     }
 
     public async Task DeleteSchedule(Guid id, CancellationToken cancellationToken)

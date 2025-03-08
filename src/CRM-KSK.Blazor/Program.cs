@@ -9,7 +9,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7268") })
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.Configuration["ApiUrl"]) })
     ;
 builder.Services.AddScoped<ClientServiceBlazor>();
 builder.Services.AddScoped<TrainerServiceBlazor>();
@@ -20,7 +20,7 @@ builder.Services.AddScoped<MembershipServiceBlazor>();
 builder.Services.AddTransient<JwtAuthorizationMessageHandler>();
 builder.Services.AddHttpClient("ApiClient", client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7268");
+    client.BaseAddress = new Uri(builder.Configuration["ApiUrl"]);
 })
 .AddHttpMessageHandler<JwtAuthorizationMessageHandler>();
 
