@@ -31,12 +31,6 @@ public class ClientRepository : IClientRepository
         return client;
     }
 
-    public async Task<List<BirthdayNotification>> GetAllFromBodAsync(CancellationToken token)
-    {
-        var person = await _context.BirthDays.ToListAsync(token);
-        return person;
-    }
-
     public async Task<List<Client>> GetAllClientsAsync(CancellationToken token)
     {
         var clients = await _context.Clients.ToListAsync(token);
@@ -52,6 +46,22 @@ public class ClientRepository : IClientRepository
             .ToListAsync(token);
 
         return clients ?? [];
+    }
+
+    public async Task<List<BirthdayNotification>> GetClientWithBirthDaysThisMonthAsync(int month, CancellationToken token)
+    {
+        var clientsBod = await _context.Clients
+            .Where(c => c.DateOfBirth.Month == month)
+            .Select(c => new BirthdayNotification
+            {
+                PersonId = c.Id,
+                PersonType = "Клиент",
+                Name = $"{c.FirstName} {c.LastName}",
+                Phone = c.Phone,
+                Birthday = c.DateOfBirth
+            }).ToListAsync(token);
+
+        return clientsBod ?? [];
     }
 
     public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)

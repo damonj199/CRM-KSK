@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using CRM_KSK.Application.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace CRM_KSK.Infrastructure.BackgroundServices;
@@ -6,15 +8,13 @@ namespace CRM_KSK.Infrastructure.BackgroundServices;
 public sealed class BirthdayNotificationBackgroundService : BackgroundService
 {
     private readonly ILogger<BirthdayNotificationBackgroundService> _logger;
-    private readonly IProcessBirthdays _processBirthdays;
-    private readonly IWorkWithMembership _workWithMembership;
+    private readonly IServiceProvider _service;
 
     public BirthdayNotificationBackgroundService(ILogger<BirthdayNotificationBackgroundService> logger,
-        IProcessBirthdays processBirthdays, IWorkWithMembership workWithMembership)
+        IServiceProvider service)
     {
         _logger = logger;
-        _processBirthdays = processBirthdays;
-        _workWithMembership = workWithMembership;
+        _service = service;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -33,12 +33,18 @@ public sealed class BirthdayNotificationBackgroundService : BackgroundService
                     targetTime = targetTime.AddDays(1);
                 }
                 var delay = targetTime - dateTimeNow;
+                //var delay = TimeSpan.FromMinutes(2); //для тестирования
 
                 await Task.Delay(delay, stoppingToken);
 
-                await _processBirthdays.ProcessBodAsync(stoppingToken);
+                using(var scope = _service.CreateScope())
+                {
+                    var processBirthdays = scope.ServiceProvider.GetRequiredService<IProcessBirthdays>();
+                    var workWithMembership = scope.ServiceProvider.GetRequiredService<IWorkWithMembership>();
 
-                await _workWithMembership.DeductTrainingsFromMemberships(stoppingToken);
+                    await processBirthdays.ProcessBodAsync(stoppingToken);
+                    await workWithMembership.DeductTrainingsFromMemberships(stoppingToken);
+                }
             }
             catch (TaskCanceledException)
             {
