@@ -47,6 +47,7 @@ public class AuthController : ControllerBase
     public IActionResult Logout()
     {
         Response.Cookies.Delete("jwt");
+        
         return Ok();
     }
 
