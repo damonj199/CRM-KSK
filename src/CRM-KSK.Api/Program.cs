@@ -1,31 +1,21 @@
 using CRM_KSK.Api.Configurations;
-using CRM_KSK.Api.Extensions;
 using Serilog;
-using Serilog.Events;
-
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File(
-        Path.Combine("logs", "myapp.txt"),
-        rollingInterval: RollingInterval.Day,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
-    )
-    .CreateLogger();
-
-if (!Directory.Exists("logs"))
-{
-    Directory.CreateDirectory("logs");
-}
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog();
 
 var isDev = builder.Environment.IsDevelopment();
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(5000);
+});
 
 builder.Configuration.AddEnvironmentVariables();
 builder.Host.UseDefaultServiceProvider(options =>
@@ -35,7 +25,6 @@ builder.Host.UseDefaultServiceProvider(options =>
 });
 
 builder.Services.ConfigureService(builder.Configuration);
-builder.WebHost.UseUrls("http://+:5000");
 
 var app = builder.Build();
 
@@ -44,15 +33,19 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCookiePolicy(new CookiePolicyOptions
 {
     HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
     Secure = CookieSecurePolicy.Always,
-    MinimumSameSitePolicy = SameSiteMode.None
+    MinimumSameSitePolicy = SameSiteMode.Strict
 });
-app.UseCors("AllowAllOrigins");
+
+app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthentication();
 app.UseAuthorization();

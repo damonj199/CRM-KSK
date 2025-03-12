@@ -23,10 +23,12 @@ public static class ConfigureServices
         });
         services.AddCors(options =>
         {
-            options.AddPolicy("AllowAllOrigins",
+            var corsOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+
+            options.AddPolicy("AllowSpecificOrigins",
                 builder =>
                 {
-                    builder.WithOrigins("http://localhost:8080")
+                    builder.WithOrigins(corsOrigins)
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials();
@@ -35,11 +37,11 @@ public static class ConfigureServices
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
+
         services.AddAutoMapper(typeof(MapperProfile));
 
-        services.AddDbContext<CRM_KSKDbContext>(
-            options => options
-            .UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
+        services.AddDbContext<CRM_KSKDbContext>(options => 
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
             .UseCamelCaseNamingConvention());
 
         services.AddScoped<IAuthService, AuthService>();
@@ -57,8 +59,8 @@ public static class ConfigureServices
         services.AddScoped<IBirtDaysRepository, BirtDaysRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
-        services.AddSingleton<IProcessBirthdays, ProcessBirthdays>();
-        services.AddSingleton<IWorkWithMembership, WorkWithMembership>();
+        services.AddScoped<IProcessBirthdays, ProcessBirthdays>();
+        services.AddScoped<IWorkWithMembership, WorkWithMembership>();
         services.AddHostedService<BirthdayNotificationBackgroundService>();
     }
 }
