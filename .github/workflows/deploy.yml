@@ -41,5 +41,5 @@ jobs:
             docker ps -a
 
             # Просмотр логов сервисов
-            docker logs api
-            docker logs blazor
+            docker logs crm-ksk-api-1
+            docker logs crm-ksk-blazor-1
