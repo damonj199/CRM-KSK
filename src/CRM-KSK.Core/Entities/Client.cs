@@ -9,6 +9,7 @@ public class Client
     public DateOnly DateOfBirth { get; set; }
     public string? ParentName { get; set; }
     public string? ParentPhone { get; set; }
+    public DateTime DateRegister { get; set; } = DateTime.Now;
 
     public List<Membership> Memberships { get; set; } = [];
     public List<Training> Trainings { get; set; } = [];
