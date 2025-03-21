@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    [Migration("20250320193232_AddedDateRegisterFromClients")]
-    partial class AddedDateRegisterFromClients
+    [Migration("20250321120526_AddedDataRegisterFromClients")]
+    partial class AddedDataRegisterFromClients
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
