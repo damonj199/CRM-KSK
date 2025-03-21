@@ -11,15 +11,14 @@ public class TrainerService : ITrainerService
     private readonly ITrainerRepository _trainerRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IMapper _mapper;
-    private readonly string _dafaultPassword;
+    private const string _dafaultPassword = "12345";
 
     public TrainerService(ITrainerRepository trainerRepository, IMapper mapper,
         IPasswordHasher passwordHasher, IConfiguration configuration)
     {
         _trainerRepository = trainerRepository;
         _passwordHasher = passwordHasher;
-        _mapper = mapper;
-        _dafaultPassword = configuration["DefaultSettings:DefaultPassword"];
+        _mapper = mapper;;
     }
 
     public async Task AddTrainerAsync(TrainerDto trainerDto, CancellationToken cancellationToken)
