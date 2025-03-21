@@ -23,5 +23,5 @@ public class TrainerDto
     [Required]
     public DateOnly DateOfBirth { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-    public string Color { get; set; } = default!;
+    public string Color { get; set; } = "#FFFFFF";
 }
