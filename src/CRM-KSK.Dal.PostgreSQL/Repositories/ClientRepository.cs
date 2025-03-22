@@ -86,12 +86,12 @@ public class ClientRepository : IClientRepository
         return client;
     }
 
-    public async Task DeleteClientAsync(Guid id, CancellationToken cancellationToken)
+    public async Task SoftDeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {
         var client = new Client { Id = id };
 
         _context.Clients.Attach(client);
-        _context.Clients.Remove(client);
+        client.SoftDelete();
         await _context.SaveChangesAsync();
     }
 

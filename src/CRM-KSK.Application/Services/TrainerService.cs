@@ -71,6 +71,6 @@ public class TrainerService : ITrainerService
 
     public async Task DeleteTrainer(Guid id, CancellationToken cancellationToken)
     {
-        await _trainerRepository.DeleteTraner(id, cancellationToken);
+        await _trainerRepository.SoftDeleteTraner(id, cancellationToken);
     }
 }
