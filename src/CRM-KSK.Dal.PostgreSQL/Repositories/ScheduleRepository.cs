@@ -32,6 +32,7 @@ public class ScheduleRepository : IScheduleRepository
                 .ThenInclude(t => t.Trainer)
             .Include(tr => tr.Trainings)
                 .ThenInclude(c => c.Clients)
+             .IgnoreQueryFilters()
             .ToListAsync(cancellationToken);
 
         return schedules;

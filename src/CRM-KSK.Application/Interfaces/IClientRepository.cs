@@ -6,7 +6,7 @@ public interface IClientRepository
 {
     Task<Guid> AddClientAsync(Client client, CancellationToken cancellationToken);
     Task<bool> ClientVerificationAsync(string phoneNumber, CancellationToken cancellationToken);
-    Task DeleteClientAsync(Guid id, CancellationToken cancellationToken);
+    Task SoftDeleteClientAsync(Guid id, CancellationToken cancellationToken);
     Task<List<Client>> GetAllClientsAsync(CancellationToken token);
     Task<Client> GetClientById(Guid id, CancellationToken token);
     Task<Client> GetClientByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken);

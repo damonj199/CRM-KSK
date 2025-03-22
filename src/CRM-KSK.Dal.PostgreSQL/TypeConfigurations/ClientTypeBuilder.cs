@@ -12,5 +12,7 @@ internal sealed class ClientTypeBuilder : IEntityTypeConfiguration<Client>
             .HasMany(c => c.Memberships)
             .WithOne(m => m.Client)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(t => !t.IsDeleted);
     }
 }
