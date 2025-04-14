@@ -19,5 +19,8 @@ internal sealed class TrainingTypeBuilder : IEntityTypeConfiguration<Training>
             .WithMany(s => s.Trainings)
             .HasForeignKey(t => t.ScheduleId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .HasQueryFilter(t => t.Trainer == null || !t.Trainer.IsDeleted);
     }
 }

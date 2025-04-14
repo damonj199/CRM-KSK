@@ -115,7 +115,7 @@ public class ClientService : IClientService
 
     public async Task DeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {
-        await _clientRepository.DeleteClientAsync(id, cancellationToken);
+        await _clientRepository.SoftDeleteClientAsync(id, cancellationToken);
     }
 
     public async Task UpdateClientInfo(ClientDto  clientDto, CancellationToken token)

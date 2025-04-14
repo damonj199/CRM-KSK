@@ -14,7 +14,7 @@ internal sealed class TrainerTypeBuilder : IEntityTypeConfiguration<Trainer>
             .HasForeignKey(tr => tr.TrainerId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        //builder.HasQueryFilter(t => !t.IsDeleted)
+        builder.HasQueryFilter(t => !t.IsDeleted);
     }
 
 }

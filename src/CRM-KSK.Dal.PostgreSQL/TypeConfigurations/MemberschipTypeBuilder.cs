@@ -12,10 +12,13 @@ internal sealed class MemberschipTypeBuilder : IEntityTypeConfiguration<Membersh
             .HasOne(m => m.Client)
             .WithMany(c => c.Memberships)
             .HasForeignKey(m => m.ClientId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder
             .Property(x => x.StatusMembership)
             .HasConversion<string>();
+
+        builder
+            .HasQueryFilter(m => m.Client == null || !m.Client.IsDeleted);
     }
 }
