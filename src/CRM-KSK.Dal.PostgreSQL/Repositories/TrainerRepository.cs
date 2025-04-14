@@ -94,12 +94,12 @@ public class TrainerRepository : ITrainerRepository
         await _context.SaveChangesAsync(token);
     }
 
-    public async Task DeleteTraner(Guid id, CancellationToken cancellationToken)
+    public async Task SoftDeleteTraner(Guid id, CancellationToken cancellationToken)
     {
         var trainer = new Trainer { Id = id };
 
         _context.Trainers.Attach(trainer);
-        _context.Trainers.Remove(trainer);
+        trainer.SoftDelete();
         await _context.SaveChangesAsync(cancellationToken);
     }
 }
