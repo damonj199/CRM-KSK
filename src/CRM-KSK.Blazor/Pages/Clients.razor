@@ -22,12 +22,13 @@
     <div class="d-flex flex-wrap justify-content-center">
         @foreach (var membership in SortedExpiringMemberships)
         {
-            
             var daysRemaining = (membership.DateEnd.ToDateTime(new TimeOnly(0, 0)) - DateTime.Today).Days;
-            bool highlight = (daysRemaining == 1 || membership.AmountTraining <= 1);
-            string cardClass = highlight ? "card border-danger mb-3" : "card mb-3";
+            bool isExpired = membership.AmountTraining == 0 || daysRemaining < 0;
+            bool highlight = (daysRemaining <= 1 && daysRemaining >= 0) || membership.AmountTraining <= 1;
+            string cardClass = (isExpired || highlight) ? "card border-danger mb-3" : "card mb-3";
+
             <div class="@cardClass" style="width: 18rem; margin: 10px;" 
-                a href="/client-datails" @onclick="() => ShowClientDetails(membership.Client)">
+            a href="/client-datails" @onclick="() => ShowClientDetails(membership.Client)">
                 <div class="card-body">
                     <h5 class="card-title">
                         @membership.Client.FirstName @membership.Client.LastName
@@ -39,9 +40,13 @@
                         Осталось занятий: <strong>@membership.AmountTraining</strong><br />
                         Дата окончания: <strong>@membership.DateEnd</strong>
                     </p>
-                    @if (highlight)
+                    @if (isExpired)
                     {
-                        <span class="badge bg-danger">Внимание!</span>
+                        <span class="badge bg-dark">🛑Закончился🛑</span>
+                    }
+                    else if (highlight)
+                    {
+                        <span class="badge bg-danger">⚠️Внимание⚠️</span>
                     }
                 </div>
             </div>
@@ -66,8 +71,19 @@ else
     {
         var expiringMemberships = await _membershipService.GetExpiringMemberships();
 
+        foreach (var membership in expiringMemberships)
+        {
+            bool isExpired = membership.AmountTraining == 0 || membership.DateEnd.ToDateTime(new TimeOnly(0, 0)) < DateTime.Today;
+
+            if (isExpired && membership.StatusMembership != Core.Enums.StatusMembership.Закончился)
+            {
+                membership.StatusMembership = Core.Enums.StatusMembership.Закончился;
+                await _membershipService.UpdateMembership(membership);
+            }
+        }
+
         SortedExpiringMemberships = expiringMemberships
-        .OrderBy(m => m.DateEnd.Day)
+        .OrderBy(m => m.DateEnd)
         .ThenBy(m => m.AmountTraining)
         .ToList();
     }

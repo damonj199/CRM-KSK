@@ -92,7 +92,7 @@ public class ClientRepository : IClientRepository
 
         _context.Clients.Attach(client);
         client.SoftDelete();
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> ClientVerificationAsync(string phoneNumber, CancellationToken cancellationToken)
