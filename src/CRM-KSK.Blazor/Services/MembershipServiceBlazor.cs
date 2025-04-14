@@ -36,4 +36,10 @@ public class MembershipServiceBlazor
         var response = await _httpClient.DeleteAsync($"api/Memberships/{id}");
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<bool> UpdateMembership(MembershipDto membershipDto)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/Memberships", membershipDto);
+        return response.IsSuccessStatusCode;
+    }
 }

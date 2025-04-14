@@ -87,11 +87,16 @@
             <select multiple @bind="SelectedClientId">
                 @foreach (var client in FilteredClients)
                 {
-                    <option value="@client.Id">@client.FirstName @client.LastName - 
-                    (@(client.Memberships.Any() ? string.Join(", ", client.Memberships
-                           .Select(m => m.TypeTrainings.GetDisplayName())) : " ")) - 
-                        @(client.Memberships.Any() ? string.Join(", ", client.Memberships
-                        .Select(m => m.IsOneTimeTraining ? "1P" : m.AmountTraining.ToString())) : " ")
+                    var activeMemberships = client.Memberships.Where(m => m.StatusMembership == StatusMembership.Активный);
+
+                    <option value="@client.Id">
+                        @client.FirstName @client.LastName - 
+                        (@(activeMemberships.Any()
+                            ? string.Join(", ", client.Memberships.Select(m => m.TypeTrainings.GetDisplayName()))
+                            : " ")) - 
+                        @(activeMemberships.Any()
+                            ? string.Join(", ", client.Memberships.Select(m => m.IsOneTimeTraining ? "1P" : m.AmountTraining.ToString()))
+                            : " ")
                     </option>
                 }
             </select>
@@ -255,8 +260,10 @@
 
     private string SearchClient { get; set; } = string.Empty;
     private List<ClientDto> FilteredClients => Clients
-        .OrderByDescending(c => c.FirstName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase) ||
-                                c.LastName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase))
+        .Where(c => c.Memberships.Any(m => m.StatusMembership == StatusMembership.Активный))
+        .OrderByDescending(c =>
+            c.FirstName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase) ||
+            c.LastName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase))
         .ToList();
 
     protected override async Task OnInitializedAsync()
