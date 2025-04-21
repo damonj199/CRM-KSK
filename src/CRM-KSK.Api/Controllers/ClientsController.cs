@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ClientsController : ControllerBase
@@ -37,6 +37,13 @@ public class ClientsController : ControllerBase
     public async Task<IActionResult> GetAllClients(CancellationToken token)
     {
         var clients = await _clientService.GetAllClientsAsync(token);
+        return Ok(clients);
+    }
+
+    [HttpGet("with-memberships")]
+    public async Task<IActionResult> GetAllClientsWithMemberships(CancellationToken token)
+    {
+        var clients = await _clientService.GetAllClientsWithMemberships(token);
         return Ok(clients);
     }
 

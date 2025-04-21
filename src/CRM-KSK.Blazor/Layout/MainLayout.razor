@@ -9,7 +9,7 @@
     @if(!_navigation.Uri.Contains("login", StringComparison.OrdinalIgnoreCase))
     {
         <div class="sidebar">
-            <NavMenu />
+            <NavMenu OnOpenAddClientModal="@ShowAddClientModal" />
         </div>
     }
     <main>
@@ -38,6 +38,10 @@
             @Body
         </article>
     </main>
+
+    <AddClientModal IsVisible="@IsAddClientModalVisible"
+                    IsVisibleChanged="@OnAddClientModalVisibilityChanged"
+                    OnClientAdded="@OnClientAdded" />
 </div>
 
 <style>
@@ -117,6 +121,24 @@
 </style>
 
 @code {
+    private bool IsAddClientModalVisible = false;
+
+    private Task ShowAddClientModal()
+    {
+        IsAddClientModalVisible = true;
+        return Task.CompletedTask;
+    }
+
+    private Task OnAddClientModalVisibilityChanged(bool visible)
+    {
+        IsAddClientModalVisible = visible;
+        return Task.CompletedTask;
+    }
+
+    private Task OnClientAdded()
+    {
+        return Task.CompletedTask;
+    }
 
     private async Task Logout()
     {
