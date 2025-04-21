@@ -38,5 +38,11 @@ public enum TypeTrainings
     Voltiger,
 
     [Display(Name = "Группа")]
-    Group
+    Group,
+
+    [Display(Name = "Тренажёры 30")]
+    ExerciseMachine30,
+
+    [Display(Name = "Тренажёры 45")]
+    ExerciseMachine45
 }

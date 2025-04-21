@@ -25,6 +25,15 @@ public class ClientRepository : IClientRepository
         return client.Id;
     }
 
+    public async Task<List<Client>> GetAllClientWithMemberships(CancellationToken token)
+    {
+        var clients = await _context.Clients
+            .Include(m => m.Memberships)
+            .ToListAsync(token);
+
+        return clients ?? [];
+    }
+
     public async Task<Client> GetClientById(Guid id, CancellationToken token)
     {
         var client = await _context.Clients.Include(m => m.Memberships).FirstOrDefaultAsync(c => c.Id == id, token);

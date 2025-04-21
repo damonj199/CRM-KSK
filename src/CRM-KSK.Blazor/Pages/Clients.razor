@@ -1,53 +1,42 @@
 ﻿@page "/clients"
 @inject NavigationManager _navigation
-@inject MembershipServiceBlazor _membershipService
 @inject ClientStateService _clientState
+@inject MembershipServiceBlazor _membershipService
+@inject ClientServiceBlazor _clientService
 
 <h3>Управление клиентами</h3>
 
-<div class="button-container">
-    <button class="btn btn-primary" @onclick="ShowAddClientModal">Добавить клиента</button>
-    <button class="btn btn-secondary" @onclick="ShowFindClientModal">Найти клиента</button>
+<div class="mb-4">
+    <input type="text" @bind="searchQuery" placeholder="Поиск по имени или фамилии" class="form-control" />
+    <input type="text" @bind="searchQuery" @oninput="e => FilterClients()" placeholder="Поиск по имени или фамилии" class="form-control" />
 </div>
 
-<AddClientModal @bind-IsVisible="isAddClientModalVisible" />
-<SearchClientModal @bind-IsVisible="isSearchClientModalVisible" />
-
-<h4 class="text-center text-primary mb-4 mt-3">
-    Клиенты с заканчивающимися абонементами
-</h4>
-
-@if (SortedExpiringMemberships != null && SortedExpiringMemberships.Any())
+@if (filteredClients is not null && filteredClients.Any())
 {
-    <div class="d-flex flex-wrap justify-content-center">
-        @foreach (var membership in SortedExpiringMemberships)
+    <div class="list-group">
+        @foreach (var client in filteredClients.OrderBy(c => c.LastName))
         {
-            var daysRemaining = (membership.DateEnd.ToDateTime(new TimeOnly(0, 0)) - DateTime.Today).Days;
-            bool isExpired = membership.AmountTraining == 0 || daysRemaining < 0;
-            bool highlight = (daysRemaining <= 1 && daysRemaining >= 0) || membership.AmountTraining <= 1;
-            string cardClass = (isExpired || highlight) ? "card border-danger mb-3" : "card mb-3";
-
-            <div class="@cardClass" style="width: 18rem; margin: 10px;" 
-            a href="/client-datails" @onclick="() => ShowClientDetails(membership.Client)">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        @membership.Client.FirstName @membership.Client.LastName
-                    </h5>
-                    <h6 class="card-subtitle mb-2 text-muted">
-                        <strong>@membership.TypeTrainings.GetDisplayName()</strong>
-                    </h6>
-                    <p class="card-text">
-                        Осталось занятий: <strong>@membership.AmountTraining</strong><br />
-                        Дата окончания: <strong>@membership.DateEnd</strong>
-                    </p>
-                    @if (isExpired)
-                    {
-                        <span class="badge bg-dark">🛑Закончился🛑</span>
-                    }
-                    else if (highlight)
-                    {
-                        <span class="badge bg-danger">⚠️Внимание⚠️</span>
-                    }
+            <div class="list-group-item" style="cursor: pointer;" @onclick="() => ShowClientDetails(client)">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@client.LastName @client.FirstName</strong><br />
+                        <small>📞 @client.Phone</small><br />
+                        @if (client.Memberships is not null && client.Memberships.Any())
+                        {
+                            foreach (var m in client.Memberships.Where(m => m.StatusMembership == StatusMembership.Активный))
+                            {
+                                <div class="mt-1">
+                                    <span class="badge bg-success">@m.TypeTrainings.GetDisplayName()</span>
+                                    — до @m.DateEnd.ToShortDateString(), осталось занятий: @m.AmountTraining
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="mt-1 text-muted"><em>Нет активных абонементов</em></div>
+                        }
+                    </div>
+                    <i class="bi bi-chevron-right"></i>
                 </div>
             </div>
         }
@@ -55,17 +44,13 @@
 }
 else
 {
-    <p class="text-center">Нет абонементов, заканчивающихся в ближайшее время.</p>
+    <p class="text-center">Клиенты не найдены.</p>
 }
 
 @code {
-    private bool isAddClientModalVisible;
-    private bool isSearchClientModalVisible;
-
-    private void ShowAddClientModal() => isAddClientModalVisible = true;
-    private void ShowFindClientModal() => isSearchClientModalVisible = true;
-
-    private List<MembershipDto> SortedExpiringMemberships = [];
+    private string searchQuery = "";
+    private List<ClientDto> allClients = [];
+    private List<ClientDto> filteredClients = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -82,10 +67,22 @@ else
             }
         }
 
-        SortedExpiringMemberships = expiringMemberships
-        .OrderBy(m => m.DateEnd)
-        .ThenBy(m => m.AmountTraining)
-        .ToList();
+        var SortedExpiringMemberships = expiringMemberships
+            .OrderBy(m => m.DateEnd)
+            .ThenBy(m => m.AmountTraining)
+            .ToList();
+
+        allClients = await _clientService.GetAllClientsWithMemberships();
+        FilterClients();
+    }
+
+    private void FilterClients()
+    {
+        filteredClients = string.IsNullOrWhiteSpace(searchQuery)
+            ? allClients
+            : allClients.Where(c =>
+                c.FirstName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                c.LastName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     private void ShowClientDetails(ClientDto client)

@@ -30,8 +30,7 @@ public class JwtProvider : IJwtProvider
 
         var toket = new JwtSecurityToken(
             claims: claims.ToArray(),
-            signingCredentials: signingCredentials,
-            expires: DateTime.UtcNow.AddHours(12));
+            signingCredentials: signingCredentials);
 
         var tokinValue = new JwtSecurityTokenHandler().WriteToken(toket);
 
