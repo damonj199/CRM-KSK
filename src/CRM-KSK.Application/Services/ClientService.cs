@@ -60,6 +60,19 @@ public class ClientService : IClientService
         }
     }
 
+    public async Task<List<ClientDto>> GetAllClientsWithMemberships(CancellationToken token)
+    {
+        var clients = await _clientRepository.GetAllClientWithMemberships(token);
+
+        if (clients.Any())
+        {
+            var clientsDto = _mapper.Map<List<ClientDto>>(clients);
+            return clientsDto;
+        }
+
+        return [];
+    }
+
     public async Task<ClientDto> GetClientById(Guid id, CancellationToken token)
     {
         var client = await _clientRepository.GetClientById(id, token);

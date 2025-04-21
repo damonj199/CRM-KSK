@@ -29,12 +29,23 @@
                 <span class="oi oi-plus" aria-hidden="true"></span> Тренеры
             </NavLink>
         </div>
+        <div class="nav-item px-3">
+            <button class="nav-link btn btn-link text-start w-100" @onclick="OpenAddClientModal">
+                <span class="bi bi-plus" aria-hidden="true"></span> Добавить клиента
+            </button>
+        </div>
     </nav>
 </div>
 
 
 @code {
     private bool collapseNavMenu = true;
+    [Parameter] public EventCallback OnOpenAddClientModal { get; set; }
+
+    private void OpenAddClientModal()
+    {
+        OnOpenAddClientModal.InvokeAsync();
+    }
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 

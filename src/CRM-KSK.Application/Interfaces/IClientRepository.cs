@@ -14,4 +14,5 @@ public interface IClientRepository
     Task<List<BirthdayNotification>> GetClientWithBirthDaysThisMonthAsync(int month, CancellationToken token);
     Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10);
     Task UpdateClientInfoAsync(Client client, CancellationToken token);
+    Task<List<Client>> GetAllClientWithMemberships(CancellationToken token);
 }

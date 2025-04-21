@@ -14,7 +14,13 @@ public class ClientServiceBlazor
 
     public async Task<List<ClientDto>> GetAllClientsAsync()
     {
-        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients/");
+        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients");
+        return response ?? [];
+    }
+
+    public async Task<List<ClientDto>> GetAllClientsWithMemberships()
+    {
+        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients/with-memberships");
         return response ?? [];
     }
 
