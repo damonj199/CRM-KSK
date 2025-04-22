@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
 
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ClientsController : ControllerBase
