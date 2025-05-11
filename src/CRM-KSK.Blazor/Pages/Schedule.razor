@@ -54,9 +54,21 @@
                                         @foreach(var client in training.ClientsName)
                                         {
                                             @($"{client.LastName} {client.FirstName} ")
+                                            @($"({training.TypeTrainings.GetDisplayName()}) {GetRemainingTrainings(client.Id, training.TypeTrainings)}")
                                         }
-                                        @($"({training.TypeTrainings.GetDisplayName()})")
                                     </div> 
+                                }
+                            }
+                            @if (CellComments.TryGetValue((day, time), out var comments) && comments.Any())
+                            {
+                                @foreach (var comment in comments)
+                                {
+                                    <div class="comment-box" style="background-color:#f8f9fa; padding:3px; margin:2px; border-radius:4px; border:1px dashed #ccc;">
+                                        @comment.CommentText
+                                        <button class="btn-comment-delete"
+                                            @onclick="() => RemoveComment(comment.Id)"
+                                            @onclick:stopPropagation="true">×</button>
+                                    </div>
                                 }
                             }
                         </td>
@@ -140,6 +152,23 @@
                     </div>
                 }
             }
+            <div class="comment-section">
+                <h4>Комментарии</h4>
+                @if (CellComments.TryGetValue((SelectedDay, SelectedTime), out var currentComments) && currentComments.Any())
+                {
+                    @foreach (var comment in currentComments)
+                    {
+                        <div class="comment-box mb-2">
+                            @comment.CommentText
+                            <button class="btn-comment-delete"
+                                @onclick="() => RemoveComment(comment.Id)">×</button>
+                        </div>
+                    }
+                }
+                <textarea class="form-control mb-2" @bind="CurrentComment" placeholder="Введите новый комментарий..."></textarea>
+                <button class="btn btn-info" @onclick="SaveComment">Добавить комментарий</button>
+            </div>
+
             <button class="btn btn-dark" @onclick="OpenAddTrainingModal">Добавить тренировку</button>
             <button class="btn btn-secondary mt-1" @onclick="CloseModal">Закрыть</button>
         </div>
@@ -231,16 +260,72 @@
     height: 20px;
     background-color: #f9f9f9;
     }
+
+    .comment-box {
+    position: relative;
+    word-break: break-word;
+    }
+
+    .btn-comment-delete {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    color: #999;
+    padding: 0 5px;
+    }
+
+    .btn-comment-delete:hover {
+    color: #f00;
+    }
+
+    .comment-box {
+        position: relative;
+        padding: 5px;
+        margin: 5px 0;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px dashed #ddd;
+        word-break: break-word;
+    }
+
+    .btn-comment-delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2em;
+        color: #999;
+        padding: 0 5px;
+    }
+
+        .btn-comment-delete:hover {
+            color: #f00;
+        }
+
+    .comment-section {
+        margin-top: 15px;
+        padding: 10px;
+        border-top: 1px solid #eee;
+    }
 </style>
 
 @code {
     [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
-    private DateTime currentWeekStart;
-
 
     private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "22:00");
+
+    private DateTime currentWeekStart;
+    private string CurrentComment = string.Empty;
+
     private List<string> DaysOfWeekWithDates = new();
     private Dictionary<(string Day, string Time), List<TrainingDto>> ScheduleData = new();
+    private Dictionary<(string Day, string Time), List<ScheduleCommentDto>> CellComments = new();
 
     private List<TrainerDto> Trainers = [];
     private IReadOnlyList<ClientDto> Clients = [];
@@ -268,11 +353,31 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadCommentsFromDatabase();
         currentWeekStart = GetStartOfWeek(DateTime.Today, DateTime.Today.DayOfWeek);
         GenerateDaysOfWeekWithDates();
         await LoadDataFromApi();
         await LoadScheduleFromApi();
         EnsureScheduleDataInitialized();
+    }
+
+    private async Task LoadCommentsFromDatabase()
+    {
+        var comments = await _scheduleService.GetScheduleComments();
+        CellComments.Clear();
+
+        foreach (var comment in comments)
+        {
+            var dayKey = comment.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU"));
+            var timeKey = comment.Time.ToString(@"hh\:mm");
+
+            if (!CellComments.ContainsKey((dayKey, timeKey)))
+            {
+                CellComments[(dayKey, timeKey)] = new List<ScheduleCommentDto>();
+            }
+
+            CellComments[(dayKey, timeKey)].Add(comment);
+        }
     }
 
     private async Task HandleOverlayClick()
@@ -341,6 +446,17 @@
         LoadUI();
     }
 
+    private int? GetRemainingTrainings(Guid id, TypeTrainings type)
+    {
+        var client = FilteredClients?.FirstOrDefault(c => c.Id == id);
+        var result = client?.Memberships?.FirstOrDefault(m => m.TypeTrainings == type).AmountTraining - 1;
+
+        if (result == null)
+            return 0;
+
+        return result;
+    }
+
     private void LoadUI()
     {
         ScheduleData.Clear();
@@ -399,6 +515,7 @@
         SelectedDay = day;
         SelectedTime = time;
 
+
         if (ScheduleData.TryGetValue((day, time), out var trainings) && trainings?.Any() == true)
         {
             SelectedTrainings = trainings.ToList();
@@ -408,6 +525,29 @@
         {
             IsModalOpen = true;
         }
+    }
+
+    private async Task SaveComment()
+    {
+        if (!string.IsNullOrWhiteSpace(SelectedDay) &&
+            !string.IsNullOrWhiteSpace(SelectedTime) &&
+            !string.IsNullOrWhiteSpace(CurrentComment))
+        {
+            DateOnly date = DateOnly.Parse(SelectedDay);
+            TimeSpan time = TimeSpan.Parse(SelectedTime);
+
+            await _scheduleService.AddScheduleComment(date, time, CurrentComment);
+            await LoadCommentsFromDatabase();
+            CurrentComment = string.Empty;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveComment(int id)
+    {
+        await _scheduleService.DeleteScheduleComment(id);
+        await LoadCommentsFromDatabase();
+        StateHasChanged();
     }
 
     private void OpenAddTrainingModal()
