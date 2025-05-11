@@ -24,6 +24,25 @@ public class ScheduleRepository : IScheduleRepository
         }
     }
 
+    public async Task AddCommentAsync(DateOnly date, TimeSpan time, string comment, CancellationToken token)
+    {
+        var newComment = new ScheduleComment
+        {
+            Date = date,
+            Time = time,
+            CommentText = comment
+        };
+        _context.ScheduleComments.Add(newComment);
+        await _context.SaveChangesAsync(token);
+    }
+
+    public async Task<List<ScheduleComment>> GetCommentsAsync(CancellationToken token)
+    {
+        var comments = await _context.ScheduleComments.ToListAsync(token);
+
+        return comments ?? [];
+    }
+
     public async Task<IReadOnlyList<Schedule>> GetWeeksSchedule(DateOnly start, DateOnly end, CancellationToken cancellationToken)
     {
         var schedules = await _context.Schedules
@@ -49,11 +68,13 @@ public class ScheduleRepository : IScheduleRepository
         return schedules ?? [];
     }
 
-    public async Task DeleteSchedule(Guid id, CancellationToken cancellationToken)
+    public async Task DeleteComment(int id, CancellationToken token)
     {
-        var schedule = await _context.Schedules.FindAsync(id, cancellationToken);
-
-        _context.Schedules.Remove(schedule);
-        await _context.SaveChangesAsync(cancellationToken);
+        var comment = await _context.ScheduleComments.FindAsync(id, token);
+        if (comment != null)
+        {
+            _context.ScheduleComments.Remove(comment);
+            await _context.SaveChangesAsync(token);
+        }
     }
 }

@@ -12,6 +12,17 @@ public class ScheduleServiceBlazor
         _httpClient = httpClientFactory.CreateClient("ApiClient");
     }
 
+    public async Task AddScheduleComment(DateOnly date, TimeSpan time, string content, CancellationToken token = default)
+    {
+        var request = new ScheduleCommentDto
+        {
+            Date = date,
+            Time = time,
+            CommentText = content,
+        };
+        await _httpClient.PostAsJsonAsync("api/Schedules/comment", request, token);
+    }
+
     public async Task<IReadOnlyList<ScheduleDto>> GetWeeksSchedule(DateTime weekStart)
     {
         DateOnly start = DateOnly.FromDateTime(weekStart);
@@ -20,15 +31,15 @@ public class ScheduleServiceBlazor
         return schedule ?? [];
     }
 
-    public async Task AddOrUpdateSchedule(ScheduleDto scheduleDto)
+    public async Task<List<ScheduleCommentDto>> GetScheduleComments()
     {
-        await _httpClient.PostAsJsonAsync("api/Schedules", scheduleDto);
+        var comments = await _httpClient.GetFromJsonAsync<List<ScheduleCommentDto>>($"api/Schedules/comments");
+        return comments ?? [];
     }
 
-    public async Task<bool> DeleteTrainingAsync(Guid id)
+    public async Task DeleteScheduleComment(int id)
     {
-        var response = await _httpClient.DeleteAsync($"api/Schedules/{id}");
-        return response.IsSuccessStatusCode;
+        await _httpClient.DeleteAsync($"api/Schedules/comment/{id}");
     }
 
     public async Task<IReadOnlyList<ScheduleDto>> GetScheduleHistory(DateOnly startDate, DateOnly endDate)
