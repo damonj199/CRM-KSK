@@ -15,6 +15,19 @@ public class ScheduleService : IScheduleService
         _mapper = mapper;
     }
 
+    public async Task AddScheduleComment(ScheduleCommentDto commentDto, CancellationToken token)
+    {
+        await _scheduleRepository.AddCommentAsync(commentDto.Date, commentDto.Time, commentDto.CommentText, token);
+    }
+
+    public async Task<List<ScheduleCommentDto>> GetScheduleComments(CancellationToken token)
+    {
+        var comments = await _scheduleRepository.GetCommentsAsync(token);
+        var commentsDto = _mapper.Map<List<ScheduleCommentDto>>(comments);
+
+        return commentsDto;
+    }
+
     public async Task<IReadOnlyList<ScheduleDto>> GetWeeksSchedule(DateOnly weekStart, CancellationToken cancellationToken)
     {
         var endOfWeek = weekStart.AddDays(6);
@@ -34,11 +47,8 @@ public class ScheduleService : IScheduleService
         return scheduleDtos ?? [];
     }
 
-    public async Task DeleteSchedule(Guid id, CancellationToken cancellationToken)
+    public async Task DeleteComment(int id, CancellationToken token)
     {
-        if (id != Guid.Empty)
-        {
-            await _scheduleRepository.DeleteSchedule(id, cancellationToken);
-        }
+        await _scheduleRepository.DeleteComment(id, token);
     }
 }
