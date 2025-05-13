@@ -50,13 +50,14 @@
                                 @foreach(var training in trainings)
                                 {
                                     <div style="background-color:@training.TrainerName.Color; padding: 3px; margin:2px; border-radius:4px;">
-                                        @($"{training.TrainerName.LastName} {training.TrainerName.FirstName}") - 
-                                        @foreach(var client in training.ClientsName)
+                                        @($"{training.TrainerName.LastName} {training.TrainerName.FirstName}") -
+                                        @foreach (var client in training.ClientsName)
                                         {
                                             @($"{client.LastName} {client.FirstName} ")
-                                            @($"({training.TypeTrainings.GetDisplayName()}) {GetRemainingTrainings(client.Id, training.TypeTrainings)}")
+                                            var remaining = GetRemainingTrainings(client.Id, training.TypeTrainings);
+                                            @($"({training.TypeTrainings.GetDisplayName()}) {(remaining.HasValue ? remaining.ToString() : "N/A")}")
                                         }
-                                    </div> 
+                                    </div>
                                 }
                             }
                             @if (CellComments.TryGetValue((day, time), out var comments) && comments.Any())
@@ -120,6 +121,25 @@
                     <option value="@type">@((type as Enum).GetDisplayName())</option>
                 }
             </select>
+
+            <div class="comment-section">
+                <h4>Комментарии</h4>
+                @if (CellComments.TryGetValue((SelectedDay, SelectedTime), out var currentComments) && currentComments.Any())
+                {
+                    @foreach (var comment in currentComments)
+                    {
+                        <div class="comment-box mb-2">
+                            @comment.CommentText
+                            <button class="btn-comment-delete"
+                                    @onclick="() => RemoveComment(comment.Id)">
+                                ×
+                            </button>
+                        </div>
+                    }
+                }
+                <textarea class="form-control mb-2" @bind="CurrentComment" placeholder="Введите новый комментарий..."></textarea>
+                <button class="btn btn-info" @onclick="SaveComment">Добавить комментарий</button>
+            </div>
 
             <div class="from-actions mt-2">
                 <button class="btn btn-primary" @onclick="SaveTraining">Сохранить</button>
@@ -286,10 +306,12 @@
         position: relative;
         padding: 5px;
         margin: 5px 0;
-        background: #f8f9fa;
+        background: #FFF8E1;
         border-radius: 4px;
         border: 1px dashed #ddd;
         word-break: break-word;
+        color: #CC7722;
+        font-size: 0.9em;
     }
 
     .btn-comment-delete {
@@ -300,7 +322,7 @@
         border: none;
         cursor: pointer;
         font-size: 1.2em;
-        color: #999;
+        color: #CC7722;
         padding: 0 5px;
     }
 
@@ -448,13 +470,12 @@
 
     private int? GetRemainingTrainings(Guid id, TypeTrainings type)
     {
-        var client = FilteredClients?.FirstOrDefault(c => c.Id == id);
-        var result = client?.Memberships?.FirstOrDefault(m => m.TypeTrainings == type).AmountTraining - 1;
-
-        if (result == null)
-            return 0;
-
-        return result;
+        return FilteredClients?
+            .FirstOrDefault(c => c?.Id == id)?
+            .Memberships?
+            .FirstOrDefault(m => m?.TypeTrainings == type &&
+                               m?.StatusMembership == StatusMembership.Активный)?
+            .AmountTraining;
     }
 
     private void LoadUI()
