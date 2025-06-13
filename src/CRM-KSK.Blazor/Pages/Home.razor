@@ -83,8 +83,12 @@ else
 
 @code {
     private List<BirthdayDto> Birthdays = [];
+
     private List<BirthdayDto> SortedBirthdays =>
-        Birthdays?.OrderBy(b => b.Birthday.Day).ToList() ?? new List<BirthdayDto>();
+        Birthdays?
+            .OrderBy(b => IsBirthdayPassed(b))
+            .ThenBy(b => b.Birthday.Day)
+            .ToList() ?? new List<BirthdayDto>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -94,14 +98,12 @@ else
     private bool IsBirthdayToday(BirthdayDto birthday)
     {
         var today = DateTime.Today;
-
         return birthday.Birthday.Month == today.Month && birthday.Birthday.Day == today.Day;
     }
 
     private bool IsBirthdayPassed(BirthdayDto birthday)
     {
         var today = DateTime.Today;
-
         return birthday.Birthday.Month == today.Month && birthday.Birthday.Day < today.Day;
     }
 

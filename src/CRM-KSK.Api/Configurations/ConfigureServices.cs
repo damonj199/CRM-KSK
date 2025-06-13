@@ -61,6 +61,8 @@ public static class ConfigureServices
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IProcessBirthdays, ProcessBirthdays>();
         services.AddScoped<IWorkWithMembership, WorkWithMembership>();
+        services.AddScoped<IHorsesWorkService, HorsesWorkService>();
+        services.AddScoped<IHorsesRepository, HorsesRepository>();
         services.AddHostedService<BirthdayNotificationBackgroundService>();
     }
 }

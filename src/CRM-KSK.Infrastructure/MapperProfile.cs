@@ -30,5 +30,6 @@ public class MapperProfile : Profile
         CreateMap<BirthdayNotification, BirthdayDto>().ReverseMap();
         CreateMap<Membership, MembershipDto>().ReverseMap();
         CreateMap<ScheduleComment, ScheduleCommentDto>().ReverseMap();
+        CreateMap<WorkHorse, WorkHorseDto>().ReverseMap();
     }
 }
