@@ -100,7 +100,7 @@
             <select multiple @bind="SelectedClientId">
                 @foreach (var client in FilteredClients)
                 {
-                    var activeMemberships = client.Memberships.Where(m => m.StatusMembership == StatusMembership.Активный);
+                    var activeMemberships = client.Memberships.Where(m => m.StatusMembership == StatusMembership.Активный).ToList();
 
                     <option value="@client.Id">
                         @client.FirstName @client.LastName - 
