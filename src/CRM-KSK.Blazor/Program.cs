@@ -22,6 +22,7 @@ builder.Services.AddScoped<TrainerServiceBlazor>();
 builder.Services.AddScoped<ScheduleServiceBlazor>();
 builder.Services.AddScoped<TrainingServiceBlazor>();
 builder.Services.AddScoped<MembershipServiceBlazor>();
+builder.Services.AddScoped<HorsesServiceBlazor>();
 
 builder.Services.AddTransient<JwtAuthorizationMessageHandler>();
 builder.Services.AddHttpClient("ApiClient", client =>
