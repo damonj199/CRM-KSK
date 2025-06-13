@@ -39,6 +39,9 @@ public class WorkWithMembership : IWorkWithMembership
                         {
                             membership.StatusMembership = Core.Enums.StatusMembership.Закончился;
                             _logger.LogError("Абонемент закончился!");
+
+                            await _membershipRepository.DeleteMembershipAsync(membership.Id, token);
+                            continue;
                         }
 
                         await _membershipRepository.UpdateMembershipAsync(membership, token);
