@@ -3,6 +3,7 @@ using System;
 using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    partial class CRM_KSKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250616182442_UpdateEntityHorseWork")]
+    partial class UpdateEntityHorseWork
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -141,34 +144,6 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasName("pK_clients");
 
                     b.ToTable("clients", (string)null);
-                });
-
-            modelBuilder.Entity("CRM_KSK.Core.Entities.Horse", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int>("RowNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("rowNumber");
-
-                    b.Property<DateOnly>("StartWeek")
-                        .HasColumnType("date")
-                        .HasColumnName("startWeek");
-
-                    b.HasKey("Id")
-                        .HasName("pK_horses");
-
-                    b.ToTable("horses", (string)null);
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
@@ -366,6 +341,11 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date")
                         .HasColumnName("date");
+
+                    b.Property<string>("HorseName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("horseName");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")

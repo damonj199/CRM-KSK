@@ -31,5 +31,6 @@ public class MapperProfile : Profile
         CreateMap<Membership, MembershipDto>().ReverseMap();
         CreateMap<ScheduleComment, ScheduleCommentDto>().ReverseMap();
         CreateMap<WorkHorse, WorkHorseDto>().ReverseMap();
+        CreateMap<Horse, HorseDto>().ReverseMap();
     }
 }
