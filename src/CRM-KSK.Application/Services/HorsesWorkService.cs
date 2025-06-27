@@ -20,12 +20,14 @@ public class HorsesWorkService : IHorsesWorkService
 
     private DateOnly today = DateOnly.FromDateTime(DateTime.Today);
 
-    public async Task<bool> AddHorsesWork(WorkHorseDto horseDto, CancellationToken token)
+    public async Task<bool> AddOrUpdateHorsesWork(WorkHorseDto horseDto, CancellationToken token)
     {
-        if (!string.IsNullOrWhiteSpace(horseDto.ContentText) && horseDto.Date >= today)
+        if (!string.IsNullOrWhiteSpace(horseDto.ContentText) || horseDto.Date >= today)
         {
             var horse = _mapper.Map<WorkHorse>(horseDto);
-            await _horsesRepository.AddHorseWork(horse, token);
+
+            horse.GetCurrentWeekMonday(horse.Date);
+            await _horsesRepository.AddOrUpdateHorseWork(horse, token);
 
             return true;
         }
@@ -34,22 +36,42 @@ public class HorsesWorkService : IHorsesWorkService
         return false;
     }
 
+    public async Task AddHorse(HorseDto horseDto, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(horseDto.Name))
+        {
+            _logger.LogWarning("Имя не может быть пустым");
+            return;
+        }
+
+        var horse = _mapper.Map<Horse>(horseDto);
+        await _horsesRepository.AddHorse(horse, token);
+    }
+
+    public async Task<List<HorseDto>> GetHorsesNameWeek(DateOnly sDate, CancellationToken token)
+    {
+        var horses = await _horsesRepository.GetHorsesNameWeek(sDate, token);
+        var horsesDto = _mapper.Map<List<HorseDto>>(horses);
+
+        return horsesDto ?? [];
+    }
+
     public async Task<List<WorkHorseDto>> GetAllScheduleWorkHorses(CancellationToken token)
     {
         var horses = await _horsesRepository.GetAllScheduleWorkHorses(token);
         var horsesDto = _mapper.Map<List<WorkHorseDto>>(horses);
 
-        return horsesDto;
+        return horsesDto ?? [];
     }
 
     public async Task<List<WorkHorseDto>> GetScheduleWorkHorsesWeek(DateOnly sDate, CancellationToken token)
     {
-        var eDate = sDate.AddDays(7);
-
-        var horses = await _horsesRepository.GetScheduleWorkHorsesWeek(sDate, eDate, token);
+        var horses = await _horsesRepository.GetScheduleWorkHorsesWeek(sDate, token);
         var horsesDto = _mapper.Map<List<WorkHorseDto>>(horses);
 
-        return horsesDto;
+        _logger.LogWarning($"ПРОВЕРЯЕМ СКОЛЬКО ЭЛЕМЕНТОВ ВОЗВРАЩАЕТСЯ - {horsesDto.Count}");
+
+        return horsesDto ?? [];
     }
 
     public async Task<bool> DeleteWorkHorseById(Guid id, CancellationToken token)

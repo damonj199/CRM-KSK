@@ -4,9 +4,11 @@ namespace CRM_KSK.Application.Interfaces
 {
     public interface IHorsesWorkService
     {
-        Task<bool> AddHorsesWork(WorkHorseDto horseDto, CancellationToken token);
+        Task AddHorse(HorseDto horseDto, CancellationToken token);
+        Task<bool> AddOrUpdateHorsesWork(WorkHorseDto horseDto, CancellationToken token);
         Task<bool> DeleteWorkHorseById(Guid id, CancellationToken token);
         Task<List<WorkHorseDto>> GetAllScheduleWorkHorses(CancellationToken token);
+        Task<List<HorseDto>> GetHorsesNameWeek(DateOnly sDate, CancellationToken token);
         Task<List<WorkHorseDto>> GetScheduleWorkHorsesWeek(DateOnly sDate, CancellationToken token);
     }
 }

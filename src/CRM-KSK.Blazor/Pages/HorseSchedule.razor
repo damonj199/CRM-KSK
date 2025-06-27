@@ -16,11 +16,11 @@
             <tr>
                 <th>№</th>
                 <th>Кличка</th>
-                @foreach (var day in DaysWithDates)
+                @foreach (var day in weekDates)
                 {
                     <th>
-                        <div>@GetDayOfWeek(day)</div>
-                        <div class="small-date">@day</div>
+                        <div>@GetDayOfWeek(day.ToString())</div>
+                        <div class="small-date">@day.ToString("dd.MM.yyyy")</div>
                     </th>
                 }
             </tr>
@@ -33,16 +33,15 @@
                     <td class="row-number">@rowNumber</td>
                     <td>
                         <input class="horse-name-input"
-                               value="@GetHorseName(rowNumber)"
-                               @onchange="@(e => UpdateHorseName(rowNumber, e.Value?.ToString()))" />
+                               @bind="_horseNames[rowNumber]"
+                               @onblur="@(() => UpdateHorseName(rowNumber))" />
                     </td>
-                    @foreach (var day in DaysWithDates)
+                    @foreach (var day in weekDates)
                     {
-                        var date = DateOnly.ParseExact(day, "dd.MM.yyyy", CultureInfo.InvariantCulture);
                         <td>
                             <input class="activity-input"
-                                   value="@GetContentText(rowNumber, date)"
-                                   @onchange="@(e => UpdateContentText(rowNumber, date, e.Value?.ToString()))" />
+                                   @bind="_contentText[rowNumber][day]"
+                                   @onblur="@(() => UpdateContentText(rowNumber, day))" />
                         </td>
                     }
                 </tr>
@@ -145,30 +144,70 @@
 </style>
 
 @code {
-    private List<WorkHorseDto> scheduleData = new();
-    private List<string> DaysWithDates = new();
-    private DateTime currentWeekStart = DateTime.Today;
+    private List<HorseDto> horses = new();
+    private List<WorkHorseDto> workScheduleData = new();
+    private List<DateOnly> weekDates = new();
+
+    private Dictionary<int, Dictionary<DateOnly, string>> _contentText = new();
+    private Dictionary<int, string> _horseNames = new();
+
+    private DateOnly startOfWeek;
 
     protected override async Task OnInitializedAsync()
     {
-        currentWeekStart = GetStartOfWeek(DateTime.Today);
-        GenerateWeekDays();
-        await LoadScheduleData();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        startOfWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+
+        Console.WriteLine($"проверяем дату начала недели {startOfWeek.ToString()}");
+
+        await LoadHorses();
+        await GenerateWeekAndInitialize();
+    }
+
+    private async Task LoadHorses()
+    {
+        horses = await _horsesService.GetHorsesNameWeek(startOfWeek);
+
+        foreach (var horse in horses)
+        {
+            _horseNames[horse.RowNumber] = horse.Name;
+        }
+    }
+
+    private async Task GenerateWeekAndInitialize()
+    {
+        weekDates = Enumerable.Range(0, 7)
+            .Select(i => startOfWeek.AddDays(i))
+            .ToList();
+
+        _contentText.Clear();
+
+        for (int i = 1; i <= 25; i++)
+        {
+            if (!_horseNames.ContainsKey(i))
+            {
+                _horseNames[i] = "";
+            }
+
+            _contentText[i] = new Dictionary<DateOnly, string>();
+            foreach (var day in weekDates)
+            {
+                _contentText[i][day] = "";
+            }
+        }
+
+        await LoadScheduleData(startOfWeek);
     }
 
     private string GetCurrentWeekRange()
     {
-        var start = currentWeekStart.ToString("dd.MM.yyyy");
-        var end = currentWeekStart.AddDays(6).ToString("dd.MM.yyyy");
+        var start = startOfWeek.ToString("dd.MM.yyyy");
+        var end = startOfWeek.AddDays(6).ToString("dd.MM.yyyy");
         return $"{start} - {end}";
     }
 
-    private void GenerateWeekDays()
-    {
-        DaysWithDates = Enumerable.Range(0, 7)
-            .Select(i => currentWeekStart.AddDays(i).ToString("dd.MM.yyyy"))
-            .ToList();
-    }
+    private List<string> DaysWithDates =>
+        weekDates.Select(date => date.ToString("dd.MM.yyyy")).ToList();
 
     private string GetDayOfWeek(string date)
     {
@@ -176,113 +215,110 @@
             .ToString("dddd", new CultureInfo("ru-RU"));
     }
 
-    private async Task LoadScheduleData()
+    private async Task LoadScheduleData(DateOnly startOfWeek)
     {
-        try
+        workScheduleData = await _horsesService.GetWeeksSchedule(startOfWeek);
+        Console.WriteLine($"проверяем выгрузку расписания за неделю {workScheduleData.Count}");
+
+        if (workScheduleData.Count <= 0)
         {
-            var startDate = DateOnly.FromDateTime(currentWeekStart);
-            var data = await _horsesService.GetWeeksSchedule(startDate);
+            workScheduleData = await _horsesService.GetAllWorkHorses();
+            Console.WriteLine($"проверяем выгрузку расписания за все время {workScheduleData.Count}");
+        }
 
-            scheduleData = data ?? new List<WorkHorseDto>();
+        foreach (var entry in workScheduleData)
+        {
+            if (!_contentText.ContainsKey(entry.RowNumber))
+                _contentText[entry.RowNumber] = new();
 
-            for (int i = 1; i <= 25; i++)
+            _contentText[entry.RowNumber][entry.Date] = entry.ContentText;
+        }
+    }
+
+    private async Task UpdateHorseName(int rowNumber)
+    {
+        if (!_horseNames.TryGetValue(rowNumber, out var horseName))
+            horseName = "";
+
+        var existingHorse = horses.FirstOrDefault(h => h.RowNumber == rowNumber);
+
+        if (existingHorse != null)
+        {
+            // Обновляем существующую HorseDto
+            existingHorse.Name = horseName;
+            await _horsesService.AddHorse(existingHorse); // Предполагается, что такой метод существует
+        }
+        else
+        {
+            // Создаем новую HorseDto
+            var newHorse = new HorseDto
             {
-                foreach (var day in DaysWithDates)
-                {
-                    var date = DateOnly.ParseExact(day, "dd.MM.yyyy", CultureInfo.InvariantCulture);
-                    if (!scheduleData.Any(x => x.RowNumber == i && x.Date == date))
-                    {
-                        scheduleData.Add(new WorkHorseDto
-                        {
-                            RowNumber = i,
-                            Date = date,
-                            HorseName = GetHorseName(i),
-                            ContentText = ""
-                        });
-                    }
-                }
+                RowNumber = rowNumber,
+                Name = horseName,
+                StartWeek = startOfWeek // Или другое подходящее значение
+            };
+            await _horsesService.AddHorse(newHorse); // Предполагается, что такой метод существует
+            horses.Add(newHorse);
+        }
+    }
+
+    private async Task UpdateContentText(int rowNumber, DateOnly date)
+    {
+        if (!_contentText.TryGetValue(rowNumber, out var dailyDict) ||
+            !dailyDict.TryGetValue(date, out var contentText))
+            contentText = "";
+
+        contentText = contentText?.Trim() ?? "";
+
+        var horseName = _horseNames.ContainsKey(rowNumber) ? _horseNames[rowNumber] : "";
+        var existingWorkEntry = workScheduleData.FirstOrDefault(x => x.RowNumber == rowNumber && x.Date == date);
+
+        Console.WriteLine($"DEBUG: startOfWeek = {startOfWeek}");
+        if (string.IsNullOrWhiteSpace(contentText))
+        {
+            // Если содержимое пустое — удаляем запись, если она существует
+            if (existingWorkEntry != null)
+            {
+                await _horsesService.DeleteWorkHorse(existingWorkEntry.Id);
+                workScheduleData.Remove(existingWorkEntry);
             }
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine($"Ошибка загрузки данных: {ex.Message}");
+            if (existingWorkEntry != null)
+            {
+                // Обновление существующей записи WorkHorseDto
+                existingWorkEntry.ContentText = contentText;
+
+                await _horsesService.AddWorkHorse(existingWorkEntry); // Предполагается, что такой метод существует
+            }
+            else
+            {
+                // Создание новой записи WorkHorseDto
+                var newDto = new WorkHorseDto
+                    {
+                        RowNumber = rowNumber,
+                        Date = date,
+                        ContentText = contentText
+                    };
+
+                await _horsesService.AddWorkHorse(newDto);
+                workScheduleData.Add(newDto);
+            }
         }
     }
 
-    private string GetHorseName(int rowNumber)
+    private async Task NavigateToPreviousWeek()
     {
-        return scheduleData.FirstOrDefault(x => x.RowNumber == rowNumber)?.HorseName ?? "";
-    }
-
-    private string GetContentText(int rowNumber, DateOnly date)
-    {
-        return scheduleData.FirstOrDefault(x => x.RowNumber == rowNumber && x.Date == date)?.ContentText ?? "";
-    }
-
-    private async Task UpdateHorseName(int rowNumber, string? value)
-    {
-        var horseName = value ?? "";
-        var existing = scheduleData.FirstOrDefault(x => x.RowNumber == rowNumber);
-
-        var dto = new WorkHorseDto
-        {
-            RowNumber = rowNumber,
-            HorseName = horseName,
-            Date = DateOnly.MinValue,
-            ContentText = ""
-        };
-
-        if (existing != null)
-        {
-            dto.Id = existing.Id;
-            existing.HorseName = horseName;
-        }
-
-        await _horsesService.AddWorkHorse(dto);
-    }
-
-    private async Task UpdateContentText(int rowNumber, DateOnly date, string? value)
-    {
-        var contentText = value ?? "";
-        var existing = scheduleData.FirstOrDefault(x => x.RowNumber == rowNumber && x.Date == date);
-        var horseName = GetHorseName(rowNumber);
-
-        var dto = new WorkHorseDto
-        {
-            RowNumber = rowNumber,
-            HorseName = horseName,
-            Date = date,
-            ContentText = contentText
-        };
-
-        if (existing != null)
-        {
-            dto.Id = existing.Id;
-            existing.ContentText = contentText;
-        }
-
-        await _horsesService.AddWorkHorse(dto);
-    }
-
-    private DateTime GetStartOfWeek(DateTime date)
-    {
-        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
-        return date.AddDays(-diff).Date;
-    }
-
-    private async void NavigateToPreviousWeek()
-    {
-        currentWeekStart = currentWeekStart.AddDays(-7);
-        GenerateWeekDays();
-        await LoadScheduleData();
+        startOfWeek = startOfWeek.AddDays(-7);
+        await GenerateWeekAndInitialize();
         StateHasChanged();
     }
 
-    private async void NavigateToNextWeek()
+    private async Task NavigateToNextWeek()
     {
-        currentWeekStart = currentWeekStart.AddDays(7);
-        GenerateWeekDays();
-        await LoadScheduleData();
+        startOfWeek = startOfWeek.AddDays(7);
+        await GenerateWeekAndInitialize();
         StateHasChanged();
     }
 }

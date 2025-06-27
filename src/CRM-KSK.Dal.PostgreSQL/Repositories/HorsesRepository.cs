@@ -13,12 +13,73 @@ public class HorsesRepository : IHorsesRepository
         _context = context;
     }
 
-    //Перенести все проверки в слой бизнес логики
-
-    public async Task AddHorseWork(WorkHorse horse, CancellationToken token)
+    public async Task AddHorse(Horse horse, CancellationToken token)
     {
-        _context.WorkHorses.Add(horse);
+        var existing = await _context.Horses.FirstOrDefaultAsync(x =>
+            x.StartWeek == horse.StartWeek &&
+            x.RowNumber == horse.RowNumber, token);
+
+        if (existing != null && !string.IsNullOrWhiteSpace(horse.Name))
+        {
+            existing.Name = horse.Name;
+            await _context.SaveChangesAsync(token);
+            return;
+        }
+
+        _context.Horses.Add(horse);
         await _context.SaveChangesAsync(token);
+    }
+
+    public async Task AddOrUpdateHorseWork(WorkHorse horse, CancellationToken token)
+    {
+        var existing = await _context.WorkHorses.FirstOrDefaultAsync(x =>
+            x.RowNumber == horse.RowNumber &&
+            x.Date == horse.Date &&
+            x.WeekStartDate == horse.WeekStartDate, token);
+
+        var isEmptyCell = string.IsNullOrWhiteSpace(horse.ContentText);
+
+        if (existing != null)
+        {
+            if (isEmptyCell)
+            {
+                // Удаляем запись, если она стала пустой
+                _context.WorkHorses.Remove(horse);
+            }
+            else
+            {
+                // Обновляем существующую запись
+                existing.ContentText = horse.ContentText?.Trim();
+            }
+        }
+        else
+        {
+            if (!isEmptyCell)
+            {
+                // Создаём новую запись
+                var newHorse = new WorkHorse
+                {
+                    RowNumber = horse.RowNumber,
+                    Date = horse.Date,
+                    ContentText = horse.ContentText?.Trim()
+                };
+
+                newHorse.GetCurrentWeekMonday(horse.Date);
+
+                _context.WorkHorses.Add(newHorse);
+            }
+        }
+
+        await _context.SaveChangesAsync(token);
+    }
+
+    public async Task<List<Horse>> GetHorsesNameWeek(DateOnly sDate, CancellationToken token)
+    {
+        var horses = await _context.Horses
+            .Where(x => x.StartWeek == sDate)
+            .ToListAsync(token);
+
+        return horses ?? [];
     }
 
     public async Task<List<WorkHorse>> GetAllScheduleWorkHorses(CancellationToken token)
@@ -28,10 +89,10 @@ public class HorsesRepository : IHorsesRepository
         return allSchedduleHorses ?? [];
     }
 
-    public async Task<List<WorkHorse>> GetScheduleWorkHorsesWeek(DateOnly sDate, DateOnly eDate, CancellationToken token)
+    public async Task<List<WorkHorse>> GetScheduleWorkHorsesWeek(DateOnly sDate, CancellationToken token)
     {
         var scheduleWeek = await _context.WorkHorses
-            .Where(h => h.Date >= eDate && h.Date < eDate)
+            .Where(h => h.WeekStartDate == sDate)
             .OrderBy(h => h.Date)
             .ToListAsync(token);
 

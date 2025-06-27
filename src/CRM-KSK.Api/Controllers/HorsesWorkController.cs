@@ -17,10 +17,10 @@ public class HorsesWorkController : ControllerBase
         _horsesWorkService = horsesWorkService;
     }
 
-    [HttpPost]
+    [HttpPost("work")]
     public async Task<IActionResult> AddWorkHorses([FromBody] WorkHorseDto horse, CancellationToken token)
     {
-        var result = await _horsesWorkService.AddHorsesWork(horse, token);
+        var result = await _horsesWorkService.AddOrUpdateHorsesWork(horse, token);
 
         if (result)
         {
@@ -32,6 +32,20 @@ public class HorsesWorkController : ControllerBase
         }
     }
 
+    [HttpPost("horse")]
+    public async Task<IActionResult> AddHorse([FromBody] HorseDto horse, CancellationToken token)
+    {
+        await _horsesWorkService.AddHorse(horse, token);
+        return Ok();
+    }
+
+    [HttpGet("horsesWeek")]
+    public async Task<IActionResult> GetHorsesNameWeek([FromQuery] DateOnly sDate, CancellationToken token)
+    {
+        var horsesWeek = await _horsesWorkService.GetHorsesNameWeek(sDate, token);
+        return Ok(horsesWeek);
+    }
+
     [HttpGet("all")]
     public async Task<IActionResult> GetAllScheduleWorkHorses(CancellationToken token)
     {
@@ -39,10 +53,10 @@ public class HorsesWorkController : ControllerBase
         return Ok(allSchedule);
     }
 
-    [HttpGet("week")]
-    public async Task<IActionResult> GetScheduleWorkHorsesWeek([FromQuery] DateOnly startWeek, CancellationToken token)
+    [HttpGet("workHorsesWeek")]
+    public async Task<IActionResult> GetScheduleWorkHorsesWeek([FromQuery] DateOnly weekStart, CancellationToken token)
     {
-        var week = await _horsesWorkService.GetScheduleWorkHorsesWeek(startWeek, token);
+        var week = await _horsesWorkService.GetScheduleWorkHorsesWeek(weekStart, token);
         return Ok(week);
     }
 
