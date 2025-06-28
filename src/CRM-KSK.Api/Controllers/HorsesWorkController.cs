@@ -20,7 +20,7 @@ public class HorsesWorkController : ControllerBase
     [HttpPost("work")]
     public async Task<IActionResult> AddWorkHorses([FromBody] WorkHorseDto horse, CancellationToken token)
     {
-        var result = await _horsesWorkService.AddOrUpdateHorsesWork(horse, token);
+        var result = await _horsesWorkService.AddWorkHorse(horse, token);
 
         if (result)
         {
@@ -39,28 +39,57 @@ public class HorsesWorkController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("horsesWeek")]
+    [HttpGet("horses-week")]
     public async Task<IActionResult> GetHorsesNameWeek([FromQuery] DateOnly sDate, CancellationToken token)
     {
         var horsesWeek = await _horsesWorkService.GetHorsesNameWeek(sDate, token);
         return Ok(horsesWeek);
     }
 
-    [HttpGet("all")]
+    [HttpGet("work-all")]
     public async Task<IActionResult> GetAllScheduleWorkHorses(CancellationToken token)
     {
         var allSchedule = await _horsesWorkService.GetAllScheduleWorkHorses(token);
         return Ok(allSchedule);
     }
 
-    [HttpGet("workHorsesWeek")]
+    [HttpGet("work-horses-week")]
     public async Task<IActionResult> GetScheduleWorkHorsesWeek([FromQuery] DateOnly weekStart, CancellationToken token)
     {
         var week = await _horsesWorkService.GetScheduleWorkHorsesWeek(weekStart, token);
         return Ok(week);
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpPatch("name")]
+    public async Task<IActionResult> UpdateHorseName([FromBody] UpdateHorseNameDto dto, CancellationToken token)
+    {
+        await _horsesWorkService.UpdateHorseName(dto.Id, dto.Name, token);
+        return Ok();
+    }
+
+    [HttpPatch("work")]
+    public async Task<IActionResult> UpdateWorkHorse([FromBody] UpdateWorkHorse dto, CancellationToken token)
+    {
+        await _horsesWorkService.UpdateWorkHorse(dto.Id, dto.Content, token);
+        return Ok();
+    }
+
+    [HttpDelete("name/{id:long}")]
+    public async Task<IActionResult> DeleteHorse(long id, CancellationToken token)
+    {
+        var result = await _horsesWorkService.DeleteHorseById(id, token);
+
+        if (result)
+        {
+            return Ok("Запись удалена");
+        }
+        else
+        {
+            return BadRequest("Ошибка удаления, проверьте данные");
+        }
+    }
+
+    [HttpDelete("work/{id:guid}")]
     public async Task<IActionResult> DeleteWorkHorse(Guid id, CancellationToken token)
     {
         var result = await _horsesWorkService.DeleteWorkHorseById(id, token);
