@@ -13,7 +13,7 @@ public class CRM_KSKDbContext : DbContext
     public DbSet<Training> Trainings { get; set; }
     public DbSet<Schedule> Schedules { get; set; }
     public DbSet<Horse> Horses { get; set; }
-    public DbSet<WorkHorse> WorkHorses { get; set; }
+    public DbSet<HorseWork> HorsesWorks { get; set; }
     public DbSet<ScheduleComment> ScheduleComments { get; set; }
     public DbSet<Trainer> Trainers { get; set; }
     public DbSet<BirthdayNotification> BirthDays { get; set; }
@@ -23,6 +23,3 @@ public class CRM_KSKDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CRM_KSKDbContext).Assembly);
     }
 }
-
-
-

@@ -25,9 +25,9 @@ public class HorsesWorkService : IHorsesWorkService
     {
         if (!string.IsNullOrWhiteSpace(horseDto.ContentText))
         {
-            var horse = _mapper.Map<WorkHorse>(horseDto);
+            var horse = _mapper.Map<HorseWork>(horseDto);
 
-            horse.GetCurrentWeekMonday(horse.Date);
+            //horse.SetWeekStartDate();
             await _horsesRepository.AddWorkHorse(horse, token);
 
             return true;
