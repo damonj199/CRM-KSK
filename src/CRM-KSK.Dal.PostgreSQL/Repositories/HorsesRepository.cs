@@ -19,9 +19,10 @@ public class HorsesRepository : IHorsesRepository
         await _context.SaveChangesAsync(token);
     }
 
-    public async Task AddWorkHorse(WorkHorse horse, CancellationToken token)
+    public async Task AddWorkHorse(HorseWork horse, CancellationToken token)
     {
-        _context.WorkHorses.Add(horse);
+        horse.StartWeek = SetWeekStartDate(horse.Date);
+        _context.HorsesWorks.Add(horse);
         await _context.SaveChangesAsync(token);
     }
 
@@ -32,9 +33,9 @@ public class HorsesRepository : IHorsesRepository
         return horse;
     }
 
-    public async Task<WorkHorse> GetWorkHorseById(Guid id, CancellationToken token)
+    public async Task<HorseWork> GetWorkHorseById(Guid id, CancellationToken token)
     {
-        var horse = await _context.WorkHorses.FindAsync(id, token);
+        var horse = await _context.HorsesWorks.FindAsync(id, token);
 
         return horse;
     }
@@ -48,17 +49,17 @@ public class HorsesRepository : IHorsesRepository
         return horses ?? [];
     }
 
-    public async Task<List<WorkHorse>> GetAllScheduleWorkHorses(CancellationToken token)
+    public async Task<List<HorseWork>> GetAllScheduleWorkHorses(CancellationToken token)
     {
-        var allSchedduleHorses = await _context.WorkHorses.ToListAsync(token);
+        var allSchedduleHorses = await _context.HorsesWorks.ToListAsync(token);
 
         return allSchedduleHorses ?? [];
     }
 
-    public async Task<List<WorkHorse>> GetScheduleWorkHorsesWeek(DateOnly sDate, CancellationToken token)
+    public async Task<List<HorseWork>> GetScheduleWorkHorsesWeek(DateOnly sDate, CancellationToken token)
     {
-        var scheduleWeek = await _context.WorkHorses
-            .Where(h => h.WeekStartDate == sDate)
+        var scheduleWeek = await _context.HorsesWorks
+            .Where(h => h.StartWeek == sDate)
             .OrderBy(h => h.Date)
             .ToListAsync(token);
 
@@ -77,7 +78,7 @@ public class HorsesRepository : IHorsesRepository
 
     public async Task UpdateWorkHorse(Guid id, string content, CancellationToken token)
     {
-        var workHorse = await _context.WorkHorses.FindAsync(new object[] { id }, token);
+        var workHorse = await _context.HorsesWorks.FindAsync(new object[] { id }, token);
         if (workHorse == null)
             return;
 
@@ -99,13 +100,20 @@ public class HorsesRepository : IHorsesRepository
 
     public async Task<bool> DeleteWorkHorseById(Guid id, CancellationToken token)
     {
-        var workHorse = await _context.WorkHorses.FindAsync(new object[] { id }, token);
+        var workHorse = await _context.HorsesWorks.FindAsync(new object[] { id }, token);
 
         if (workHorse == null)
             return false;
 
-        _context.WorkHorses.Remove(workHorse);
+        _context.HorsesWorks.Remove(workHorse);
         await _context.SaveChangesAsync(token);
         return true;
+    }
+
+    public static DateOnly SetWeekStartDate(DateOnly date)
+    {
+        var dateTime = date.ToDateTime(TimeOnly.MinValue);
+        int diff = (7 + (dateTime.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return DateOnly.FromDateTime(dateTime.AddDays(-diff));
     }
 }
