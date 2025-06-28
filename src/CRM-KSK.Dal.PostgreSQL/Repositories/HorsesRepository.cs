@@ -15,62 +15,28 @@ public class HorsesRepository : IHorsesRepository
 
     public async Task AddHorse(Horse horse, CancellationToken token)
     {
-        var existing = await _context.Horses.FirstOrDefaultAsync(x =>
-            x.StartWeek == horse.StartWeek &&
-            x.RowNumber == horse.RowNumber, token);
-
-        if (existing != null && !string.IsNullOrWhiteSpace(horse.Name))
-        {
-            existing.Name = horse.Name;
-            await _context.SaveChangesAsync(token);
-            return;
-        }
-
         _context.Horses.Add(horse);
         await _context.SaveChangesAsync(token);
     }
 
-    public async Task AddOrUpdateHorseWork(WorkHorse horse, CancellationToken token)
+    public async Task AddWorkHorse(WorkHorse horse, CancellationToken token)
     {
-        var existing = await _context.WorkHorses.FirstOrDefaultAsync(x =>
-            x.RowNumber == horse.RowNumber &&
-            x.Date == horse.Date &&
-            x.WeekStartDate == horse.WeekStartDate, token);
-
-        var isEmptyCell = string.IsNullOrWhiteSpace(horse.ContentText);
-
-        if (existing != null)
-        {
-            if (isEmptyCell)
-            {
-                // Удаляем запись, если она стала пустой
-                _context.WorkHorses.Remove(horse);
-            }
-            else
-            {
-                // Обновляем существующую запись
-                existing.ContentText = horse.ContentText?.Trim();
-            }
-        }
-        else
-        {
-            if (!isEmptyCell)
-            {
-                // Создаём новую запись
-                var newHorse = new WorkHorse
-                {
-                    RowNumber = horse.RowNumber,
-                    Date = horse.Date,
-                    ContentText = horse.ContentText?.Trim()
-                };
-
-                newHorse.GetCurrentWeekMonday(horse.Date);
-
-                _context.WorkHorses.Add(newHorse);
-            }
-        }
-
+        _context.WorkHorses.Add(horse);
         await _context.SaveChangesAsync(token);
+    }
+
+    public async Task<Horse> GetHorseNameById(long id, CancellationToken token)
+    {
+        var horse = await _context.Horses.FindAsync(id, token);
+
+        return horse;
+    }
+
+    public async Task<WorkHorse> GetWorkHorseById(Guid id, CancellationToken token)
+    {
+        var horse = await _context.WorkHorses.FindAsync(id, token);
+
+        return horse;
     }
 
     public async Task<List<Horse>> GetHorsesNameWeek(DateOnly sDate, CancellationToken token)
@@ -99,21 +65,47 @@ public class HorsesRepository : IHorsesRepository
         return scheduleWeek ?? [];
     }
 
+    public async Task UpdateHorseName(long id, string name, CancellationToken token)
+    {
+        var horse = await _context.Horses.FindAsync(new object[] { id }, token);
+        if (horse == null)
+            return;
+
+        horse.Name = name;
+        await _context.SaveChangesAsync(token);
+    }
+
+    public async Task UpdateWorkHorse(Guid id, string content, CancellationToken token)
+    {
+        var workHorse = await _context.WorkHorses.FindAsync(new object[] { id }, token);
+        if (workHorse == null)
+            return;
+
+        workHorse.ContentText = content;
+        await _context.SaveChangesAsync(token);
+    }
+
+    public async Task<bool> DeleteHorseName(long id, CancellationToken token)
+    {
+        var horse = await _context.Horses.FindAsync(new object[] { id }, token);
+
+        if (horse == null)
+            return false;
+
+        _context.Horses.Remove(horse);
+        await _context.SaveChangesAsync(token);
+        return true;
+    }
+
     public async Task<bool> DeleteWorkHorseById(Guid id, CancellationToken token)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        var workHorse = await _context.WorkHorses.FindAsync(new object[] { id }, token);
 
-        var content = await _context.WorkHorses
-            .Where(h => h.Date >= today)
-            .FirstOrDefaultAsync(h => h.Id == id, token);
+        if (workHorse == null)
+            return false;
 
-        if (content != null)
-        {
-            _context.WorkHorses.Remove(content);
-            await _context.SaveChangesAsync(token);
-            return true;
-        }
-
-        return false;
+        _context.WorkHorses.Remove(workHorse);
+        await _context.SaveChangesAsync(token);
+        return true;
     }
 }

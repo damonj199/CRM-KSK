@@ -3,6 +3,7 @@ using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Core.Entities;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel.DataAnnotations;
 
 namespace CRM_KSK.Application.Services;
 
@@ -11,6 +12,8 @@ public class HorsesWorkService : IHorsesWorkService
     private readonly IHorsesRepository _horsesRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<HorsesWorkService> _logger;
+    private readonly DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+
     public HorsesWorkService(IHorsesRepository horsesRepository, IMapper mapper, ILogger<HorsesWorkService> logger)
     {
         _horsesRepository = horsesRepository;
@@ -18,21 +21,18 @@ public class HorsesWorkService : IHorsesWorkService
         _logger = logger;
     }
 
-    private DateOnly today = DateOnly.FromDateTime(DateTime.Today);
-
-    public async Task<bool> AddOrUpdateHorsesWork(WorkHorseDto horseDto, CancellationToken token)
+    public async Task<bool> AddWorkHorse(WorkHorseDto horseDto, CancellationToken token)
     {
-        if (!string.IsNullOrWhiteSpace(horseDto.ContentText) || horseDto.Date >= today)
+        if (!string.IsNullOrWhiteSpace(horseDto.ContentText))
         {
             var horse = _mapper.Map<WorkHorse>(horseDto);
 
             horse.GetCurrentWeekMonday(horse.Date);
-            await _horsesRepository.AddOrUpdateHorseWork(horse, token);
+            await _horsesRepository.AddWorkHorse(horse, token);
 
             return true;
         }
 
-        _logger.LogWarning("Нельзя добавить пустое расписание или задним числом");
         return false;
     }
 
@@ -72,6 +72,30 @@ public class HorsesWorkService : IHorsesWorkService
         _logger.LogWarning($"ПРОВЕРЯЕМ СКОЛЬКО ЭЛЕМЕНТОВ ВОЗВРАЩАЕТСЯ - {horsesDto.Count}");
 
         return horsesDto ?? [];
+    }
+
+    public async Task UpdateWorkHorse(Guid id, string content, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ValidationException("Текст не может быть пустым");
+
+        await _horsesRepository.UpdateWorkHorse(id, content, token);
+        
+    }
+
+    public async Task UpdateHorseName(long id, string name, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ValidationException("Кличка не может быть пустой");
+
+        await _horsesRepository.UpdateHorseName(id, name, token);
+    }
+
+    public async Task<bool> DeleteHorseById(long id, CancellationToken token)
+    {
+        var result = await _horsesRepository.DeleteHorseName(id, token);
+
+        return result;
     }
 
     public async Task<bool> DeleteWorkHorseById(Guid id, CancellationToken token)
