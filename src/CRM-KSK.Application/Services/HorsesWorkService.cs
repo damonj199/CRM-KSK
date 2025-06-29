@@ -41,12 +41,14 @@ public class HorsesWorkService : IHorsesWorkService
             }
         }
 
-        foreach (var horse in horsesLastWeek)
+        var newHorse = horsesLastWeek.Select(h => new Horse
         {
-            horse.StartWeek = sDate;
-        }
+            RowNumber = h.RowNumber,
+            Name = h.Name,
+            StartWeek = sDate
+        }).ToList();
 
-        await _horsesRepository.AddHorsesLastWeek(horsesLastWeek, token);
+        await _horsesRepository.AddHorsesLastWeek(newHorse, token);
     }
 
     public async Task<bool> AddWorkHorse(WorkHorseDto horseDto, CancellationToken token)
