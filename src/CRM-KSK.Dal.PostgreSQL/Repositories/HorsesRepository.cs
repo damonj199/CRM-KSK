@@ -13,6 +13,12 @@ public class HorsesRepository : IHorsesRepository
         _context = context;
     }
 
+    public async Task AddHorsesLastWeek(List<Horse> horses, CancellationToken token)
+    {
+        await _context.Horses.AddRangeAsync(horses, token);
+        await _context.SaveChangesAsync(token);
+    }
+
     public async Task AddHorse(Horse horse, CancellationToken token)
     {
         _context.Horses.Add(horse);
@@ -21,7 +27,7 @@ public class HorsesRepository : IHorsesRepository
 
     public async Task AddWorkHorse(HorseWork horse, CancellationToken token)
     {
-        horse.StartWeek = SetWeekStartDate(horse.Date);
+        //horse.StartWeek = SetWeekStartDate(horse.Date);
         _context.HorsesWorks.Add(horse);
         await _context.SaveChangesAsync(token);
     }
@@ -43,6 +49,7 @@ public class HorsesRepository : IHorsesRepository
     public async Task<List<Horse>> GetHorsesNameWeek(DateOnly sDate, CancellationToken token)
     {
         var horses = await _context.Horses
+            .AsNoTracking()
             .Where(x => x.StartWeek == sDate)
             .ToListAsync(token);
 
@@ -51,7 +58,9 @@ public class HorsesRepository : IHorsesRepository
 
     public async Task<List<HorseWork>> GetAllScheduleWorkHorses(CancellationToken token)
     {
-        var allSchedduleHorses = await _context.HorsesWorks.ToListAsync(token);
+        var allSchedduleHorses = await _context.HorsesWorks
+            .AsNoTracking()
+            .ToListAsync(token);
 
         return allSchedduleHorses ?? [];
     }
@@ -59,6 +68,7 @@ public class HorsesRepository : IHorsesRepository
     public async Task<List<HorseWork>> GetScheduleWorkHorsesWeek(DateOnly sDate, CancellationToken token)
     {
         var scheduleWeek = await _context.HorsesWorks
+            .AsNoTracking()
             .Where(h => h.StartWeek == sDate)
             .OrderBy(h => h.Date)
             .ToListAsync(token);

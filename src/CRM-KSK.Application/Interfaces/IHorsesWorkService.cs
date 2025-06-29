@@ -11,6 +11,7 @@ namespace CRM_KSK.Application.Interfaces
         Task<List<WorkHorseDto>> GetAllScheduleWorkHorses(CancellationToken token);
         Task<List<HorseDto>> GetHorsesNameWeek(DateOnly sDate, CancellationToken token);
         Task<List<WorkHorseDto>> GetScheduleWorkHorsesWeek(DateOnly sDate, CancellationToken token);
+        Task AddHorsesLastWeek(DateOnly sDate, CancellationToken token);
         Task UpdateHorseName(long id, string name, CancellationToken token);
         Task UpdateWorkHorse(Guid id, string content, CancellationToken token);
     }

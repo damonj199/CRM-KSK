@@ -13,6 +13,7 @@ public interface IHorsesRepository
     Task<List<Horse>> GetHorsesNameWeek(DateOnly sDate, CancellationToken token);
     Task<List<HorseWork>> GetScheduleWorkHorsesWeek(DateOnly sDate, CancellationToken token);
     Task<HorseWork> GetWorkHorseById(Guid id, CancellationToken token);
+    Task AddHorsesLastWeek(List<Horse> horses, CancellationToken token);
     Task UpdateHorseName(long id, string name, CancellationToken token);
     Task UpdateWorkHorse(Guid id, string content, CancellationToken token);
 }

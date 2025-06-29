@@ -20,6 +20,13 @@ public class HorsesServiceBlazor
         return await HandleResponse(response, "Запись успешно добавлена");
     }
 
+    public async Task<string> AddHorsesLastWeek(DateOnly sDate)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/HorsesWork/transfer-last-week", sDate);
+
+        return await HandleResponse(response, "Записи успешно перенесены");
+    }
+
     public async Task<List<HorseDto>> GetHorsesByWeek(DateOnly sDate)
     {
         var response = await _httpClient.GetFromJsonAsync<List<HorseDto>>($"api/HorsesWork/horses-week?sDate={sDate:yyyy-MM-dd}");
