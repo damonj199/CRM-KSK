@@ -21,13 +21,40 @@ public class HorsesWorkService : IHorsesWorkService
         _logger = logger;
     }
 
+    public async Task AddHorsesLastWeek(DateOnly sDate, CancellationToken token)
+    {
+        var startLastWeek = sDate.AddDays(-7);
+        var horsesLastWeek = await _horsesRepository.GetHorsesNameWeek(startLastWeek, token);
+        var horsesCurrentWeek = await _horsesRepository.GetHorsesNameWeek(sDate, token);
+
+        if (horsesLastWeek.Count == 0)
+        {
+            _logger.LogWarning("Не будем переносить пустую неделю");
+            return;
+        }
+
+        if (horsesCurrentWeek.Count > 0)
+        {
+            foreach (var horse in horsesCurrentWeek)
+            {
+                await _horsesRepository.DeleteHorseName(horse.Id, token);
+            }
+        }
+
+        foreach (var horse in horsesLastWeek)
+        {
+            horse.StartWeek = sDate;
+        }
+
+        await _horsesRepository.AddHorsesLastWeek(horsesLastWeek, token);
+    }
+
     public async Task<bool> AddWorkHorse(WorkHorseDto horseDto, CancellationToken token)
     {
         if (!string.IsNullOrWhiteSpace(horseDto.ContentText))
         {
             var horse = _mapper.Map<HorseWork>(horseDto);
 
-            //horse.SetWeekStartDate();
             await _horsesRepository.AddWorkHorse(horse, token);
 
             return true;

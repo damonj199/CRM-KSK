@@ -17,6 +17,13 @@ public class HorsesWorkController : ControllerBase
         _horsesWorkService = horsesWorkService;
     }
 
+    [HttpPost("transfer-last-week")]
+    public async Task<IActionResult> AddHorsesLastWeek([FromBody] DateOnly sDate, CancellationToken token)
+    {
+        await _horsesWorkService.AddHorsesLastWeek(sDate, token);
+        return Ok();
+    }
+
     [HttpPost("work")]
     public async Task<IActionResult> AddWorkHorses([FromBody] WorkHorseDto horse, CancellationToken token)
     {
