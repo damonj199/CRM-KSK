@@ -79,10 +79,11 @@ public class MembershipRepository : IMembershipRepository
 
     public async Task DeleteMembershipAsync(Guid id, CancellationToken token)
     {
-        var mem = new Membership { Id = id };
-
-        _context.Memberships.Attach(mem);
-        _context.Memberships.Remove(mem);
-        await _context.SaveChangesAsync(token);
+        var membership = await _context.Memberships.FindAsync(id, token);
+        if (membership != null)
+        {
+            _context.Memberships.Remove(membership);
+            await _context.SaveChangesAsync(token);
+        }
     }
 }
