@@ -31,12 +31,8 @@ public class MembershipRepository : IMembershipRepository
 
     public async Task<Membership> GetMembershipByClientAndTypeAsync(Guid id, TypeTrainings type, CancellationToken token)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
-
         var membership = await _context.Memberships
-            .Where(c => c.ClientId == id
-                        && c.TypeTrainings == type
-                        && c.DateEnd >= today)
+            .Where(c => c.ClientId == id && c.TypeTrainings == type)
             .FirstOrDefaultAsync(token);
 
         return membership;
