@@ -10,6 +10,9 @@ services:
     environment:
       ASPNETCORE_URLS: ${ASPNETCORE_URLS}
       ConnectionStrings__DefaultConnection: ${POSTGRES_CONNECTION}
+      Logging__LogLevel__Default: Warning
+      Logging__LogLevel__Microsoft: Warning
+      Logging__LogLevel__Microsoft.AspNetCore: Warning
     networks:
     - crm-network
     
