@@ -63,6 +63,8 @@ public static class ConfigureServices
         services.AddScoped<IWorkWithMembership, WorkWithMembership>();
         services.AddScoped<IHorsesWorkService, HorsesWorkService>();
         services.AddScoped<IHorsesRepository, HorsesRepository>();
+        services.AddScoped<IMembershipDeductionLogService, MembershipDeductionLogService>();
+        services.AddScoped<IMembershipDeductionLogRepository, MembershipDeductionLogRepository>();
         services.AddHostedService<BirthdayNotificationBackgroundService>();
     }
 }
