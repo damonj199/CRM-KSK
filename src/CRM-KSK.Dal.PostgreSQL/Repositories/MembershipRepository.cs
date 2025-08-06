@@ -31,12 +31,8 @@ public class MembershipRepository : IMembershipRepository
 
     public async Task<Membership> GetMembershipByClientAndTypeAsync(Guid id, TypeTrainings type, CancellationToken token)
     {
-        var today = DateOnly.FromDateTime(DateTime.Today);
-
         var membership = await _context.Memberships
-            .Where(c => c.ClientId == id
-                        && c.TypeTrainings == type
-                        && c.DateEnd >= today)
+            .Where(c => c.ClientId == id && c.TypeTrainings == type)
             .FirstOrDefaultAsync(token);
 
         return membership;
@@ -79,10 +75,11 @@ public class MembershipRepository : IMembershipRepository
 
     public async Task DeleteMembershipAsync(Guid id, CancellationToken token)
     {
-        var mem = new Membership { Id = id };
-
-        _context.Memberships.Attach(mem);
-        _context.Memberships.Remove(mem);
-        await _context.SaveChangesAsync(token);
+        var membership = await _context.Memberships.FindAsync(id, token);
+        if (membership != null)
+        {
+            _context.Memberships.Remove(membership);
+            await _context.SaveChangesAsync(token);
+        }
     }
 }
