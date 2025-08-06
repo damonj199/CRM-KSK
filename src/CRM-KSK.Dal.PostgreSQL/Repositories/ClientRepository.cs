@@ -97,11 +97,12 @@ public class ClientRepository : IClientRepository
 
     public async Task SoftDeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {
-        var client = new Client { Id = id };
-
-        _context.Clients.Attach(client);
-        client.SoftDelete();
-        await _context.SaveChangesAsync(cancellationToken);
+        var client = await _context.Clients.FindAsync(id);
+        if (client != null)
+        {
+            client.SoftDelete();
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async Task<bool> ClientVerificationAsync(string phoneNumber, CancellationToken cancellationToken)
