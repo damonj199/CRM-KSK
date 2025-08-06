@@ -86,24 +86,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var expiringMemberships = await _membershipService.GetExpiringMemberships();
-
-        foreach (var membership in expiringMemberships)
-        {
-            bool isExpired = membership.AmountTraining == 0 || membership.DateEnd.ToDateTime(new TimeOnly(0, 0)) < DateTime.Today;
-
-            if (isExpired && membership.StatusMembership != Core.Enums.StatusMembership.Закончился)
-            {
-                membership.StatusMembership = Core.Enums.StatusMembership.Закончился;
-                await _membershipService.UpdateMembership(membership);
-            }
-        }
-
-        var SortedExpiringMemberships = expiringMemberships
-            .OrderBy(m => m.DateEnd)
-            .ThenBy(m => m.AmountTraining)
-            .ToList();
-
         allClients = await _clientService.GetAllClientsWithMemberships();
     }
 
