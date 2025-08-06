@@ -16,14 +16,4 @@ public class MembershipDeductionLogService : IMembershipDeductionLogService
     {
         return await _logRepository.GetLogsAsync(date, token);
     }
-
-    public async Task<IEnumerable<MembershipDeductionLogDto>> GetDeductionLogsByClientAsync(Guid clientId, CancellationToken token)
-    {
-        return await _logRepository.GetLogsByClientAsync(clientId, token);
-    }
-
-    public async Task<int> GetDeductionLogsCountAsync(DateOnly date, CancellationToken token)
-    {
-        return await _logRepository.GetLogsCountAsync(date, token);
-    }
 } 

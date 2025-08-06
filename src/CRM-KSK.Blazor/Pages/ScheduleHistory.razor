@@ -12,7 +12,7 @@
     <label>Конечная дата:</label>
     <input type="date" @bind="EndDate" />
 
-    <label>Тренера:</label>
+    <label>Тренер:</label>
     <select @bind="SelectedTrainerId" @bind:event="onchange">
         <option value="">Все тренеры</option>
         @foreach (var trainer in Trainers)
@@ -21,7 +21,7 @@
         }
     </select>
 
-    <label>Клиента:</label>
+    <label>Клиент:</label>
     <input type="text" @bind="ClientSearchText" @bind:event="oninput" placeholder="Введите имя или фамилию" />
     <select @bind="SelectedClientId" @bind:event="onchange">
         <option value="">Все клиенты</option>
@@ -152,6 +152,8 @@
                         .ToList()
                 })
             .Where(s => s.Trainings.Any())
+            .OrderByDescending(s => s.Date)
+            .ThenBy(s => s.Time)
             .ToList();
 
         StateHasChanged();

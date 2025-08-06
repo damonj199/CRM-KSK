@@ -3,6 +3,7 @@ using System;
 using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    partial class CRM_KSKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250806114432_FixErrorDeletedTraining")]
+    partial class FixErrorDeletedTraining
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,68 +146,6 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.ToTable("clients", (string)null);
                 });
 
-            modelBuilder.Entity("CRM_KSK.Core.Entities.Horse", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int>("RowNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("rowNumber");
-
-                    b.Property<DateOnly>("StartWeek")
-                        .HasColumnType("date")
-                        .HasColumnName("startWeek");
-
-                    b.HasKey("Id")
-                        .HasName("pK_horses");
-
-                    b.ToTable("horses", (string)null);
-                });
-
-            modelBuilder.Entity("CRM_KSK.Core.Entities.HorseWork", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ContentText")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("contentText");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date")
-                        .HasColumnName("date");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isDeleted");
-
-                    b.Property<int>("RowNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("rowNumber");
-
-                    b.Property<DateOnly>("StartWeek")
-                        .HasColumnType("date")
-                        .HasColumnName("startWeek");
-
-                    b.HasKey("Id")
-                        .HasName("pK_horsesWorks");
-
-                    b.ToTable("horsesWorks", (string)null);
-                });
-
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
                 {
                     b.Property<Guid>("Id")
@@ -261,7 +202,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid?>("ClientId")
+                    b.Property<Guid>("ClientId")
                         .HasColumnType("uuid")
                         .HasColumnName("clientId");
 
@@ -281,7 +222,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("scheduleId");
 
-                    b.Property<Guid?>("TrainingId")
+                    b.Property<Guid>("TrainingId")
                         .HasColumnType("uuid")
                         .HasColumnName("trainingId");
 
@@ -459,6 +400,41 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.ToTable("trainings", (string)null);
                 });
 
+            modelBuilder.Entity("CRM_KSK.Core.Entities.WorkHorse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ContentText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("contentText");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("HorseName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("horseName");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDeleted");
+
+                    b.Property<int>("RowNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("rowNumber");
+
+                    b.HasKey("Id")
+                        .HasName("pK_workHorses");
+
+                    b.ToTable("workHorses", (string)null);
+                });
+
             modelBuilder.Entity("ClientTraining", b =>
                 {
                     b.Property<Guid>("ClientsId")
@@ -496,6 +472,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .WithMany()
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
                         .HasConstraintName("fK_membershipDeductionLogs_clients_clientId");
 
                     b.HasOne("CRM_KSK.Core.Entities.Membership", "Membership")
@@ -515,6 +492,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .WithMany()
                         .HasForeignKey("TrainingId")
                         .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
                         .HasConstraintName("fK_membershipDeductionLogs_trainings_trainingId");
 
                     b.Navigation("Client");

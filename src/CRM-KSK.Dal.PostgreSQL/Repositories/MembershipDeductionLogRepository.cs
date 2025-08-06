@@ -48,43 +48,10 @@ public class MembershipDeductionLogRepository : IMembershipDeductionLogRepositor
                 TrainingsAfterDeduction = l.TrainingsAfterDeduction,
                 MembershipExpired = l.MembershipExpired,
                 ScheduleDate = l.Schedule.Date.ToString("dd.MM.yyyy"),
-                TrainerName = $"{l.Training.Trainer.LastName} {l.Training.Trainer.FirstName}"
+                TrainerName = l.Training != null ? $"{l.Training.Trainer.LastName} {l.Training.Trainer.FirstName}" : null
             })
             .ToListAsync(token);
 
         return logs;
-    }
-
-    public async Task<IEnumerable<MembershipDeductionLogDto>> GetLogsByClientAsync(Guid clientId, CancellationToken token)
-    {
-        var logs = await _context.MembershipDeductionLogs
-            .Include(l => l.Client)
-            .Include(l => l.Schedule)
-            .Include(l => l.Training)
-            .Include(l => l.Training.Trainer)
-            .Where(l => l.ClientId == clientId)
-            .OrderByDescending(l => l.DeductionDate)
-            .Select(l => new MembershipDeductionLogDto
-            {
-                Id = l.Id,
-                DeductionDate = l.DeductionDate,
-                ClientFullName = $"{l.Client.LastName} {l.Client.FirstName}",
-                TrainingType = l.TrainingType,
-                TrainingsBeforeDeduction = l.TrainingsBeforeDeduction,
-                TrainingsAfterDeduction = l.TrainingsAfterDeduction,
-                MembershipExpired = l.MembershipExpired,
-                ScheduleDate = l.Schedule.Date.ToString("dd.MM.yyyy"),
-                TrainerName = $"{l.Training.Trainer.LastName} {l.Training.Trainer.FirstName}"
-            })
-            .ToListAsync(token);
-
-        return logs;
-    }
-
-    public async Task<int> GetLogsCountAsync(DateOnly date, CancellationToken token)
-    {
-        return await _context.MembershipDeductionLogs
-            .Where(l => l.DeductionDate == date)
-            .CountAsync(token);
     }
 } 

@@ -7,6 +7,4 @@ public interface IMembershipDeductionLogRepository
 {
     Task<MembershipDeductionLog> CreateLogAsync(MembershipDeductionLog log, CancellationToken token);
     Task<IEnumerable<MembershipDeductionLogDto>> GetLogsAsync(DateOnly date, CancellationToken token);
-    Task<IEnumerable<MembershipDeductionLogDto>> GetLogsByClientAsync(Guid clientId, CancellationToken token);
-    Task<int> GetLogsCountAsync(DateOnly date, CancellationToken token);
 } 

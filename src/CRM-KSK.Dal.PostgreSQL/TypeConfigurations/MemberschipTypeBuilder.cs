@@ -19,6 +19,6 @@ internal sealed class MemberschipTypeBuilder : IEntityTypeConfiguration<Membersh
             .HasConversion<string>();
 
         builder
-            .HasQueryFilter(m => m.Client == null || !m.Client.IsDeleted);
+            .HasQueryFilter(m => (m.Client == null || !m.Client.IsDeleted) && !m.IsDeleted);
     }
 }
