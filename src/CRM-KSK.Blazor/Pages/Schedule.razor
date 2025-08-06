@@ -483,7 +483,7 @@
 
     private async Task LoadDataFromApi()
     {
-        Trainers = await _trainerService.GetAllTrainers() ?? [];
+        Trainers = (await _trainerService.GetAllTrainers() ?? []).OrderBy(t => t.FirstName).ToList();
         Clients = await _clientService.GetClientsForSchedulesAsync() ?? [];
     }
 

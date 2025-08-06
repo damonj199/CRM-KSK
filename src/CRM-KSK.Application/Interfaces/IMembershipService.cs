@@ -7,7 +7,6 @@ public interface IMembershipService
     Task AddMembershipAsync(List<MembershipDto> memberships, CancellationToken token);
     Task DeleteMembershipAsync(Guid id, CancellationToken token);
     Task<List<MembershipDto>> GetAllMembershipClientAsync(Guid id, CancellationToken token);
-    Task<List<MembershipDto>> GetExpiringMembershipsAsync(CancellationToken token);
     Task<MembershipDto> GetMembershipByIdAsync(Guid id, CancellationToken token);
     Task UpdateMembershipAsync(MembershipDto membershipDto, CancellationToken token);
 }

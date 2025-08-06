@@ -26,6 +26,7 @@ public class TrainingsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "AdminPolicy")]
     public async Task<IActionResult> DeleteTrainingAsync(Guid id, CancellationToken token)
     {
         await _trainingService.DeleteTrainingAsync(id, token);

@@ -96,10 +96,11 @@ public class TrainerRepository : ITrainerRepository
 
     public async Task SoftDeleteTraner(Guid id, CancellationToken cancellationToken)
     {
-        var trainer = new Trainer { Id = id };
-
-        _context.Trainers.Attach(trainer);
-        trainer.SoftDelete();
-        await _context.SaveChangesAsync(cancellationToken);
+        var trainer = await _context.Trainers.FindAsync(id);
+        if (trainer != null)
+        {
+            trainer.SoftDelete();
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 }

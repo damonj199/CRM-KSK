@@ -18,10 +18,10 @@ public class ClientRepository : IClientRepository
 
     public async Task<Guid> AddClientAsync(Client client, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("передаем клиента на добавление в БД");
+        _logger.LogWarning("передаем клиента на добавление в БД");
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(cancellationToken); 
-        _logger.LogInformation("Клиент добавлен!");
+        _logger.LogWarning("Клиент добавлен!");
         return client.Id;
     }
 
@@ -88,26 +88,27 @@ public class ClientRepository : IClientRepository
 
     public async Task<Client> GetClientByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("проверяем есть ли в БД клиент с таким номером");
+        _logger.LogWarning("проверяем есть ли в БД клиент с таким номером");
         var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(n => n.Phone == phoneNumber);
 
-        _logger.LogDebug("вот что в бд по этому клиенту {0}", client);
+        _logger.LogWarning("вот что в бд по этому клиенту {0}", client);
         return client;
     }
 
     public async Task SoftDeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {
-        var client = new Client { Id = id };
-
-        _context.Clients.Attach(client);
-        client.SoftDelete();
-        await _context.SaveChangesAsync(cancellationToken);
+        var client = await _context.Clients.FindAsync(id);
+        if (client != null)
+        {
+            client.SoftDelete();
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async Task<bool> ClientVerificationAsync(string phoneNumber, CancellationToken cancellationToken)
     {
         var clientExist = await _context.Clients.AnyAsync(c => c.Phone == phoneNumber, cancellationToken);
-        _logger.LogDebug("Провряем что у нас там в БД, {0}", clientExist);
+        _logger.LogWarning("Провряем что у нас там в БД, {0}", clientExist);
         return clientExist;
     }
 
