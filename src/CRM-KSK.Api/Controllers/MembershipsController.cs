@@ -39,13 +39,6 @@ public class MembershipsController : ControllerBase
         return Ok(membership);
     }
 
-    [HttpGet("expiring")]
-    public async Task<IActionResult> GetExpiringMemberships(CancellationToken token)
-    {
-        var membershipsDto = await _membershipService.GetExpiringMembershipsAsync(token);
-        return Ok(membershipsDto);
-    }
-
     [HttpPut]
     public async Task<IActionResult> UpdateMembershipAsync([FromBody] MembershipDto membership, CancellationToken token)
     {

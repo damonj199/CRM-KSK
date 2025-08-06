@@ -12,7 +12,7 @@ internal sealed class TrainingTypeBuilder : IEntityTypeConfiguration<Training>
             .HasOne(t => t.Trainer)
             .WithMany(tr => tr.Trainings)
             .HasForeignKey(t => t.TrainerId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder
             .HasOne(t => t.Schedule)
