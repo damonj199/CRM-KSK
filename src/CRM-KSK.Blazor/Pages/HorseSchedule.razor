@@ -1,12 +1,21 @@
 ﻿@page "/horses-schedule"
 @inject HorsesServiceBlazor _horsesService
+@implements IDisposable
 
 <div class="header-container">
-    <h3 class="title">Работа лошадей</h3>
-    <div class="navigation-buttons">
-        <button @onclick="NavigateToPreviousWeek" class="btn btn-secondary">← Пред.</button>
-        <span class="current-week">@GetCurrentWeekRange()</span>
-        <button @onclick="NavigateToNextWeek" class="btn btn-secondary">След. →</button>
+    <button @onclick="TransferFromLastWeek"
+            class="btn-transfer"
+            disabled="@_isTransferring">
+        @(_isTransferring ? "Перенос..." : "Перенести лошадей")
+    </button>
+
+    <div class="header-center">
+        <h3 class="title">Работа лошадей</h3>
+        <div class="navigation-buttons">
+            <button @onclick="NavigateToPreviousWeek" class="btn btn-secondary">← Пред.</button>
+            <span class="current-week">@GetCurrentWeekRange()</span>
+            <button @onclick="NavigateToNextWeek" class="btn btn-secondary">След. →</button>
+        </div>
     </div>
 </div>
 
@@ -16,33 +25,31 @@
             <tr>
                 <th>№</th>
                 <th>Кличка</th>
-                @foreach (var day in DaysWithDates)
+                @foreach (var day in weekDates)
                 {
                     <th>
                         <div>@GetDayOfWeek(day)</div>
-                        <div class="small-date">@day</div>
+                        <div class="small-date">@day.ToString("dd.MM.yyyy")</div>
                     </th>
                 }
             </tr>
         </thead>
         <tbody>
-            @for (int i = 1; i <= 25; i++)
+            @foreach (var row in _rows)
             {
-                var rowNumber = i;
                 <tr>
-                    <td class="row-number">@rowNumber</td>
+                    <td class="row-number">@row.RowNumber</td>
                     <td>
                         <input class="horse-name-input"
-                               value="@GetHorseName(rowNumber)"
-                               @onchange="@(e => UpdateHorseName(rowNumber, e.Value?.ToString()))" />
+                               @bind="row.HorseName"
+                               @onblur="@(() => UpdateHorse(row))" />
                     </td>
-                    @foreach (var day in DaysWithDates)
+                    @foreach (var day in weekDates)
                     {
-                        var date = DateOnly.ParseExact(day, "dd.MM.yyyy", CultureInfo.InvariantCulture);
                         <td>
                             <input class="activity-input"
-                                   value="@GetContentText(rowNumber, date)"
-                                   @onchange="@(e => UpdateContentText(rowNumber, date, e.Value?.ToString()))" />
+                                   @bind="row.DailyWorks[day]"
+                                   @onblur="@(() => UpdateWork(row, day))" />
                         </td>
                     }
                 </tr>
@@ -111,10 +118,17 @@
 
     .header-container {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
-        gap: 20px;
         margin: 0 0 4px 0;
+        position: relative;
+    }
+
+    .header-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-grow: 1;
     }
 
     .title {
@@ -122,6 +136,25 @@
         padding: 0;
         white-space: nowrap;
     }
+
+    .btn-transfer {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+
+        .btn-transfer:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-transfer:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
 
     .navigation-buttons {
         display: flex;
@@ -145,61 +178,69 @@
 </style>
 
 @code {
-    private List<WorkHorseDto> scheduleData = new();
-    private List<string> DaysWithDates = new();
-    private DateTime currentWeekStart = DateTime.Today;
+    private DateOnly startOfWeek;
+    private List<DateOnly> weekDates = new();
+    private List<ScheduleRow> _rows = new();
+    private CancellationTokenSource _cts = new();
+    private bool _isTransferring = false;
+    private bool _transferSuccess;
+    private string _transferMessage = string.Empty;
+
+    private class ScheduleRow
+    {
+        public int RowNumber { get; set; }
+        public string HorseName { get; set; } = string.Empty;
+        public Dictionary<DateOnly, string> DailyWorks { get; set; } = new();
+        public long? HorseId { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        currentWeekStart = GetStartOfWeek(DateTime.Today);
-        GenerateWeekDays();
-        await LoadScheduleData();
+        startOfWeek = GetCurrentWeekMonday();
+        await LoadData();
     }
 
-    private string GetCurrentWeekRange()
-    {
-        var start = currentWeekStart.ToString("dd.MM.yyyy");
-        var end = currentWeekStart.AddDays(6).ToString("dd.MM.yyyy");
-        return $"{start} - {end}";
-    }
-
-    private void GenerateWeekDays()
-    {
-        DaysWithDates = Enumerable.Range(0, 7)
-            .Select(i => currentWeekStart.AddDays(i).ToString("dd.MM.yyyy"))
-            .ToList();
-    }
-
-    private string GetDayOfWeek(string date)
-    {
-        return DateTime.ParseExact(date, "dd.MM.yyyy", CultureInfo.InvariantCulture)
-            .ToString("dddd", new CultureInfo("ru-RU"));
-    }
-
-    private async Task LoadScheduleData()
+    private async Task LoadData()
     {
         try
         {
-            var startDate = DateOnly.FromDateTime(currentWeekStart);
-            var data = await _horsesService.GetWeeksSchedule(startDate);
+            // Инициализация недели
+            weekDates = Enumerable.Range(0, 7)
+                .Select(i => startOfWeek.AddDays(i))
+                .ToList();
 
-            scheduleData = data ?? new List<WorkHorseDto>();
-
-            for (int i = 1; i <= 25; i++)
-            {
-                foreach (var day in DaysWithDates)
+            // Инициализация строк
+            _rows = Enumerable.Range(1, 25)
+                .Select(i => new ScheduleRow
                 {
-                    var date = DateOnly.ParseExact(day, "dd.MM.yyyy", CultureInfo.InvariantCulture);
-                    if (!scheduleData.Any(x => x.RowNumber == i && x.Date == date))
-                    {
-                        scheduleData.Add(new WorkHorseDto
-                        {
-                            RowNumber = i,
-                            Date = date,
-                            HorseName = GetHorseName(i),
-                            ContentText = ""
-                        });
-                    }
+                    RowNumber = i,
+                    DailyWorks = weekDates.ToDictionary(d => d, _ => string.Empty)
+                })
+                .ToList();
+
+            // Параллельная загрузка данных
+            var horsesTask = _horsesService.GetHorsesByWeek(startOfWeek);
+            var worksTask = _horsesService.GetWorkHorsesByWeek(startOfWeek);
+
+            await Task.WhenAll(horsesTask, worksTask);
+
+            // Заполнение данных
+            foreach (var horse in await horsesTask)
+            {
+                var row = _rows.FirstOrDefault(r => r.RowNumber == horse.RowNumber);
+                if (row != null)
+                {
+                    row.HorseName = horse.Name;
+                    row.HorseId = horse.Id;
+                }
+            }
+
+            foreach (var work in await worksTask)
+            {
+                var row = _rows.FirstOrDefault(r => r.RowNumber == work.RowNumber);
+                if (row != null && row.DailyWorks.ContainsKey(work.Date))
+                {
+                    row.DailyWorks[work.Date] = work.ContentText;
                 }
             }
         }
@@ -209,80 +250,143 @@
         }
     }
 
-    private string GetHorseName(int rowNumber)
+    private async Task TransferFromLastWeek()
     {
-        return scheduleData.FirstOrDefault(x => x.RowNumber == rowNumber)?.HorseName ?? "";
+        _isTransferring = true;
+        _transferMessage = string.Empty;
+
+        await _horsesService.AddHorsesLastWeek(startOfWeek);
+
+        _isTransferring = false;
+
+        await LoadData(); // Перезагружаем данные
     }
 
-    private string GetContentText(int rowNumber, DateOnly date)
+    private async Task UpdateHorse(ScheduleRow row)
     {
-        return scheduleData.FirstOrDefault(x => x.RowNumber == rowNumber && x.Date == date)?.ContentText ?? "";
-    }
-
-    private async Task UpdateHorseName(int rowNumber, string? value)
-    {
-        var horseName = value ?? "";
-        var existing = scheduleData.FirstOrDefault(x => x.RowNumber == rowNumber);
-
-        var dto = new WorkHorseDto
+        try
         {
-            RowNumber = rowNumber,
-            HorseName = horseName,
-            Date = DateOnly.MinValue,
-            ContentText = ""
-        };
+            var horseName = row.HorseName?.Trim() ?? string.Empty;
 
-        if (existing != null)
-        {
-            dto.Id = existing.Id;
-            existing.HorseName = horseName;
+            if (string.IsNullOrEmpty(horseName))
+            {
+                // Если поле пустое - удаляем запись если она есть
+                if (row.HorseId.HasValue)
+                {
+                    var success = await _horsesService.DeleteHorse(row.HorseId.Value);
+                    if (success)
+                    {
+                        row.HorseId = null;
+                    }
+                }
+                return;
+            }
+
+            if (row.HorseId.HasValue)
+            {
+                await _horsesService.UpdateHorseName(row.HorseId.Value, row.HorseName);
+            }
+            else
+            {
+                var newHorse = new HorseDto
+                {
+                    RowNumber = row.RowNumber,
+                    Name = row.HorseName,
+                    StartWeek = startOfWeek
+                };
+                await _horsesService.AddHorse(newHorse);
+                // После успешного добавления нужно обновить HorseId
+                await LoadData();
+            }
         }
-
-        await _horsesService.AddWorkHorse(dto);
-    }
-
-    private async Task UpdateContentText(int rowNumber, DateOnly date, string? value)
-    {
-        var contentText = value ?? "";
-        var existing = scheduleData.FirstOrDefault(x => x.RowNumber == rowNumber && x.Date == date);
-        var horseName = GetHorseName(rowNumber);
-
-        var dto = new WorkHorseDto
+        catch (Exception ex)
         {
-            RowNumber = rowNumber,
-            HorseName = horseName,
-            Date = date,
-            ContentText = contentText
-        };
-
-        if (existing != null)
-        {
-            dto.Id = existing.Id;
-            existing.ContentText = contentText;
+            Console.WriteLine($"Ошибка обновления лошади: {ex.Message}");
         }
-
-        await _horsesService.AddWorkHorse(dto);
     }
 
-    private DateTime GetStartOfWeek(DateTime date)
+    private async Task UpdateWork(ScheduleRow row, DateOnly date)
     {
-        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
-        return date.AddDays(-diff).Date;
+        try
+        {
+            var content = row.DailyWorks[date].Trim();
+
+            if (string.IsNullOrEmpty(content))
+            {
+                // Находим и удаляем существующую запись
+                var existing = (await _horsesService.GetWorkHorsesByWeek(startOfWeek))
+                    .FirstOrDefault(w => w.RowNumber == row.RowNumber && w.Date == date);
+
+                if (existing != null)
+                {
+                    await _horsesService.DeleteWorkHorse(existing.Id);
+                }
+            }
+            else
+            {
+                var existing = (await _horsesService.GetWorkHorsesByWeek(startOfWeek))
+                    .FirstOrDefault(w => w.RowNumber == row.RowNumber && w.Date == date);
+
+                if (existing != null)
+                {
+                    await _horsesService.UpdateWorkHorse(existing.Id, content);
+                }
+                else
+                {
+                    await _horsesService.AddWorkHorse(new WorkHorseDto
+                    {
+                        RowNumber = row.RowNumber,
+                        Date = date,
+                        ContentText = content,
+                        StartWeek = startOfWeek
+                    });
+                    
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка обновления работы: {ex.Message}");
+        }
     }
 
-    private async void NavigateToPreviousWeek()
+    private async Task NavigateToPreviousWeek()
     {
-        currentWeekStart = currentWeekStart.AddDays(-7);
-        GenerateWeekDays();
-        await LoadScheduleData();
+        startOfWeek = startOfWeek.AddDays(-7);
+        await LoadData();
         StateHasChanged();
     }
 
-    private async void NavigateToNextWeek()
+    private async Task NavigateToNextWeek()
     {
-        currentWeekStart = currentWeekStart.AddDays(7);
-        GenerateWeekDays();
-        await LoadScheduleData();
+        startOfWeek = startOfWeek.AddDays(7);
+        await LoadData();
         StateHasChanged();
+    }
+
+    private DateOnly GetCurrentWeekMonday()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return today.AddDays(-diff);
+    }
+
+    private string GetCurrentWeekRange()
+    {
+        var start = startOfWeek.ToString("dd.MM.yyyy");
+        var end = startOfWeek.AddDays(6).ToString("dd.MM.yyyy");
+        return $"{start} - {end}";
+    }
+
+    private string GetDayOfWeek(DateOnly date)
+    {
+        return date.ToDateTime(TimeOnly.MinValue)
+            .ToString("dddd", new CultureInfo("ru-RU"));
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
     }
 }

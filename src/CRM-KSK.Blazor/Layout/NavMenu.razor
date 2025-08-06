@@ -1,6 +1,15 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject HttpClient _http
+@inject IJSRuntime JSRuntime
+@inject NavigationManager _navigation
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">KCK Нева</a>
+
+        <button class="btn btn-sm btn-outline-light ms-auto me-2" @onclick="Logout">
+            Выйти
+        </button>
+
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -47,6 +56,17 @@
     </nav>
 </div>
 
+<style>
+    .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.5);
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+</style>
 
 @code {
     private bool collapseNavMenu = true;
@@ -62,5 +82,13 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task Logout()
+    {
+        await _http.PostAsync("api/Auth/logout", null);
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "jwt");
+
+        _navigation.NavigateTo("/login", true);
     }
 }

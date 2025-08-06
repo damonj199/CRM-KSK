@@ -3,6 +3,7 @@ using System;
 using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    partial class CRM_KSKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250616182442_UpdateEntityHorseWork")]
+    partial class UpdateEntityHorseWork
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,68 +146,6 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.ToTable("clients", (string)null);
                 });
 
-            modelBuilder.Entity("CRM_KSK.Core.Entities.Horse", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int>("RowNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("rowNumber");
-
-                    b.Property<DateOnly>("StartWeek")
-                        .HasColumnType("date")
-                        .HasColumnName("startWeek");
-
-                    b.HasKey("Id")
-                        .HasName("pK_horses");
-
-                    b.ToTable("horses", (string)null);
-                });
-
-            modelBuilder.Entity("CRM_KSK.Core.Entities.HorseWork", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ContentText")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("contentText");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date")
-                        .HasColumnName("date");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("isDeleted");
-
-                    b.Property<int>("RowNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("rowNumber");
-
-                    b.Property<DateOnly>("StartWeek")
-                        .HasColumnType("date")
-                        .HasColumnName("startWeek");
-
-                    b.HasKey("Id")
-                        .HasName("pK_horsesWorks");
-
-                    b.ToTable("horsesWorks", (string)null);
-                });
-
             modelBuilder.Entity("CRM_KSK.Core.Entities.Membership", b =>
                 {
                     b.Property<Guid>("Id")
@@ -248,76 +189,6 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasDatabaseName("iX_memberships_clientId");
 
                     b.ToTable("memberships", (string)null);
-                });
-
-            modelBuilder.Entity("CRM_KSK.Core.Entities.MembershipDeductionLog", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("clientId");
-
-                    b.Property<DateOnly>("DeductionDate")
-                        .HasColumnType("date")
-                        .HasColumnName("deductionDate");
-
-                    b.Property<bool>("MembershipExpired")
-                        .HasColumnType("boolean")
-                        .HasColumnName("membershipExpired");
-
-                    b.Property<Guid>("MembershipId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("membershipId");
-
-                    b.Property<Guid>("ScheduleId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("scheduleId");
-
-                    b.Property<Guid>("TrainingId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("trainingId");
-
-                    b.Property<int>("TrainingType")
-                        .HasColumnType("integer")
-                        .HasColumnName("trainingType");
-
-                    b.Property<int>("TrainingsAfterDeduction")
-                        .HasColumnType("integer")
-                        .HasColumnName("trainingsAfterDeduction");
-
-                    b.Property<int>("TrainingsBeforeDeduction")
-                        .HasColumnType("integer")
-                        .HasColumnName("trainingsBeforeDeduction");
-
-                    b.HasKey("Id")
-                        .HasName("pK_membershipDeductionLogs");
-
-                    b.HasIndex("ClientId")
-                        .HasDatabaseName("iX_membershipDeductionLogs_clientId");
-
-                    b.HasIndex("DeductionDate")
-                        .HasDatabaseName("iX_membershipDeductionLogs_deductionDate");
-
-                    b.HasIndex("MembershipExpired")
-                        .HasDatabaseName("iX_membershipDeductionLogs_membershipExpired");
-
-                    b.HasIndex("MembershipId")
-                        .HasDatabaseName("iX_membershipDeductionLogs_membershipId");
-
-                    b.HasIndex("ScheduleId")
-                        .HasDatabaseName("iX_membershipDeductionLogs_scheduleId");
-
-                    b.HasIndex("TrainingId")
-                        .HasDatabaseName("iX_membershipDeductionLogs_trainingId");
-
-                    b.HasIndex("TrainingType")
-                        .HasDatabaseName("iX_membershipDeductionLogs_trainingType");
-
-                    b.ToTable("membershipDeductionLogs", (string)null);
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Schedule", b =>
@@ -455,6 +326,45 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.ToTable("trainings", (string)null);
                 });
 
+            modelBuilder.Entity("CRM_KSK.Core.Entities.WorkHorse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ContentText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("contentText");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("HorseName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("horseName");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("isDeleted");
+
+                    b.Property<int>("RowNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("rowNumber");
+
+                    b.Property<DateOnly>("WeekStartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("weekStartDate");
+
+                    b.HasKey("Id")
+                        .HasName("pK_workHorses");
+
+                    b.ToTable("workHorses", (string)null);
+                });
+
             modelBuilder.Entity("ClientTraining", b =>
                 {
                     b.Property<Guid>("ClientsId")
@@ -484,45 +394,6 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasConstraintName("fK_memberships_clients_clientId");
 
                     b.Navigation("Client");
-                });
-
-            modelBuilder.Entity("CRM_KSK.Core.Entities.MembershipDeductionLog", b =>
-                {
-                    b.HasOne("CRM_KSK.Core.Entities.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fK_membershipDeductionLogs_clients_clientId");
-
-                    b.HasOne("CRM_KSK.Core.Entities.Membership", "Membership")
-                        .WithMany()
-                        .HasForeignKey("MembershipId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fK_membershipDeductionLogs_memberships_membershipId");
-
-                    b.HasOne("CRM_KSK.Core.Entities.Schedule", "Schedule")
-                        .WithMany()
-                        .HasForeignKey("ScheduleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fK_membershipDeductionLogs_schedules_scheduleId");
-
-                    b.HasOne("CRM_KSK.Core.Entities.Training", "Training")
-                        .WithMany()
-                        .HasForeignKey("TrainingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fK_membershipDeductionLogs_trainings_trainingId");
-
-                    b.Navigation("Client");
-
-                    b.Navigation("Membership");
-
-                    b.Navigation("Schedule");
-
-                    b.Navigation("Training");
                 });
 
             modelBuilder.Entity("CRM_KSK.Core.Entities.Training", b =>

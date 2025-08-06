@@ -13,21 +13,6 @@
         </div>
     }
     <main>
-        <div class="top-row">
-            <AuthorizeView>
-                <Authorized>
-                    <div class="welcome-message">
-                        <h3>Добро пожаловать, @context.User.Identity.Name!</h3>
-                        <p>
-                            Ваша роль: @(Enum.TryParse(typeof(Roles), context.User.FindFirst(ClaimTypes.Role)?.Value, out var role)
-                            ? ((Roles)role).GetDisplayName()
-                            : "Неизвестно")
-                        </p>
-                    </div>
-                    <button class="btn btn-danger logout-button" @onclick="Logout">Выйти</button>
-                </Authorized>
-            </AuthorizeView>
-        </div>
         
         <article class="content px-4">
             @Body
@@ -133,13 +118,5 @@
     private Task OnClientAdded()
     {
         return Task.CompletedTask;
-    }
-
-    private async Task Logout()
-    {
-        await _http.PostAsync("api/Auth/logout", null);
-        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "jwt");
-
-        _navigation.NavigateTo("/login", true);
     }
 }
