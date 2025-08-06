@@ -3,6 +3,7 @@ using System;
 using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    partial class CRM_KSKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250806111330_UpdateDeletedMemberships")]
+    partial class UpdateDeletedMemberships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -199,7 +202,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid?>("ClientId")
+                    b.Property<Guid>("ClientId")
                         .HasColumnType("uuid")
                         .HasColumnName("clientId");
 
@@ -211,7 +214,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("membershipExpired");
 
-                    b.Property<Guid?>("MembershipId")
+                    b.Property<Guid>("MembershipId")
                         .HasColumnType("uuid")
                         .HasColumnName("membershipId");
 
@@ -219,7 +222,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("scheduleId");
 
-                    b.Property<Guid?>("TrainingId")
+                    b.Property<Guid>("TrainingId")
                         .HasColumnType("uuid")
                         .HasColumnName("trainingId");
 
@@ -469,12 +472,14 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .WithMany()
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
                         .HasConstraintName("fK_membershipDeductionLogs_clients_clientId");
 
                     b.HasOne("CRM_KSK.Core.Entities.Membership", "Membership")
                         .WithMany()
                         .HasForeignKey("MembershipId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
                         .HasConstraintName("fK_membershipDeductionLogs_memberships_membershipId");
 
                     b.HasOne("CRM_KSK.Core.Entities.Schedule", "Schedule")
@@ -487,7 +492,8 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.HasOne("CRM_KSK.Core.Entities.Training", "Training")
                         .WithMany()
                         .HasForeignKey("TrainingId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
                         .HasConstraintName("fK_membershipDeductionLogs_trainings_trainingId");
 
                     b.Navigation("Client");
@@ -511,7 +517,7 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                     b.HasOne("CRM_KSK.Core.Entities.Trainer", "Trainer")
                         .WithMany("Trainings")
                         .HasForeignKey("TrainerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fK_trainings_trainers_trainerId");
 

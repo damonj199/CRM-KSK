@@ -12,41 +12,18 @@ public class MembershipDeductionLogTypeBuilder : IEntityTypeConfiguration<Member
         
         builder.Property(x => x.DeductionDate)
             .IsRequired();
-            
-        builder.Property(x => x.ClientId)
-            .IsRequired();
-            
-        builder.Property(x => x.MembershipId)
-            .IsRequired();
-            
-        builder.Property(x => x.ScheduleId)
-            .IsRequired();
-            
-        builder.Property(x => x.TrainingId)
-            .IsRequired();
-            
-        builder.Property(x => x.TrainingType)
-            .IsRequired();
-            
-        builder.Property(x => x.TrainingsBeforeDeduction)
-            .IsRequired();
-            
-        builder.Property(x => x.TrainingsAfterDeduction)
-            .IsRequired();
-            
-        builder.Property(x => x.MembershipExpired)
-            .IsRequired();
 
         // Навигационные свойства
         builder.HasOne(x => x.Client)
             .WithMany()
             .HasForeignKey(x => x.ClientId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.Membership)
             .WithMany()
             .HasForeignKey(x => x.MembershipId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasOne(x => x.Schedule)
             .WithMany()
@@ -56,7 +33,7 @@ public class MembershipDeductionLogTypeBuilder : IEntityTypeConfiguration<Member
         builder.HasOne(x => x.Training)
             .WithMany()
             .HasForeignKey(x => x.TrainingId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Индексы для улучшения производительности
         builder.HasIndex(x => x.ClientId);

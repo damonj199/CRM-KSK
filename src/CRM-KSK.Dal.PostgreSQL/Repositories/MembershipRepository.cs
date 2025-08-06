@@ -22,38 +22,17 @@ public class MembershipRepository : IMembershipRepository
 
     public async Task<List<Membership>> GetAllMembershipClientAsync(Guid id, CancellationToken token)
     {
-        var memberships = await _context.Memberships
-            .Where(c => c.ClientId == id)
-            .ToListAsync(token);
-
+        var memberships = await _context.Memberships.Where(c => c.ClientId == id).ToListAsync(token);
         return memberships ?? [];
     }
 
     public async Task<Membership> GetMembershipByClientAndTypeAsync(Guid id, TypeTrainings type, CancellationToken token)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-
         var membership = await _context.Memberships
-            .Where(c => c.ClientId == id
-                        && c.TypeTrainings == type
-                        && c.DateEnd >= today)
+            .Where(c => c.ClientId == id && c.TypeTrainings == type && c.DateEnd >= today)
             .FirstOrDefaultAsync(token);
-
         return membership;
-    }
-
-    public async Task<List<Membership>> GetExpiringMembershipAsync(CancellationToken token)
-    {
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        var expiringPeriod = today.AddDays(3);
-
-        var expiringMembership = await _context.Memberships
-            .Where(m => m.DateEnd <= expiringPeriod
-                || m.AmountTraining <= 2)
-            .Include(c => c.Client)
-            .ToListAsync(token);
-
-        return expiringMembership ?? [];
     }
 
     public async Task<Membership> GetMembershipByIdAsync(Guid id, CancellationToken token)
@@ -77,12 +56,13 @@ public class MembershipRepository : IMembershipRepository
         await _context.SaveChangesAsync(token);
     }
 
-    public async Task DeleteMembershipAsync(Guid id, CancellationToken token)
+    public async Task SoftDeleteMembershipAsync(Guid id, CancellationToken token)
     {
-        var mem = new Membership { Id = id };
-
-        _context.Memberships.Attach(mem);
-        _context.Memberships.Remove(mem);
+        var mem = await _context.Memberships.FindAsync(id);
+    if (mem != null)
+    {
+        mem.SoftDelete();
         await _context.SaveChangesAsync(token);
+    }
     }
 }

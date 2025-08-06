@@ -29,7 +29,6 @@ public class MembershipService : IMembershipService
     {
         var memberships = await _membershipRepository.GetAllMembershipClientAsync(id, token);
         var membershipsDtos = _mapper.Map<List<MembershipDto>>(memberships);
-
         return membershipsDtos ?? [];
     }
 
@@ -41,14 +40,6 @@ public class MembershipService : IMembershipService
         return membershipDto;
     }
 
-    public async Task<List<MembershipDto>> GetExpiringMembershipsAsync(CancellationToken token)
-    {
-        var memberships = await _membershipRepository.GetExpiringMembershipAsync(token);
-        var membershipsDto = _mapper.Map<List<MembershipDto>>(memberships);
-
-        return membershipsDto ?? [];
-    }
-
     public async Task UpdateMembershipAsync(MembershipDto membershipDto, CancellationToken token)
     {
         var membership = _mapper.Map<Membership>(membershipDto);
@@ -57,6 +48,6 @@ public class MembershipService : IMembershipService
 
     public async Task DeleteMembershipAsync(Guid id, CancellationToken token)
     {
-        await _membershipRepository.DeleteMembershipAsync(id, token);
+        await _membershipRepository.SoftDeleteMembershipAsync(id, token);
     }
 }

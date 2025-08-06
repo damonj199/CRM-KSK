@@ -25,6 +25,7 @@ public class WorkWithMembership : IWorkWithMembership
 
     public async Task DeductTrainingsFromMemberships(CancellationToken token)
     {
+        //var day = DateOnly.FromDateTime(DateTime.Today); //для тестирования
         var day = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
         var schedules = await _scheduleRepository.GetYesterdaysScheduleAsync(day, token);
 
@@ -66,7 +67,7 @@ public class WorkWithMembership : IWorkWithMembership
                             deductionLog.MembershipExpired = true;
                             _logger.LogError("Абонемент закончился!");
 
-                            await _membershipRepository.DeleteMembershipAsync(membership.Id, token);
+                            await _membershipRepository.SoftDeleteMembershipAsync(membership.Id, token);
                         }
                         else
                         {
