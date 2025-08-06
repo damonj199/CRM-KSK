@@ -17,6 +17,7 @@ public class CRM_KSKDbContext : DbContext
     public DbSet<ScheduleComment> ScheduleComments { get; set; }
     public DbSet<Trainer> Trainers { get; set; }
     public DbSet<BirthdayNotification> BirthDays { get; set; }
+    public DbSet<MembershipDeductionLog> MembershipDeductionLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
