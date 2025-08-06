@@ -100,13 +100,22 @@
 
                 <label>Тип тренировок:</label>
                 <select @bind="NewMembership.TypeTrainings">
+                    <option value="">Выберите тип тренировки</option>
                     @foreach (var type in Enum.GetValues(typeof(TypeTrainings)))
                     {
-                        <option value="@type">@((type as Enum).GetDisplayName())</option>
+                        @if (type is TypeTrainings trainingType && trainingType != TypeTrainings.Unknown)
+                        {
+                            <option value="@type">@((type as Enum).GetDisplayName())</option>
+                        }
                     }
                 </select>
 
-                <button @onclick="AddMembership" class="btn btn-success mt-2">Сохранить</button>
+                @if (!string.IsNullOrEmpty(membershipErrorMessage))
+                {
+                    <p class="alert alert-danger">@membershipErrorMessage</p>
+                }
+
+                <button @onclick="AddMembership" class="btn btn-success mt-2" disabled="@(!CanAddMembership)">Сохранить</button>
                 <button @onclick="() => IsModalOpen = false" class="btn btn-secondary mt-2">Отмена</button>
             </div>
         </div>
@@ -210,6 +219,7 @@ else
     private List<MembershipDto> NewMemberships = [];
     private List<MembershipDto> Memberships = [];
     private ClientDto? OriginalClientCopy;
+    private string membershipErrorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -221,8 +231,33 @@ else
         Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
     }
 
+    private bool CanAddMembership => NewMembership.TypeTrainings != TypeTrainings.Unknown && 
+                                    NewMembership.TypeTrainings != default(TypeTrainings) &&
+                                    NewMembership.AmountTraining > 0 &&
+                                    NewMembership.DateStart <= NewMembership.DateEnd;
+
     private async Task AddMembership()
     {
+        membershipErrorMessage = string.Empty;
+
+        if (NewMembership.TypeTrainings == TypeTrainings.Unknown || NewMembership.TypeTrainings == default(TypeTrainings))
+        {
+            membershipErrorMessage = "Выберите тип тренировки";
+            return;
+        }
+
+        if (NewMembership.AmountTraining <= 0)
+        {
+            membershipErrorMessage = "Количество тренировок должно быть больше 0";
+            return;
+        }
+
+        if (NewMembership.DateStart > NewMembership.DateEnd)
+        {
+            membershipErrorMessage = "Дата начала не может быть позже даты окончания";
+            return;
+        }
+
         NewMembership.ClientId = _clientState.SelectedClient.Id;
         NewMemberships.Add(NewMembership);
 
@@ -230,6 +265,7 @@ else
         Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
         IsModalOpen = false;
         NewMemberships.Clear();
+        NewMembership = new(); // Сбрасываем для следующего абонемента
     }
 
     private void ToggleOneTimeTraining(ChangeEventArgs e)
