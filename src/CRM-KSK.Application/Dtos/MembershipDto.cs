@@ -11,6 +11,7 @@ public class MembershipDto
     public StatusMembership StatusMembership { get; set; } = StatusMembership.Активный;
     public TypeTrainings TypeTrainings { get; set; } = TypeTrainings.Unknown;
     public bool IsOneTimeTraining { get; set; } = false;
+    public bool IsDeleted { get; set; } = false;
        
     public Guid ClientId { get; set; }
     public ClientDto? Client { get; set; }

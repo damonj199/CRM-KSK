@@ -19,7 +19,7 @@ public sealed class BirthdayNotificationBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("BackgroundService запустился");
+        _logger.LogWarning("BackgroundService запустился");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -55,6 +55,6 @@ public sealed class BirthdayNotificationBackgroundService : BackgroundService
                 _logger.LogError(ex, "Ошибка в выполнении синхронизации");
             }
         }
-        _logger.LogInformation("Background service завершает работу.");
+        _logger.LogWarning("Background service завершает работу.");
     }
 }

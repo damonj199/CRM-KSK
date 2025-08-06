@@ -28,7 +28,7 @@ public class ClientService : IClientService
 
     public async Task<string> AddClientAsync(ClientDto clientDto, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("попали в метод добавления клиента в сервисе, проверяем есть ли уже такой клиент");
+        _logger.LogWarning("попали в метод добавления клиента в сервисе, проверяем есть ли уже такой клиент");
         var existingClient = await _clientRepository.ClientVerificationAsync(clientDto.Phone, cancellationToken);
 
         if (existingClient)
