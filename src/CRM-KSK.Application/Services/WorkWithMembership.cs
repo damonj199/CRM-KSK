@@ -50,7 +50,7 @@ public class WorkWithMembership : IWorkWithMembership
                         var deductionLog = new MembershipDeductionLog
                         {
                             Id = Guid.NewGuid(),
-                            DeductionDate = DateOnly.FromDateTime(DateTime.Today),
+                            DeductionDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
                             ClientId = client.Id,
                             MembershipId = membership.Id,
                             ScheduleId = schedule.Id,
