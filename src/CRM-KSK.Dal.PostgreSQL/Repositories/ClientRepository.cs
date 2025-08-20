@@ -19,6 +19,7 @@ public class ClientRepository : IClientRepository
     public async Task<Guid> AddClientAsync(Client client, CancellationToken cancellationToken)
     {
         _logger.LogWarning("передаем клиента на добавление в БД");
+        
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(cancellationToken); 
         _logger.LogWarning("Клиент добавлен!");
@@ -37,6 +38,7 @@ public class ClientRepository : IClientRepository
     public async Task<Client> GetClientById(Guid id, CancellationToken token)
     {
         var client = await _context.Clients.Include(m => m.Memberships).FirstOrDefaultAsync(c => c.Id == id, token);
+        
         return client;
     }
 

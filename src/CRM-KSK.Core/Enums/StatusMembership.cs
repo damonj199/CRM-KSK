@@ -1,7 +1,15 @@
-﻿namespace CRM_KSK.Core.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CRM_KSK.Core.Enums;
 
 public enum StatusMembership
 {
-    Активный,
-    Закончился
+    [Display(Name = "Активный")]
+    Active,
+
+    [Display(Name = "Закончился")]
+    Ended,
+
+    [Display(Name = "Разовый")]
+    OneTime
 }

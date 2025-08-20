@@ -34,6 +34,7 @@ public class MembershipRepository : IMembershipRepository
         var membership = await _context.Memberships
             .Where(c => c.ClientId == id && c.TypeTrainings == type)
             .FirstOrDefaultAsync(token);
+            
         return membership;
     }
 
@@ -54,6 +55,7 @@ public class MembershipRepository : IMembershipRepository
             exMembership.AmountTraining = membership.AmountTraining;
             exMembership.TypeTrainings = membership.TypeTrainings;
             exMembership.StatusMembership = membership.StatusMembership;
+            exMembership.IsMorning = membership.IsMorning;
         }
         await _context.SaveChangesAsync(token);
     }
