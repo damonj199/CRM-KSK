@@ -1,10 +1,21 @@
 ﻿@using System.Net.Http
 @using System.Net.Http.Json
+@using System.Globalization
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.AspNetCore.Components.Authorization;
 @using Microsoft.JSInterop
 @using CRM_KSK.Blazor
+@using CRM_KSK.Application.Models
+@using CRM_KSK.Blazor.Auth
 @using CRM_KSK.Blazor.Layout
+@using CRM_KSK.Blazor.Services
+@using CRM_KSK.Application.Dtos
+@using CRM_KSK.Core.Enums
+@using CRM_KSK.Blazor.Modal.Client
+@using CRM_KSK.Blazor.Modal.Trainer
+@using CRM_KSK.Application.Extensions;

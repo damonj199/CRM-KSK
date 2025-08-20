@@ -1,0 +1,392 @@
+﻿@page "/horses-schedule"
+@inject HorsesServiceBlazor _horsesService
+@implements IDisposable
+
+<div class="header-container">
+    <button @onclick="TransferFromLastWeek"
+            class="btn-transfer"
+            disabled="@_isTransferring">
+        @(_isTransferring ? "Перенос..." : "Перенести лошадей")
+    </button>
+
+    <div class="header-center">
+        <h3 class="title">Работа лошадей</h3>
+        <div class="navigation-buttons">
+            <button @onclick="NavigateToPreviousWeek" class="btn btn-secondary">← Пред.</button>
+            <span class="current-week">@GetCurrentWeekRange()</span>
+            <button @onclick="NavigateToNextWeek" class="btn btn-secondary">След. →</button>
+        </div>
+    </div>
+</div>
+
+<div class="horse-schedule-container">
+    <table class="horse-schedule-table">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Кличка</th>
+                @foreach (var day in weekDates)
+                {
+                    <th>
+                        <div>@GetDayOfWeek(day)</div>
+                        <div class="small-date">@day.ToString("dd.MM.yyyy")</div>
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in _rows)
+            {
+                <tr>
+                    <td class="row-number">@row.RowNumber</td>
+                    <td>
+                        <input class="horse-name-input"
+                               @bind="row.HorseName"
+                               @onblur="@(() => UpdateHorse(row))" />
+                    </td>
+                    @foreach (var day in weekDates)
+                    {
+                        <td>
+                            <input class="activity-input"
+                                   @bind="row.DailyWorks[day]"
+                                   @onblur="@(() => UpdateWork(row, day))" />
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .horse-schedule-container {
+        overflow-x: auto;
+        margin-top: 4px;
+        padding-top: 0;
+    }
+
+    .horse-schedule-table {
+        margin-top: 0;
+    }
+
+        .horse-schedule-table th, .horse-schedule-table td {
+            border: 1px solid #ddd;
+            padding: 4px;
+            text-align: center;
+        }
+
+        .horse-schedule-table th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            min-width: 100px;
+        }
+
+    .row-number {
+        width: 40px;
+        font-weight: bold;
+    }
+
+    .horse-name-input {
+        width: 120px;
+        padding: 4px;
+        box-sizing: border-box;
+    }
+
+    .activity-input {
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+    }
+
+    .navigation-buttons {
+        margin: 8px 0;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .current-week {
+        font-weight: bold;
+        margin: 0 10px;
+    }
+
+    .small-date {
+        font-size: 0.8em;
+        color: #666;
+    }
+
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 0 0 4px 0;
+        position: relative;
+    }
+
+    .header-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-grow: 1;
+    }
+
+    .title {
+        margin: 0;
+        padding: 0;
+        white-space: nowrap;
+    }
+
+    .btn-transfer {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+
+        .btn-transfer:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-transfer:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+    .navigation-buttons {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 0;
+    }
+
+    .current-week {
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin: 0 3px;
+        white-space: nowrap;
+    }
+
+    .btn {
+        padding: 2px 6px;
+        font-size: 0.8rem;
+        min-width: 24px;
+    }
+</style>
+
+@code {
+    private DateOnly startOfWeek;
+    private List<DateOnly> weekDates = new();
+    private List<ScheduleRow> _rows = new();
+    private CancellationTokenSource _cts = new();
+    private bool _isTransferring = false;
+    private bool _transferSuccess;
+    private string _transferMessage = string.Empty;
+
+    private class ScheduleRow
+    {
+        public int RowNumber { get; set; }
+        public string HorseName { get; set; } = string.Empty;
+        public Dictionary<DateOnly, string> DailyWorks { get; set; } = new();
+        public long? HorseId { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        startOfWeek = GetCurrentWeekMonday();
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            // Инициализация недели
+            weekDates = Enumerable.Range(0, 7)
+                .Select(i => startOfWeek.AddDays(i))
+                .ToList();
+
+            // Инициализация строк
+            _rows = Enumerable.Range(1, 25)
+                .Select(i => new ScheduleRow
+                {
+                    RowNumber = i,
+                    DailyWorks = weekDates.ToDictionary(d => d, _ => string.Empty)
+                })
+                .ToList();
+
+            // Параллельная загрузка данных
+            var horsesTask = _horsesService.GetHorsesByWeek(startOfWeek);
+            var worksTask = _horsesService.GetWorkHorsesByWeek(startOfWeek);
+
+            await Task.WhenAll(horsesTask, worksTask);
+
+            // Заполнение данных
+            foreach (var horse in await horsesTask)
+            {
+                var row = _rows.FirstOrDefault(r => r.RowNumber == horse.RowNumber);
+                if (row != null)
+                {
+                    row.HorseName = horse.Name;
+                    row.HorseId = horse.Id;
+                }
+            }
+
+            foreach (var work in await worksTask)
+            {
+                var row = _rows.FirstOrDefault(r => r.RowNumber == work.RowNumber);
+                if (row != null && row.DailyWorks.ContainsKey(work.Date))
+                {
+                    row.DailyWorks[work.Date] = work.ContentText;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка загрузки данных: {ex.Message}");
+        }
+    }
+
+    private async Task TransferFromLastWeek()
+    {
+        _isTransferring = true;
+        _transferMessage = string.Empty;
+
+        await _horsesService.AddHorsesLastWeek(startOfWeek);
+
+        _isTransferring = false;
+
+        await LoadData(); // Перезагружаем данные
+    }
+
+    private async Task UpdateHorse(ScheduleRow row)
+    {
+        try
+        {
+            var horseName = row.HorseName?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrEmpty(horseName))
+            {
+                // Если поле пустое - удаляем запись если она есть
+                if (row.HorseId.HasValue)
+                {
+                    var success = await _horsesService.DeleteHorse(row.HorseId.Value);
+                    if (success)
+                    {
+                        row.HorseId = null;
+                    }
+                }
+                return;
+            }
+
+            if (row.HorseId.HasValue)
+            {
+                await _horsesService.UpdateHorseName(row.HorseId.Value, row.HorseName);
+            }
+            else
+            {
+                var newHorse = new HorseDto
+                {
+                    RowNumber = row.RowNumber,
+                    Name = row.HorseName,
+                    StartWeek = startOfWeek
+                };
+                await _horsesService.AddHorse(newHorse);
+                // После успешного добавления нужно обновить HorseId
+                await LoadData();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка обновления лошади: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateWork(ScheduleRow row, DateOnly date)
+    {
+        try
+        {
+            var content = row.DailyWorks[date].Trim();
+
+            if (string.IsNullOrEmpty(content))
+            {
+                // Находим и удаляем существующую запись
+                var existing = (await _horsesService.GetWorkHorsesByWeek(startOfWeek))
+                    .FirstOrDefault(w => w.RowNumber == row.RowNumber && w.Date == date);
+
+                if (existing != null)
+                {
+                    await _horsesService.DeleteWorkHorse(existing.Id);
+                }
+            }
+            else
+            {
+                var existing = (await _horsesService.GetWorkHorsesByWeek(startOfWeek))
+                    .FirstOrDefault(w => w.RowNumber == row.RowNumber && w.Date == date);
+
+                if (existing != null)
+                {
+                    await _horsesService.UpdateWorkHorse(existing.Id, content);
+                }
+                else
+                {
+                    await _horsesService.AddWorkHorse(new WorkHorseDto
+                    {
+                        RowNumber = row.RowNumber,
+                        Date = date,
+                        ContentText = content,
+                        StartWeek = startOfWeek
+                    });
+                    
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка обновления работы: {ex.Message}");
+        }
+    }
+
+    private async Task NavigateToPreviousWeek()
+    {
+        startOfWeek = startOfWeek.AddDays(-7);
+        await LoadData();
+        StateHasChanged();
+    }
+
+    private async Task NavigateToNextWeek()
+    {
+        startOfWeek = startOfWeek.AddDays(7);
+        await LoadData();
+        StateHasChanged();
+    }
+
+    private DateOnly GetCurrentWeekMonday()
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        int diff = (7 + (today.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return today.AddDays(-diff);
+    }
+
+    private string GetCurrentWeekRange()
+    {
+        var start = startOfWeek.ToString("dd.MM.yyyy");
+        var end = startOfWeek.AddDays(6).ToString("dd.MM.yyyy");
+        return $"{start} - {end}";
+    }
+
+    private string GetDayOfWeek(DateOnly date)
+    {
+        return date.ToDateTime(TimeOnly.MinValue)
+            .ToString("dddd", new CultureInfo("ru-RU"));
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

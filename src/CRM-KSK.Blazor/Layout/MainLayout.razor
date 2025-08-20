@@ -1,16 +1,122 @@
-﻿@inherits LayoutComponentBase
+﻿@using System.Security.Claims
+@inherits LayoutComponentBase
+@inject HttpClient _http
+@inject IJSRuntime JSRuntime
+@inject NavigationManager _navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+    @if(!_navigation.Uri.Contains("login", StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="sidebar">
+            <NavMenu OnOpenAddClientModal="@ShowAddClientModal" />
         </div>
-
+    }
+    <main>
+        
         <article class="content px-4">
             @Body
         </article>
     </main>
+
+    <AddClientModal IsVisible="@IsAddClientModalVisible"
+                    IsVisibleChanged="@OnAddClientModalVisibilityChanged"
+                    OnClientAdded="@OnClientAdded" />
 </div>
+
+<style>
+    .unauthorized-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 80vh;
+        text-align: center;
+        font-size: 1.2rem;
+        color: #333;
+    }
+
+    .login-link {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: bold;
+        margin-left: 5px;
+    }
+
+        .login-link:hover {
+            text-decoration: underline;
+        }
+
+    .top-row {
+        background-color: #f8f9fa;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .welcome-message {
+        text-align: center;
+        flex-grow: 1;
+    }
+
+        .welcome-message h3 {
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+        .welcome-message p {
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+
+    .logout-button {
+        margin-left: auto;
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+
+    @@media (max-width: 768px) {
+        .top-row {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .logout-button {
+            margin-top: 10px;
+            margin-left: 0;
+        }
+    }
+</style>
+
+@code {
+    private bool IsAddClientModalVisible = false;
+
+    private Task ShowAddClientModal()
+    {
+        IsAddClientModalVisible = true;
+        return Task.CompletedTask;
+    }
+
+    private Task OnAddClientModalVisibilityChanged(bool visible)
+    {
+        IsAddClientModalVisible = visible;
+        return Task.CompletedTask;
+    }
+
+    private Task OnClientAdded()
+    {
+        return Task.CompletedTask;
+    }
+}

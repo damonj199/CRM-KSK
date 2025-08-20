@@ -1,0 +1,45 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - dev  # Запускать при пуше в ветку dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e  # Прекратить выполнение при ошибке
+
+            # Переход в рабочую директорию
+            cd /home/deploy/crm-ksk
+
+            # Обновление кода проекта
+            git pull origin dev
+
+            # Остановка и удаление старых контейнеров
+            docker-compose down
+            
+            # Очистка старых образов
+            docker system prune -af
+
+            # Сборка новых образов и запуск контейнеров
+            docker-compose up -d --build
+
+            # Проверка запущенных контейнеров
+            docker ps -a
+
+            # Просмотр логов сервисов
+            docker logs crm-ksk-api-1
+            docker logs crm-ksk-blazor-1

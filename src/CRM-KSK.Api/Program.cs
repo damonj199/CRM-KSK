@@ -1,12 +1,22 @@
-using CRM_KSK.Api;
+using CRM_KSK.Api.Configurations;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
+
 var isDev = builder.Environment.IsDevelopment();
-if (isDev)
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    builder.Configuration.AddUserSecrets<Program>();
-}
+    serverOptions.ListenAnyIP(5000);
+});
+
 builder.Configuration.AddEnvironmentVariables();
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -18,15 +28,26 @@ builder.Services.ConfigureService(builder.Configuration);
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+app.UseMiddleware<ExceptionMiddleware>();
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+if (!app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseHttpsRedirection();
 }
-app.UseCors("AllowFrontend");
 
-app.UseHttpsRedirection();
+app.UseCookiePolicy(new CookiePolicyOptions
+{
+    HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
+    Secure = CookieSecurePolicy.Always,
+    MinimumSameSitePolicy = SameSiteMode.Strict
+});
 
+app.UseCors("AllowSpecificOrigins");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

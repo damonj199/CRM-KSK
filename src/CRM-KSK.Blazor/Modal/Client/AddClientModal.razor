@@ -1,0 +1,157 @@
+﻿@inject ClientServiceBlazor ClientService
+
+@if (IsVisible)
+{
+    <EditForm Model="client" OnValidSubmit="AddClient">
+        <DataAnnotationsValidator />
+
+        <div class="modal-overlay" @onclick="CloseModal" style="@(IsVisible ? "display:flex;" : "display:none;")">
+            <div class="modal-content" @onclick:stopPropagation="true">
+                <h3>Добавить клиента</h3>
+
+                <div class="form-group">
+                    <label for="firstName">Имя:</label>
+                    <InputText id="firstName" name="firstName" @bind-Value="client.FirstName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Фамилия:</label>
+                    <InputText id="lastName" name="lastName" @bind-Value="client.LastName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="phone">Телефон: +7 </label>
+                    <InputText id="phone" name="phone" @bind-Value="client.Phone" class="form-control" minLength="10" maxLength="10" />
+                </div>
+                <div class="form-group">
+                    <label for="dob">Дата рождения:</label>
+                    <InputDate id="dob" name="dob" @bind-Value="client.DateOfBirth" class="form-control" />
+                </div>
+                <h4>Данные о родителях</h4>
+                <div class="form-group">
+                    <label for="parentName">Родитель:</label>
+                    <InputText id="parentName" name="parentName" @bind-Value="client.ParentName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="parentPhone">Телефон для связи: +7</label>
+                    <InputText id="parentPhone" name="parentPhone" @bind-Value="client.ParentPhone" class="form-control" minLength="10" maxLength="10" />
+                </div>
+                <button type="button" class="btn btn-primary" @onclick="() => IsModalOpen = true">Добавить абонемент</button>
+                <div class="form-actions mt-2" >
+                    <button type="submit" class="btn btn-success" >Сохранить</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Отмена</button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <p class="alert @(message.Contains("Ошибка") ? "alert-danger" : "alert-success")">@message</p>
+                }
+            </div>
+        </div>
+    </EditForm>
+}
+@if (IsModalOpen)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h4>Добавить абонемент</h4>
+            <label>Дата начала:</label>
+            <input type="date" @bind="NewMembership.DateStart" />
+
+            <label>Дата окончания:</label>
+            <input type="date" @bind="NewMembership.DateEnd" />
+
+            <label>Количество тренировок:</label>
+            <input type="number" @bind="NewMembership.AmountTraining" />
+
+            <label>Тип тренировок:</label>
+            <select @bind="NewMembership.TypeTrainings">
+                <option value="">Выберите тип тренировки</option>
+                @foreach (var type in Enum.GetValues(typeof(TypeTrainings)))
+                {
+                    @if (type is TypeTrainings trainingType && trainingType != TypeTrainings.Unknown)
+                    {
+                        <option value="@type">@((type as Enum).GetDisplayName())</option>
+                    }
+                }
+            </select>
+
+            @if (!string.IsNullOrEmpty(membershipErrorMessage))
+            {
+                <p class="alert alert-danger">@membershipErrorMessage</p>
+            }
+
+            <button @onclick="AddMembership" class="btn btn-success mt-2" disabled="@(!CanAddMembership)">Сохранить</button>
+            <button @onclick="() => IsModalOpen = false" class="btn btn-secondary mt-2">Отмена</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsModalOpen { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public EventCallback OnClientAdded { get; set; }
+
+    private MembershipDto NewMembership = new();
+    private ClientDto client = new();
+    private string message = string.Empty;
+    private string membershipErrorMessage = string.Empty;
+
+    private async Task AddClient()
+    {
+        message = await ClientService.AddClientAsync(client);
+
+        if (!string.IsNullOrEmpty(message) && message.Contains("Успешно"))
+        {
+            await OnClientAdded.InvokeAsync();
+            await CloseModal();
+        }
+    }
+
+    private bool CanAddMembership => NewMembership.TypeTrainings != TypeTrainings.Unknown && 
+                                    NewMembership.TypeTrainings != default(TypeTrainings) &&
+                                    NewMembership.AmountTraining > 0 &&
+                                    NewMembership.DateStart <= NewMembership.DateEnd;
+
+    private void AddMembership()
+    {
+        membershipErrorMessage = string.Empty;
+
+        if (NewMembership.TypeTrainings == TypeTrainings.Unknown || NewMembership.TypeTrainings == default(TypeTrainings))
+        {
+            membershipErrorMessage = "Выберите тип тренировки";
+            return;
+        }
+
+        if (NewMembership.AmountTraining <= 0)
+        {
+            membershipErrorMessage = "Количество тренировок должно быть больше 0";
+            return;
+        }
+
+        if (NewMembership.DateStart > NewMembership.DateEnd)
+        {
+            membershipErrorMessage = "Дата начала не может быть позже даты окончания";
+            return;
+        }
+
+        client.Memberships.Add(NewMembership);
+        NewMembership = new(); // Сбрасываем для следующего абонемента
+        IsModalOpen = false;
+    }
+
+    private async Task CloseModal()
+    {
+        IsVisible = false;
+        client = new();
+        message = string.Empty;
+        membershipErrorMessage = string.Empty;
+        NewMembership = new();
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+        StateHasChanged();
+    }
+
+    private async Task HandleOverlayClick()
+    {
+        await CloseModal();
+    }
+}
