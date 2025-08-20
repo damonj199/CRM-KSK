@@ -1,0 +1,35 @@
+services:
+  api:
+    image: ${DOCKER_REGISTRY-}webapi-crm-ksk
+    restart: always
+    build:
+      context: .
+      dockerfile: src/CRM-KSK.Api/Dockerfile
+    ports:
+    - "5000:5000"
+    environment:
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ConnectionStrings__DefaultConnection: ${POSTGRES_CONNECTION}
+      Logging__LogLevel__Default: Warning
+      Logging__LogLevel__Microsoft: Warning
+      Logging__LogLevel__Microsoft.AspNetCore: Warning
+    networks:
+    - crm-network
+    
+     
+  blazor:
+    image: ${DOCKER_REGISTRY-}blazor-webassembly-docker
+    restart: always
+    build:
+      context: .
+      dockerfile: src/CRM-KSK.Blazor/Dockerfile
+    ports:
+    - "8080:80"
+    depends_on:
+    - api
+    networks:
+    - crm-network
+ 
+networks:
+  crm-network:
+    driver: bridge

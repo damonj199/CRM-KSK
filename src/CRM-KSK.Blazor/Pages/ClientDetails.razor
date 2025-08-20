@@ -1,0 +1,353 @@
+﻿@page "/client-details"
+@inject ClientStateService _clientState
+@inject NavigationManager _navigation
+@inject ClientServiceBlazor _clientService
+@inject MembershipServiceBlazor _membershipService
+
+<h3>Подробная информация о клиенте</h3>
+
+@if (_clientState.SelectedClient != null)
+{
+    var client = _clientState.SelectedClient;
+
+    <div class="component-details">
+        @if (IsEditing)
+        {
+            <label>Имя:</label>
+            <input type="text" @bind="client.FirstName" />
+
+            <label>Фамилия:</label>
+            <input type="text" @bind="client.LastName" />
+
+            <label>Телефон:</label>
+            <input type="text" @bind="client.Phone" />
+
+            <label>Дата рождения:</label>
+            <input type="date" @bind="client.DateOfBirth" />
+
+            <label>Родитель:</label>
+            <input type="text" @bind="client.ParentName" />
+
+            <label>Телофон родителя:</label>
+            <input type="text" @bind="client.ParentPhone" />
+
+            <button class="btn btn-success mt-2" @onclick="SaveChanges">Сохранить</button>
+            <button class="btn btn-secondary mt-2" @onclick="CancelEdit">Отмена</button>
+        }
+        else
+        {
+            <p><strong>Имя:</strong> @client.FirstName</p>
+            <p><strong>Фамилия:</strong> @client.LastName</p>
+            <p><strong>Телефон:</strong> @FormatPhoneNumber(client.Phone)</p>
+            <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
+
+            <h5>Данные о родителях</h5>
+            <p><strong>Родитель:</strong> @client.ParentName</p>
+            <p><strong>Телефон родителя:</strong>@FormatPhoneNumber(client.ParentPhone)</p>
+
+            @if (Memberships.Any())
+            {
+                <ul>
+                    @foreach (var membership in Memberships)
+                    {
+                        <li class="mb-1">
+                            <div>
+                                <strong>Статус:</strong> @(membership.IsOneTimeTraining ? "Разовый" : @membership.StatusMembership)<br />
+                                <strong>Дата начала:</strong> @membership.DateStart<br />
+                                <strong>Дата окончания:</strong> @membership.DateEnd<br />
+                                <strong>Тренировки:</strong> @membership.AmountTraining<br />
+                                <strong>Тип:</strong> @membership.TypeTrainings.GetDisplayName()
+                                <button class="btn btn-danger" title="Удалить абонемент"
+                                @onclick="() => ConfirmDelete(membership)">X
+                                </button>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>Абонементов пока нет.</p>
+            }
+
+            <button class="btn btn-success" @onclick="() => IsModalOpen = true" >Добавить абонемент</button>
+            <button class="btn btn-primary mt-2" @onclick="EditTrainer">Изменить</button>
+        }
+    </div>
+
+    <button class="btn btn-danger mt-3" @onclick="() => IsDeleteClientOpen = true">❌ Удалить клиента</button>
+
+    @if (IsModalOpen)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <h4>Добавить абонемент</h4>
+
+                <label>Дата начала:</label>
+                <input type="date" @bind="NewMembership.DateStart" disabled="@NewMembership.IsOneTimeTraining" />
+
+                <label>Дата окончания:</label>
+                <input type="date" @bind="NewMembership.DateEnd" disabled="@NewMembership.IsOneTimeTraining" />
+
+                <label class="toggle-switch">
+                    <input type="checkbox" checked="@NewMembership.IsOneTimeTraining" @onchange="ToggleOneTimeTraining" />
+                    <span class="slider"></span>
+                    <span class="toggle-label">Разовая тренировка</span>
+                </label>
+
+                <label>Количество тренировок:</label>
+                <input type="number" @bind="NewMembership.AmountTraining" disabled="@NewMembership.IsOneTimeTraining" />
+
+                <label>Тип тренировок:</label>
+                <select @bind="NewMembership.TypeTrainings">
+                    <option value="">Выберите тип тренировки</option>
+                    @foreach (var type in Enum.GetValues(typeof(TypeTrainings)))
+                    {
+                        @if (type is TypeTrainings trainingType && trainingType != TypeTrainings.Unknown)
+                        {
+                            <option value="@type">@((type as Enum).GetDisplayName())</option>
+                        }
+                    }
+                </select>
+
+                @if (!string.IsNullOrEmpty(membershipErrorMessage))
+                {
+                    <p class="alert alert-danger">@membershipErrorMessage</p>
+                }
+
+                <button @onclick="AddMembership" class="btn btn-success mt-2" disabled="@(!CanAddMembership)">Сохранить</button>
+                <button @onclick="() => IsModalOpen = false" class="btn btn-secondary mt-2">Отмена</button>
+            </div>
+        </div>
+    }
+
+    @if (IsDeleteClientOpen)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <h4>Подтверждение удаления</h4>
+                <p>Вы действительно хотите удалить клиента?</p>
+                <button class="btn btn-danger mt-2" @onclick="DeleteClient">Удалить</button>
+                <button class="btn btn-secondary mt-2" @onclick="() => IsDeleteClientOpen = false">Отмена</button>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <p class="alert alert-warning">Клиент не выбран. Перейдите на страницу <a href="/clients">управления клиентами</a>.</p>
+}
+<button class="btn btn-secondary mt-3" @onclick="GoBack">Назад</button>
+
+<style>
+    .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+    }
+
+    .modal-dialog {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 300px;
+    width: 100%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .toggle-switch {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    }
+
+    .toggle-switch input {
+    display: none;
+    }
+
+    .slider {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 25px;
+    background-color: #ccc;
+    border-radius: 25px;
+    transition: background-color 0.3s;
+    cursor: pointer;
+    }
+
+    .slider::before {
+    content: "";
+    position: absolute;
+    height: 21px;
+    width: 21px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    }
+
+    input:checked + .slider {
+    background-color: #2196F3;
+    }
+
+    input:checked + .slider::before {
+    transform: translateX(25px);
+    }
+
+    .toggle-label {
+    margin-left: 10px;
+    font-size: 14px;
+    }
+</style>
+
+@code {
+
+    private bool IsEditing = false;
+    private bool IsModalOpen = false;
+    private bool IsDeleteClientOpen = false;
+
+    private MembershipDto NewMembership = new();
+    private List<MembershipDto> NewMemberships = [];
+    private List<MembershipDto> Memberships = [];
+    private ClientDto? OriginalClientCopy;
+    private string membershipErrorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_clientState.SelectedClient == null)
+        {
+            Console.WriteLine("Ошибка id == null");
+            return;
+        }
+        Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
+    }
+
+    private bool CanAddMembership => NewMembership.TypeTrainings != TypeTrainings.Unknown && 
+                                    NewMembership.TypeTrainings != default(TypeTrainings) &&
+                                    NewMembership.AmountTraining > 0 &&
+                                    NewMembership.DateStart <= NewMembership.DateEnd;
+
+    private async Task AddMembership()
+    {
+        membershipErrorMessage = string.Empty;
+
+        if (NewMembership.TypeTrainings == TypeTrainings.Unknown || NewMembership.TypeTrainings == default(TypeTrainings))
+        {
+            membershipErrorMessage = "Выберите тип тренировки";
+            return;
+        }
+
+        if (NewMembership.AmountTraining <= 0)
+        {
+            membershipErrorMessage = "Количество тренировок должно быть больше 0";
+            return;
+        }
+
+        if (NewMembership.DateStart > NewMembership.DateEnd)
+        {
+            membershipErrorMessage = "Дата начала не может быть позже даты окончания";
+            return;
+        }
+
+        NewMembership.ClientId = _clientState.SelectedClient.Id;
+        NewMemberships.Add(NewMembership);
+
+        await _membershipService.AddMembership(NewMemberships);
+        Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
+        IsModalOpen = false;
+        NewMemberships.Clear();
+        NewMembership = new(); // Сбрасываем для следующего абонемента
+    }
+
+    private void ToggleOneTimeTraining(ChangeEventArgs e)
+    {
+        NewMembership.IsOneTimeTraining = (bool)e.Value;
+
+        if (NewMembership.IsOneTimeTraining)
+        {
+            NewMembership.AmountTraining = 1;
+            NewMembership.DateEnd = NewMembership.DateStart;
+        }
+    }
+
+    private async Task ConfirmDelete(MembershipDto membership)
+    {
+        await _membershipService.DeleteMembership(membership.Id);
+        Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
+        StateHasChanged();
+    }
+
+    private async Task DeleteClient()
+    {
+        await _clientService.DeleteClientAsync(_clientState.SelectedClient.Id);
+        IsDeleteClientOpen = false;
+        GoBack();
+    }
+
+    private void EditTrainer()
+    {
+        IsEditing = true;
+        OriginalClientCopy = new ClientDto
+            {
+                FirstName = _clientState.SelectedClient.FirstName,
+                LastName = _clientState.SelectedClient.LastName,
+                Phone = _clientState.SelectedClient.Phone,
+                DateOfBirth = _clientState.SelectedClient.DateOfBirth,
+                ParentName = _clientState.SelectedClient.ParentName,
+                ParentPhone = _clientState.SelectedClient.ParentPhone
+            };
+    }
+
+    private async Task SaveChanges()
+    {
+        if (_clientState.SelectedClient != null)
+        {
+            var success = await _clientService.UpdateClientInfo(_clientState.SelectedClient);
+            if (success)
+            {
+                IsEditing = false;
+                Console.WriteLine("Изменения сохранены.");
+            }
+            else
+            {
+                Console.WriteLine("Ошибка при сохранении.");
+            }
+        }
+    }
+
+    private void CancelEdit()
+    {
+        if (OriginalClientCopy != null)
+        {
+            _clientState.SelectedClient.FirstName = OriginalClientCopy.FirstName;
+            _clientState.SelectedClient.LastName = OriginalClientCopy.LastName;
+            _clientState.SelectedClient.Phone = OriginalClientCopy.Phone;
+            _clientState.SelectedClient.DateOfBirth = OriginalClientCopy.DateOfBirth;
+            _clientState.SelectedClient.ParentName = OriginalClientCopy.ParentName;
+            _clientState.SelectedClient.ParentPhone = OriginalClientCopy.ParentPhone;
+        }
+        IsEditing = false;
+    }
+
+    private string FormatPhoneNumber(string phone)
+    {
+        if (string.IsNullOrEmpty(phone) || phone.Length != 10)
+            return phone;
+
+        return $"+7 ({phone.Substring(0, 3)}) {phone.Substring(3, 3)}-{phone.Substring(6, 2)}-{phone.Substring(8, 2)}";
+    }
+
+    private void GoBack()
+    {
+        _navigation.NavigateTo("/clients");
+    }
+}

@@ -1,0 +1,121 @@
+﻿@page "/trainer-details"
+@inject TrainerStateService _trainerState
+@inject TrainerServiceBlazor _trainerService
+@inject NavigationManager _navigation
+
+<h3>Подродная информация о тренере </h3>
+
+@if (_trainerState.SelectedTrainer != null)
+{
+    var trainer = _trainerState.SelectedTrainer;
+
+    <div class="component-details">
+        @if (IsEditing)
+        {
+            <label>Имя:</label>
+            <input type="text" @bind="trainer.FirstName" />
+
+            <label>Фамилия:</label>
+            <input type="text" @bind="trainer.LastName" />
+
+            <label>Отчество:</label>
+            <input type="text" @bind="trainer.Surname" />
+
+            <label>Телефон:</label>
+            <input type="text" @bind="trainer.Phone" />
+
+            <label>Дата рождения:</label>
+            <input type="date" @bind="trainer.DateOfBirth" />
+
+            <label>Цвет:</label>
+            <input type="color" @bind="trainer.Color" />
+
+            <button class="btn btn-success mt-3" @onclick="SaveChanges">Сохранить</button>
+            <button class="btn btn-secondary mt-3" @onclick="CancelEdit">Отмена</button>
+        }
+        else
+        {
+            <p><strong>Имя:</strong> @trainer.FirstName</p>
+            <p><strong>Фамилия:</strong> @trainer.LastName</p>
+            <p><strong>Отчество:</strong> @trainer.Surname</p>
+            <p><strong>Телефон:</strong> @FormatPhoneNumber(trainer.Phone)</p>
+            <p><strong>Дата рождения:</strong> @trainer.DateOfBirth.ToShortDateString()</p>
+            <p><strong>Цвет:</strong> <span class="color-box" style="background-color: @trainer.Color;"></span></p>
+
+            <button class="btn btn-primary mt-3" @onclick="EditTrainer">Изменить</button>
+        }
+    </div>
+}
+else
+{
+    <p class="alert alert-warning">Тренер не выбран. Перейдите на страницу <a href="/trainers">управления клиентами</a>.</p>
+}
+<button class="btn btn-danger mt-3" @onclick="DeleteTrainer">❌ Удалить тренера</button>
+<button class="btn btn-secondary mt-3" @onclick="GoBack">Назад</button>
+
+@code {
+    private bool IsEditing = false;
+    private TrainerDto? OriginalTrainerCopy;
+
+    private void EditTrainer()
+    {
+        IsEditing = true;
+
+        OriginalTrainerCopy = new TrainerDto
+            {
+                FirstName = _trainerState.SelectedTrainer.FirstName,
+                LastName = _trainerState.SelectedTrainer.LastName,
+                Surname = _trainerState.SelectedTrainer.Surname,
+                Phone = _trainerState.SelectedTrainer.Phone,
+                DateOfBirth = _trainerState.SelectedTrainer.DateOfBirth,
+                Color = _trainerState.SelectedTrainer.Color,
+            };
+    }
+
+    private async Task SaveChanges()
+    {
+        if (_trainerState.SelectedTrainer != null)
+        {
+            var success = await _trainerService.UpdateTrainerInfo(_trainerState.SelectedTrainer);
+            if (success)
+            {
+                IsEditing = false;
+                Console.WriteLine("Изменения сохранены.");
+            }
+            else
+            {
+                Console.WriteLine("Ошибка при сохранении.");
+            }
+        }
+    }
+
+    private void CancelEdit()
+    {
+        if (OriginalTrainerCopy != null)
+        {
+            _trainerState.SelectedTrainer.FirstName = OriginalTrainerCopy.FirstName;
+            _trainerState.SelectedTrainer.LastName = OriginalTrainerCopy.LastName;
+            _trainerState.SelectedTrainer.Surname = OriginalTrainerCopy.Surname;
+            _trainerState.SelectedTrainer.Phone = OriginalTrainerCopy.Phone;
+            _trainerState.SelectedTrainer.DateOfBirth = OriginalTrainerCopy.DateOfBirth;
+            _trainerState.SelectedTrainer.Color = OriginalTrainerCopy.Color;
+        }
+        IsEditing = false;
+    }
+
+    private string FormatPhoneNumber(string phone)
+    {
+        return $"+7 ({phone.Substring(0, 3)}) {phone.Substring(3, 3)}-{phone.Substring(6, 2)}-{phone.Substring(8, 2)}";
+    }
+
+    private async Task DeleteTrainer()
+    {
+        await _trainerService.DeleteTrainer(_trainerState.SelectedTrainer.Id);
+        GoBack();
+    }
+
+    private void GoBack()
+    {
+        _navigation.NavigateTo("/trainers");
+    }
+}

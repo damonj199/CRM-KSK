@@ -1,6 +1,15 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject HttpClient _http
+@inject IJSRuntime JSRuntime
+@inject NavigationManager _navigation
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">CRM-KSK.Blazor</a>
+        <a class="navbar-brand" href="">KCK Нева</a>
+
+        <button class="btn btn-sm btn-outline-light ms-auto me-2" @onclick="Logout">
+            Выйти
+        </button>
+
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -11,29 +20,75 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Главная
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="schedule">
+                <span class="oi oi-calendar" aria-hidden="true"></span> Расписание
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            <NavLink class="nav-link" href="horses-schedule">
+                <span class="oi oi-plus" aria-hidden="true"></span> Лошади
             </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="clients">
+                <span class="oi oi-plus" aria-hidden="true"></span> Клиенты
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="trainers">
+                <span class="oi oi-plus" aria-hidden="true"></span> Тренеры
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="membership-deduction-logs">
+                <span class="oi oi-list" aria-hidden="true"></span> Логи списаний
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <button class="nav-link btn btn-link text-start w-100" @onclick="OpenAddClientModal">
+                <span class="oi oi-plus" aria-hidden="true"></span> Добавить клиента
+            </button>
         </div>
     </nav>
 </div>
 
+<style>
+    .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.5);
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+        .btn-outline-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+</style>
+
 @code {
     private bool collapseNavMenu = true;
+    [Parameter] public EventCallback OnOpenAddClientModal { get; set; }
+
+    private void OpenAddClientModal()
+    {
+        OnOpenAddClientModal.InvokeAsync();
+    }
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task Logout()
+    {
+        await _http.PostAsync("api/Auth/logout", null);
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "jwt");
+
+        _navigation.NavigateTo("/login", true);
     }
 }

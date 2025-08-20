@@ -1,0 +1,706 @@
+﻿@page "/schedule"
+@using System.Globalization
+@inject ClientServiceBlazor _clientService
+@inject TrainerServiceBlazor _trainerService
+@inject ScheduleServiceBlazor _scheduleService
+@inject TrainingServiceBlazor _trainingService
+@inject ClientStateService _clientState
+@inject NavigationManager _navigation
+
+<div class="row align-items-center mb-3">
+    <div class="col-4">
+        <a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
+    </div>
+    <div class="col-4 text-center">
+        <h3>Расписание тренировок</h3>
+    </div>
+    <div class="col-4 text-end">
+        <button class="btn btn-secondary me-2" @onclick="LoadPreviousWeek" disabled="@(!CanLoadPreviousWeek)">
+            &#8592;
+        </button>
+        <button class="btn btn-secondary" @onclick="LoadNextWeek">
+            &#8594;
+        </button>
+    </div>
+</div>
+
+
+<div class="table-conrainer">
+    <table class="schedule-table">
+        <thead>
+            <tr>
+                <th>Время</th>
+                @foreach (var day in DaysOfWeekWithDates)
+                {
+                    <th>@day</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var time in TimeSlots)
+            {
+                <tr>
+                    <td>@time</td>
+                    @foreach (var day in DaysOfWeekWithDates)
+                    {
+                        <td class="schedule-cell @(string.IsNullOrWhiteSpace(GetCellContent(day, time)) ? "empty-cell" : "")"
+                        @onclick="() => OpenModal(day, time)">
+                            @if(ScheduleData.TryGetValue((day, time), out var trainings))
+                            {
+                                @foreach(var training in trainings)
+                                {
+                                    <div style="background-color:@training.TrainerName.Color; padding: 3px; margin:2px; border-radius:4px;">
+                                        @($"{training.TrainerName.LastName} {training.TrainerName.FirstName}") -
+                                        @foreach (var client in training.ClientsName)
+                                        {
+                                            @($"{client.LastName} {client.FirstName} ")
+                                            var remaining = GetRemainingTrainings(client.Id, training.TypeTrainings);
+                                            @($"({training.TypeTrainings.GetDisplayName()}) {(remaining.HasValue ? remaining.ToString() : "N/A")}")
+                                        }
+                                    </div>
+                                }
+                            }
+                            @if (CellComments.TryGetValue((day, time), out var comments) && comments.Any())
+                            {
+                                @foreach (var comment in comments)
+                                {
+                                    <div class="comment-box" style="background-color:#f8f9fa; padding:3px; margin:2px; border-radius:4px; border:1px dashed #ccc;">
+                                        @comment.CommentText
+                                        <button class="btn-comment-delete"
+                                            @onclick="() => RemoveComment(comment.Id)"
+                                            @onclick:stopPropagation="true">×</button>
+                                    </div>
+                                }
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (IsModalOpen)
+{
+    <div class="modals" @onclick="HandleOverlayClick" style="@(IsModalOpen ? "display:flex;" : "display:none;")">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <h4>Добавить тренировку</h4>
+
+            <label>Тренер:</label>
+            <select @bind="SelectedTrainerId">
+                @foreach (var trainer in Trainers)
+                {
+                    <option value="@trainer.Id">@trainer.FirstName @trainer.LastName</option>
+                }
+            </select>
+
+            <label>Клиент:</label>
+            <input type="text" @bind="SearchClient" @bind:event="oninput" placeholder="Введите имя клиента..." />
+            <select multiple @bind="SelectedClientId">
+                @foreach (var client in FilteredClients)
+                {
+                    var activeMemberships = client.Memberships
+                        .Where(m => m.StatusMembership == StatusMembership.Активный || m.IsOneTimeTraining)
+                        .ToList();
+
+                    <option value="@client.Id">
+                        @client.FirstName @client.LastName - 
+                        (@(activeMemberships.Any()
+                            ? string.Join(", ", client.Memberships.Select(m => m.TypeTrainings.GetDisplayName()))
+                            : " ")) - 
+                        @(activeMemberships.Any()
+                            ? string.Join(", ", client.Memberships.Select(m => m.IsOneTimeTraining ? "1P" : m.AmountTraining.ToString()))
+                            : " ")
+                    </option>
+                }
+            </select>
+
+            <label>Тип тренировки:</label>
+            <select @bind="SelectedTrainingType">
+                @{
+                    var availableTypes = new List<TypeTrainings>();
+                    if (SelectedClientId.Length > 0)
+                    {
+                        var selectedClients = Clients
+                            .Where(c => SelectedClientId.Contains(c.Id.ToString()))
+                            .ToList();
+
+                        availableTypes = selectedClients
+                            .SelectMany(c => c.Memberships
+                                .Where(m => (m.StatusMembership == StatusMembership.Активный || m.IsOneTimeTraining) && m.AmountTraining > 0)
+                                .Select(m => m.TypeTrainings))
+                            .Distinct()
+                            .ToList();
+                    }
+
+                    if (availableTypes.Any())
+                    {
+                        <option value="">Выберите тип тренировки</option>
+                        foreach (var type in availableTypes)
+                        {
+                            <option value="@type">@type.GetDisplayName()</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="">@(SelectedClientId.Length > 0 ? "Нет доступных типов" : "Выберите клиентов")</option>
+                    }
+                }
+            </select>
+
+            <div class="comment-section">
+                <h4>Комментарии</h4>
+                @if (CellComments.TryGetValue((SelectedDay, SelectedTime), out var currentComments) && currentComments.Any())
+                    {
+                    @foreach (var comment in currentComments)
+                        {
+                        <div class="comment-box mb-2">
+                            @comment.CommentText
+                            <button class="btn-comment-delete"
+                                    @onclick="() => RemoveComment(comment.Id)">
+                                ×
+                            </button>
+                        </div>
+                        }
+                    }
+                <textarea class="form-control mb-2" @bind="CurrentComment" placeholder="Введите новый комментарий..."></textarea>
+                <button class="btn btn-info" @onclick="SaveComment">Добавить комментарий</button>
+            </div>
+
+            <div class="from-actions mt-2">
+                <button class="btn btn-primary" @onclick="SaveTraining">Сохранить</button>
+                <button @onclick="CloseModal">Отмена</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowTrainingsModal)
+{
+    <div class="modals" @onclick="HandleOverlayClick" style="@(ShowTrainingsModal ? "display:flex;" : "display:none;")">
+        <div class="modal-contents" @onclick:stopPropagation="true">
+            <h3>Тренировки на @SelectedDay в @SelectedTime</h3>
+
+            @if (SelectedTrainings.Count > 0)
+            {
+                @foreach (var training in SelectedTrainings)
+                {
+                    <div class="list-group-item">
+                        @($"{training.TrainerName.LastName} {training.TrainerName.FirstName} ") -
+                        @foreach(var client in training.ClientsName)
+                        {
+                            <a href="/client-details" class="link-detail" @onclick:preventDefault="true" @onclick="() => ShowClientDetails(client.Id)">
+                                @($"{client.LastName} {client.FirstName} ")
+                            </a>
+                        }
+                        @($"({training.TypeTrainings.GetDisplayName()})")
+                        <button class="btn-delete" @onclick="() => DeleteTraining(training.Id)">❌</button>
+                    </div>
+                }
+            }
+            <div class="comment-section">
+                <h4>Комментарии</h4>
+                @if (CellComments.TryGetValue((SelectedDay, SelectedTime), out var currentComments) && currentComments.Any())
+                {
+                    @foreach (var comment in currentComments)
+                    {
+                        <div class="comment-box mb-2">
+                            @comment.CommentText
+                            <button class="btn-comment-delete"
+                                @onclick="() => RemoveComment(comment.Id)">×</button>
+                        </div>
+                    }
+                }
+                <textarea class="form-control mb-2" @bind="CurrentComment" placeholder="Введите новый комментарий..."></textarea>
+                <button class="btn btn-info" @onclick="SaveComment">Добавить комментарий</button>
+            </div>
+
+            <button class="btn btn-dark" @onclick="OpenAddTrainingModal">Добавить тренировку</button>
+            <button class="btn btn-secondary mt-1" @onclick="CloseModal">Закрыть</button>
+        </div>
+    </div>
+}
+
+<style>
+    .table-container {
+        width: 100vw;
+        position: relative;
+        overflow-x: auto;
+    }
+
+    .schedule-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: center;
+    }
+
+    .schedule-table th, .schedule-table td {
+        border: 1px solid #ccc;
+        min-width: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 5px;
+        white-space: nowrap;
+    }
+
+    .schedule-table th {
+        background-color: #f4f4f4;
+    }
+
+    .schedule-cell {
+        cursor: pointer;
+        height: 50px;
+    }
+
+    .schedule-cell:hover {
+        background-color: #eef;
+    }
+
+    .modals {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-contents {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        width: auto;
+        max-width: 90%;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .training-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+    }
+
+    .btn-delete {
+        background: red;
+        color: white;
+        border: none;
+        padding: 5px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .modal-buttons {
+        margin-top: 15px;
+    }
+
+    .modal-buttons button {
+        margin: 5px;
+        padding: 5px 10px;
+    }
+
+    .empty-cell {
+        height: 20px;
+        background-color: #f9f9f9;
+    }
+
+    .comment-box {
+        position: relative;
+        word-break: break-word;
+    }
+
+    .btn-comment-delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2em;
+        color: #999;
+        padding: 0 5px;
+    }
+
+    .btn-comment-delete:hover {
+        color: #f00;
+    }
+
+    .comment-box {
+        position: relative;
+        padding: 5px;
+        margin: 5px 0;
+        background: #FFF8E1;
+        border-radius: 4px;
+        border: 1px dashed #ddd;
+        word-break: break-word;
+        color: #CC7722;
+        font-size: 0.9em;
+    }
+
+    .btn-comment-delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2em;
+        color: #CC7722;
+        padding: 0 5px;
+    }
+
+    .btn-comment-delete:hover {
+        color: #f00;
+    }
+
+    .comment-section {
+        margin-top: 15px;
+        padding: 10px;
+        border-top: 1px solid #eee;
+    }
+</style>
+
+@code {
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    private readonly List<string> TimeSlots = GenerateTimeSlots("09:00", "22:00");
+
+    private DateTime currentWeekStart;
+    private string CurrentComment = string.Empty;
+
+    private List<string> DaysOfWeekWithDates = new();
+    private Dictionary<(string Day, string Time), List<TrainingDto>> ScheduleData = new();
+    private Dictionary<(string Day, string Time), List<ScheduleCommentDto>> CellComments = new();
+
+    private List<TrainerDto> Trainers = [];
+    private IReadOnlyList<ClientDto> Clients = [];
+    private IReadOnlyList<ScheduleDto> Schedules = [];
+
+    private Guid? SelectedTrainerId;
+    private string[] SelectedClientId = [];
+    private Guid? SelectedTrainingId;
+    private TypeTrainings SelectedTrainingType = TypeTrainings.Unknown;
+
+    private string SelectedDay = string.Empty;
+    private string SelectedTime = string.Empty;
+    private List<TrainingDto> SelectedTrainings = [];
+
+    private bool ShowTrainingsModal = false;
+    private bool IsModalOpen = false;
+
+    private string SearchClient { get; set; } = string.Empty;
+    private List<ClientDto> FilteredClients => Clients
+        .Where(c => c.Memberships.Any(m => m.StatusMembership == StatusMembership.Активный))
+        .OrderByDescending(c =>
+            c.FirstName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase) ||
+            c.LastName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCommentsFromDatabase();
+        currentWeekStart = GetStartOfWeek(DateTime.Today, DateTime.Today.DayOfWeek);
+        GenerateDaysOfWeekWithDates();
+        await LoadDataFromApi();
+        await LoadScheduleFromApi();
+        EnsureScheduleDataInitialized();
+    }
+
+    private async Task LoadCommentsFromDatabase()
+    {
+        var comments = await _scheduleService.GetScheduleComments();
+        CellComments.Clear();
+
+        foreach (var comment in comments)
+        {
+            var dayKey = comment.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU"));
+            var timeKey = comment.Time.ToString(@"hh\:mm");
+
+            if (!CellComments.ContainsKey((dayKey, timeKey)))
+            {
+                CellComments[(dayKey, timeKey)] = new List<ScheduleCommentDto>();
+            }
+
+            CellComments[(dayKey, timeKey)].Add(comment);
+        }
+    }
+
+    private async Task HandleOverlayClick()
+    {
+        await CloseModal();
+    }
+
+    private async Task ShowClientDetails(Guid id)
+    {
+        var client = await _clientService.GetClientById(id);
+        _clientState.SelectedClient = client;
+        _navigation.NavigateTo("/client-details");
+    }
+
+    private void ShowHistory()
+    {
+        _navigation.NavigateTo("/history");
+    }
+
+    private void GenerateDaysOfWeekWithDates()
+    {
+        DaysOfWeekWithDates = Enumerable.Range(0, 7)
+            .Select(i => currentWeekStart.AddDays(i).ToString("dddd, dd MMMM"))
+            .ToList();
+    }
+
+    private async Task LoadNextWeek()
+    {
+        currentWeekStart = currentWeekStart.AddDays(7);
+        GenerateDaysOfWeekWithDates();
+        await LoadScheduleFromApi();
+        EnsureScheduleDataInitialized();
+    }
+
+    private bool CanLoadPreviousWeek => currentWeekStart > GetStartOfWeek(DateTime.Today, DateTime.Today.DayOfWeek);
+
+    private async Task LoadPreviousWeek()
+    {
+        var newWeekStart = currentWeekStart.AddDays(-7);
+        if (newWeekStart < GetStartOfWeek(DateTime.Today, DateTime.Today.DayOfWeek))
+        {
+            return;
+        }
+        currentWeekStart = newWeekStart;
+        GenerateDaysOfWeekWithDates();
+        await LoadScheduleFromApi();
+        EnsureScheduleDataInitialized();
+    }
+
+    private DateTime GetStartOfWeek(DateTime date, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (date.DayOfWeek - startOfWeek)) % 7;
+        return date.AddDays(-diff).Date;
+    }
+
+    private async Task LoadDataFromApi()
+    {
+        Trainers = (await _trainerService.GetAllTrainers() ?? []).OrderBy(t => t.FirstName).ToList();
+        Clients = await _clientService.GetClientsForSchedulesAsync() ?? [];
+    }
+
+    private async Task LoadScheduleFromApi()
+    {
+        Schedules = await _scheduleService.GetWeeksSchedule(currentWeekStart);
+        ScheduleData.Clear();
+        LoadUI();
+    }
+
+    private int? GetRemainingTrainings(Guid id, TypeTrainings type)
+    {
+        return FilteredClients?
+            .FirstOrDefault(c => c?.Id == id)?
+            .Memberships?
+            .FirstOrDefault(m => m?.TypeTrainings == type &&
+                               m?.StatusMembership == StatusMembership.Активный)?
+            .AmountTraining;
+    }
+
+    private void LoadUI()
+    {
+        ScheduleData.Clear();
+
+        foreach (var schedule in Schedules)
+        {
+            var dayKey = schedule.Date.ToString("dddd, dd MMMM", new CultureInfo("ru-RU"));
+            var timeKey = schedule.Time.ToString(@"hh\:mm");
+
+            if(schedule.Trainings != null && schedule.Trainings.Any())
+            {
+                if(!ScheduleData.ContainsKey((dayKey, timeKey)))
+                {
+                    ScheduleData[(dayKey, timeKey)] = new List<TrainingDto>();
+                }
+
+                foreach (var training in schedule.Trainings)
+                {
+                    // Проверяем, что тип тренировки не Unknown
+                    if (training.TypeTrainings == TypeTrainings.Unknown)
+                    {
+                        Console.WriteLine($"Warning: Training {training.Id} has Unknown type");
+                    }
+                    ScheduleData[(dayKey, timeKey)].Add(training);
+                }
+            }
+        }
+    }
+
+    private void EnsureScheduleDataInitialized()
+    {
+        foreach (var day in DaysOfWeekWithDates)
+        {
+            foreach (var time in TimeSlots)
+            {
+                if (!ScheduleData.ContainsKey((day, time)))
+                {
+                    ScheduleData[(day, time)] = [];
+                }
+            }
+        }
+    }
+
+    private static List<string> GenerateTimeSlots(string start, string end)
+    {
+        var timeSlots = new List<string>();
+        var startTime = DateTime.ParseExact(start, "HH:mm", CultureInfo.InvariantCulture);
+        var endTime = DateTime.ParseExact(end, "HH:mm", CultureInfo.InvariantCulture);
+
+        while (startTime < endTime)
+        {
+            timeSlots.Add(startTime.ToString("HH:mm"));
+            startTime = startTime.AddMinutes(30);
+        }
+
+        return timeSlots;
+    }
+
+    private void OpenModal(string day, string time)
+    {
+        SelectedDay = day;
+        SelectedTime = time;
+
+        if (ScheduleData.TryGetValue((day, time), out var trainings) && trainings?.Any() == true)
+        {
+            SelectedTrainings = trainings.ToList();
+            ShowTrainingsModal = true;
+        }
+        else
+        {
+            IsModalOpen = true;
+        }
+    }
+
+    private async Task SaveComment()
+    {
+        if (!string.IsNullOrWhiteSpace(SelectedDay) &&
+            !string.IsNullOrWhiteSpace(SelectedTime) &&
+            !string.IsNullOrWhiteSpace(CurrentComment))
+        {
+            DateOnly date = DateOnly.Parse(SelectedDay);
+            TimeSpan time = TimeSpan.Parse(SelectedTime);
+
+            await _scheduleService.AddScheduleComment(date, time, CurrentComment);
+            await LoadCommentsFromDatabase();
+            CurrentComment = string.Empty;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveComment(int id)
+    {
+        await _scheduleService.DeleteScheduleComment(id);
+        await LoadCommentsFromDatabase();
+        StateHasChanged();
+    }
+
+    private void OpenAddTrainingModal()
+    {
+        ShowTrainingsModal = false;
+        IsModalOpen = true;
+    }
+
+    private async Task CloseModal()
+    {
+        IsModalOpen = false;
+        ShowTrainingsModal = false;
+        SelectedTrainerId = null;
+        SelectedClientId = [];
+        SelectedTrainingType = default(TypeTrainings);
+        await IsVisibleChanged.InvokeAsync(IsModalOpen);
+        await IsVisibleChanged.InvokeAsync(ShowTrainingsModal);
+    }
+
+    private async Task SaveTraining()
+    {
+        if (SelectedTrainerId != null && SelectedClientId.Length > 0 && SelectedTrainingType != TypeTrainings.Unknown)
+        {
+            var Date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU"));
+            var Time = TimeSpan.Parse(SelectedTime);
+
+            var scheduleEntity = Schedules.FirstOrDefault(s => s.Date == Date && s.Time == Time);
+            if (scheduleEntity == null)
+            {
+                scheduleEntity = new ScheduleDto
+                {
+                    Id = Guid.NewGuid(),
+                    Date = Date,
+                    Time = Time
+                };
+            }
+
+            var trainerDto = Trainers.FirstOrDefault(t => t.Id == SelectedTrainerId.Value);
+
+            var selectedClientGuid = SelectedClientId.Select(id => Guid.Parse(id)).ToList();
+            var clientDtos = Clients.Where(c => selectedClientGuid.Contains(c.Id)).ToList();
+
+            var scheduleFull = new ScheduleFullDto
+            {
+                ScheduleId = scheduleEntity.Id,
+                Date = scheduleEntity.Date,
+                Time = scheduleEntity.Time,
+                TrainingId = Guid.NewGuid(),
+                TypeTrainings = SelectedTrainingType,
+                TrainerName = new ScheduleMemberDto
+                {
+                    Id = trainerDto.Id,
+                    FirstName = trainerDto.FirstName,
+                    LastName = trainerDto.LastName
+                },
+                    ClientsName = clientDtos.Select(c => new ScheduleMemberDto
+                    {
+                        Id = c.Id,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName
+                    }).ToList(),
+            };
+
+            await _trainingService.AddTrainingAsync(scheduleFull);
+
+            await LoadScheduleFromApi();
+            EnsureScheduleDataInitialized();
+        }
+
+        await CloseModal();
+    }
+
+    private string GetCellContent(string day, string time)
+    {
+        return ScheduleData.TryGetValue((day, time), out var content)
+            ? string.Join("<br>", content) 
+            : " ";
+    }
+
+    private async Task DeleteTraining(Guid id)
+    {
+        if (id == Guid.Empty)
+            return;
+
+        await _trainingService.DeleteTrainingAsync(id);
+        await LoadDataFromApi();
+        await LoadScheduleFromApi();
+        EnsureScheduleDataInitialized();
+
+        CloseModal();
+    }
+
+    private void UpdateScheduleData()
+    {
+        ScheduleData.Clear();
+        LoadUI();
+    }
+
+    private void OnClientSelectionChanged()
+    {
+        // Сбрасываем тип тренировки при изменении выбранных клиентов
+        SelectedTrainingType = default(TypeTrainings);
+        StateHasChanged();
+    }
+}
