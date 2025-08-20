@@ -10,6 +10,7 @@ public class WorkWithMembership : IWorkWithMembership
     private readonly IMembershipRepository _membershipRepository;
     private readonly IMembershipDeductionLogRepository _logRepository;
     private readonly ILogger<WorkWithMembership> _logger;
+    private readonly DateOnly daductionDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
 
     public WorkWithMembership(
         IScheduleRepository scheduleRepository, 
@@ -50,7 +51,7 @@ public class WorkWithMembership : IWorkWithMembership
                         var deductionLog = new MembershipDeductionLog
                         {
                             Id = Guid.NewGuid(),
-                            DeductionDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
+                            DeductionDate = daductionDate,
                             ClientId = client.Id,
                             MembershipId = membership.Id,
                             ScheduleId = schedule.Id,
@@ -63,7 +64,7 @@ public class WorkWithMembership : IWorkWithMembership
 
                         if (membership.AmountTraining == 0)
                         {
-                            membership.StatusMembership = Core.Enums.StatusMembership.Закончился;
+                            membership.StatusMembership = Core.Enums.StatusMembership.Ended;
                             deductionLog.MembershipExpired = true;
                             _logger.LogError("Абонемент закончился!");
 

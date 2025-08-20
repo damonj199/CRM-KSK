@@ -16,7 +16,7 @@ public class MembershipDeductionLog
     public bool MembershipExpired { get; set; } = false;
     
     // Навигационные свойства
-    public Client? Client { get; set; } = default!;
+    public Client? Client { get; set; }
     public Membership? Membership { get; set; }
     public Schedule Schedule { get; set; } = default!;
     public Training? Training { get; set; }
