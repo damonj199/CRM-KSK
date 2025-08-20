@@ -14,6 +14,7 @@ public class MembershipDeductionLog
     public int TrainingsBeforeDeduction { get; set; }
     public int TrainingsAfterDeduction { get; set; }
     public bool MembershipExpired { get; set; } = false;
+    public bool IsMorningMembership { get; set; } = false;
     
     // Навигационные свойства
     public Client? Client { get; set; }

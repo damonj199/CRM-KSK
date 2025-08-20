@@ -36,53 +36,85 @@ public class WorkWithMembership : IWorkWithMembership
             {
                 foreach (var client in training.Clients)
                 {
-                    var membership = await _membershipRepository
-                        .GetMembershipByClientAndTypeAsync(client.Id, training.TypeTrainings, token);
+                    // Проверяем, является ли время тренировки утренним (до 14:00 включительно)
+                    var isMorningTime = schedule.Time <= new TimeSpan(14, 0, 0);
+                    
+                    // Получаем все абонементы клиента данного типа
+                    var memberships = await _membershipRepository
+                        .GetMembershipsByClientAndTypeAsync(client.Id, training.TypeTrainings, token);
 
-                    if (membership != null)
+                    if (memberships != null && memberships.Any())
                     {
-                        var trainingsBefore = membership.AmountTraining;
-                        membership.AmountTraining--;
-                        var trainingsAfter = membership.AmountTraining;
+                        // Выбираем подходящий абонемент
+                        Membership? membershipToUse = null;
                         
-                        _logger.LogWarning($"Удачно списали занятие у {client.LastName} {client.FirstName}");
-
-                        // Создаем лог списания
-                        var deductionLog = new MembershipDeductionLog
+                        if (isMorningTime)
                         {
-                            Id = Guid.NewGuid(),
-                            DeductionDate = daductionDate,
-                            ClientId = client.Id,
-                            MembershipId = membership.Id,
-                            ScheduleId = schedule.Id,
-                            TrainingId = training.Id,
-                            TrainingType = training.TypeTrainings,
-                            TrainingsBeforeDeduction = trainingsBefore,
-                            TrainingsAfterDeduction = trainingsAfter,
-                            MembershipExpired = false
-                        };
-
-                        if (membership.AmountTraining == 0)
-                        {
-                            membership.StatusMembership = Core.Enums.StatusMembership.Ended;
-                            deductionLog.MembershipExpired = true;
-                            _logger.LogError("Абонемент закончился!");
-
-                            await _membershipRepository.SoftDeleteMembershipAsync(membership.Id, token);
+                            // Если время утреннее, сначала ищем утренний абонемент
+                            membershipToUse = memberships.FirstOrDefault(m => m.IsMorning && m.AmountTraining > 0);
+                            
+                            // Если утреннего нет, берем обычный
+                            if (membershipToUse == null)
+                            {
+                                membershipToUse = memberships.FirstOrDefault(m => !m.IsMorning && m.AmountTraining > 0);
+                            }
                         }
                         else
                         {
-                            await _membershipRepository.UpdateMembershipAsync(membership, token);
+                            // Если время не утреннее, берем только обычный абонемент
+                            membershipToUse = memberships.FirstOrDefault(m => !m.IsMorning && m.AmountTraining > 0);
                         }
 
-                        // Сохраняем лог
-                        try
+                        if (membershipToUse != null)
                         {
-                            await _logRepository.CreateLogAsync(deductionLog, token);
+                            var trainingsBefore = membershipToUse.AmountTraining;
+                            membershipToUse.AmountTraining--;
+                            var trainingsAfter = membershipToUse.AmountTraining;
+                            
+                            _logger.LogWarning($"Удачно списали занятие у {client.LastName} {client.FirstName} с абонемента {(membershipToUse.IsMorning ? "утреннего" : "обычного")}");
+
+                            // Создаем лог списания
+                            var deductionLog = new MembershipDeductionLog
+                            {
+                                Id = Guid.NewGuid(),
+                                DeductionDate = daductionDate,
+                                ClientId = client.Id,
+                                MembershipId = membershipToUse.Id,
+                                ScheduleId = schedule.Id,
+                                TrainingId = training.Id,
+                                TrainingType = training.TypeTrainings,
+                                TrainingsBeforeDeduction = trainingsBefore,
+                                TrainingsAfterDeduction = trainingsAfter,
+                                MembershipExpired = false,
+                                IsMorningMembership = membershipToUse.IsMorning
+                            };
+
+                            if (membershipToUse.AmountTraining == 0)
+                            {
+                                membershipToUse.StatusMembership = Core.Enums.StatusMembership.Ended;
+                                deductionLog.MembershipExpired = true;
+                                _logger.LogError("Абонемент закончился!");
+
+                                await _membershipRepository.SoftDeleteMembershipAsync(membershipToUse.Id, token);
+                            }
+                            else
+                            {
+                                await _membershipRepository.UpdateMembershipAsync(membershipToUse, token);
+                            }
+
+                            // Сохраняем лог
+                            try
+                            {
+                                await _logRepository.CreateLogAsync(deductionLog, token);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Ошибка при сохранении лога списания для клиента {ClientName}", $"{client.LastName} {client.FirstName}");
+                            }
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            _logger.LogError(ex, "Ошибка при сохранении лога списания для клиента {ClientName}", $"{client.LastName} {client.FirstName}");
+                            _logger.LogError($"Не нашли подходящий абонемент для клиента {client.LastName} {client.FirstName} на время {schedule.Time}");
                         }
                     }
                     else

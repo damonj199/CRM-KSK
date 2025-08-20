@@ -11,6 +11,7 @@ public class MembershipDeductionLogDto
     public int TrainingsBeforeDeduction { get; set; }
     public int TrainingsAfterDeduction { get; set; }
     public bool MembershipExpired { get; set; }
+    public bool IsMorningMembership { get; set; }
     public string ScheduleDate { get; set; } = string.Empty;
     public string? TrainerName { get; set; }
 } 
