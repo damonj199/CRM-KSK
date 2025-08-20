@@ -83,7 +83,7 @@
                                     <td>@log.DeductionDate.ToString("dd.MM.yyyy")</td>
                                     <td>@log.ClientFullName</td>
                                     <td>
-                                        <span class="badge bg-info">@GetTrainingTypeName(log.TrainingType)</span>
+                                        <span class="badge bg-info">@GetTrainingTypeName(log.TrainingType)@(log.IsMorningMembership ? " У" : "")</span>
                                     </td>
                                     <td>@log.TrainingsBeforeDeduction</td>
                                     <td>@log.TrainingsAfterDeduction</td>

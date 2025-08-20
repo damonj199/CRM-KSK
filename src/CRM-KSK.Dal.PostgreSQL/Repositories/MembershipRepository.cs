@@ -38,6 +38,15 @@ public class MembershipRepository : IMembershipRepository
         return membership;
     }
 
+    public async Task<List<Membership>> GetMembershipsByClientAndTypeAsync(Guid id, TypeTrainings type, CancellationToken token)
+    {
+        var memberships = await _context.Memberships
+            .Where(c => c.ClientId == id && c.TypeTrainings == type)
+            .ToListAsync(token);
+            
+        return memberships ?? [];
+    }
+
     public async Task<Membership> GetMembershipByIdAsync(Guid id, CancellationToken token)
     {
         var membership = await _context.Memberships.FindAsync(id);
