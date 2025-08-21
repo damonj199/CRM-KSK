@@ -100,7 +100,7 @@
                 @foreach (var client in FilteredClients)
                 {
                     var activeMemberships = client.Memberships
-                        .Where(m => m.StatusMembership == StatusMembership.Активный || m.IsOneTimeTraining)
+                        .Where(m => m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining)
                         .ToList();
 
                     <option value="@client.Id">
@@ -127,7 +127,7 @@
 
                         availableTypes = selectedClients
                             .SelectMany(c => c.Memberships
-                                .Where(m => (m.StatusMembership == StatusMembership.Активный || m.IsOneTimeTraining) && m.AmountTraining > 0)
+                                .Where(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining) && m.AmountTraining > 0)
                                 .Select(m => m.TypeTrainings))
                             .Distinct()
                             .ToList();
@@ -393,7 +393,7 @@
 
     private string SearchClient { get; set; } = string.Empty;
     private List<ClientDto> FilteredClients => Clients
-        .Where(c => c.Memberships.Any(m => m.StatusMembership == StatusMembership.Активный))
+        .Where(c => c.Memberships.Any(m => m.StatusMembership == StatusMembership.Active))
         .OrderByDescending(c =>
             c.FirstName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase) ||
             c.LastName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase))
@@ -500,7 +500,7 @@
             .FirstOrDefault(c => c?.Id == id)?
             .Memberships?
             .FirstOrDefault(m => m?.TypeTrainings == type &&
-                               m?.StatusMembership == StatusMembership.Активный)?
+                               m?.StatusMembership == StatusMembership.Active)?
             .AmountTraining;
     }
 

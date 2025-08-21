@@ -63,7 +63,7 @@ public class WorkWithMembership : IWorkWithMembership
 
                         if (membership.AmountTraining == 0)
                         {
-                            membership.StatusMembership = Core.Enums.StatusMembership.Закончился;
+                            membership.StatusMembership = Core.Enums.StatusMembership.Ended;
                             deductionLog.MembershipExpired = true;
                             _logger.LogError("Абонемент закончился!");
 

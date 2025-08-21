@@ -26,7 +26,7 @@ jobs:
             cd /home/deploy/crm-ksk
 
             # Обновление кода проекта
-            git pull origin dev
+            git pull origin master
 
             # Остановка и удаление старых контейнеров
             docker-compose down
