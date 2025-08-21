@@ -29,15 +29,6 @@ public class MembershipRepository : IMembershipRepository
         return memberships ?? [];
     }
 
-    public async Task<Membership> GetMembershipByClientAndTypeAsync(Guid id, TypeTrainings type, CancellationToken token)
-    {
-        var membership = await _context.Memberships
-            .Where(c => c.ClientId == id && c.TypeTrainings == type)
-            .FirstOrDefaultAsync(token);
-            
-        return membership;
-    }
-
     public async Task<List<Membership>> GetMembershipsByClientAndTypeAsync(Guid id, TypeTrainings type, CancellationToken token)
     {
         var memberships = await _context.Memberships
