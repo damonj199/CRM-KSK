@@ -47,6 +47,7 @@ public class MembershipDeductionLogRepository : IMembershipDeductionLogRepositor
                 TrainingsBeforeDeduction = l.TrainingsBeforeDeduction,
                 TrainingsAfterDeduction = l.TrainingsAfterDeduction,
                 MembershipExpired = l.MembershipExpired,
+                IsMorningMembership = l.IsMorningMembership,
                 ScheduleDate = l.Schedule.Date.ToString("dd.MM.yyyy"),
                 TrainerName = l.Training != null ? $"{l.Training.Trainer.LastName} {l.Training.Trainer.FirstName}" : null
             })

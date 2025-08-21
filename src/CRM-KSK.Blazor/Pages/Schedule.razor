@@ -55,7 +55,8 @@
                                         {
                                             @($"{client.LastName} {client.FirstName} ")
                                             var remaining = GetRemainingTrainings(client.Id, training.TypeTrainings);
-                                            @($"({training.TypeTrainings.GetDisplayName()}) {(remaining.HasValue ? remaining.ToString() : "N/A")}")
+                                            var isMorningMembership = IsMorningMembership(client.Id, training.TypeTrainings);
+                                            @($"({training.TypeTrainings.GetDisplayName()}{(isMorningMembership ? " У" : "")}) {(remaining.HasValue ? remaining.ToString() : "N/A")}")
                                         }
                                     </div>
                                 }
@@ -96,17 +97,20 @@
 
             <label>Клиент:</label>
             <input type="text" @bind="SearchClient" @bind:event="oninput" placeholder="Введите имя клиента..." />
-            <select multiple @bind="SelectedClientId">
+            <select multiple value="@string.Join(',', SelectedClientId)" @onchange="OnClientSelectionChanged">
                 @foreach (var client in FilteredClients)
                 {
                     var activeMemberships = client.Memberships
-                        .Where(m => m.StatusMembership == StatusMembership.Активный || m.IsOneTimeTraining)
+                        .Where(m => m.StatusMembership == StatusMembership.Active || 
+                                   m.StatusMembership == StatusMembership.OneTime || 
+                                   m.IsOneTimeTraining == true)
                         .ToList();
 
                     <option value="@client.Id">
                         @client.FirstName @client.LastName - 
                         (@(activeMemberships.Any()
-                            ? string.Join(", ", client.Memberships.Select(m => m.TypeTrainings.GetDisplayName()))
+                            ? string.Join(", ", client.Memberships.Select(m => 
+                                m.TypeTrainings.GetDisplayName() + (m.IsMorning ? " У" : "")))
                             : " ")) - 
                         @(activeMemberships.Any()
                             ? string.Join(", ", client.Memberships.Select(m => m.IsOneTimeTraining ? "1P" : m.AmountTraining.ToString()))
@@ -125,9 +129,16 @@
                             .Where(c => SelectedClientId.Contains(c.Id.ToString()))
                             .ToList();
 
+                        // Проверяем, является ли выбранное время утренним (до 14:00)
+                        var isMorningTime = IsMorningTime(SelectedTime);
+
                         availableTypes = selectedClients
                             .SelectMany(c => c.Memberships
-                                .Where(m => (m.StatusMembership == StatusMembership.Активный || m.IsOneTimeTraining) && m.AmountTraining > 0)
+                                .Where(m => (m.StatusMembership == StatusMembership.Active
+                                        || m.StatusMembership == StatusMembership.OneTime
+                                        || m.IsOneTimeTraining == true) && m.AmountTraining > 0
+                                        // Если время после 14:00, исключаем утренние абонементы
+                                        && (!m.IsMorning || isMorningTime))
                                 .Select(m => m.TypeTrainings))
                             .Distinct()
                             .ToList();
@@ -147,6 +158,20 @@
                     }
                 }
             </select>
+
+            @if (SelectedClientId.Length > 0 && !IsMorningTime(SelectedTime))
+            {
+                var selectedClients = Clients.Where(c => SelectedClientId.Contains(c.Id.ToString())).ToList();
+                var hasMorningMemberships = selectedClients.Any(c => c.Memberships.Any(m => m.IsMorning && m.AmountTraining > 0));
+                
+                @if (hasMorningMemberships)
+                {
+                    <div class="alert alert-warning mt-2">
+                        <strong>⚠️ Внимание!</strong> У выбранных клиентов есть утренние абонементы, 
+                        но они недоступны после 14:00. Утренние абонементы можно использовать только до 14:00.
+                    </div>
+                }
+            }
 
             <div class="comment-section">
                 <h4>Комментарии</h4>
@@ -393,7 +418,9 @@
 
     private string SearchClient { get; set; } = string.Empty;
     private List<ClientDto> FilteredClients => Clients
-        .Where(c => c.Memberships.Any(m => m.StatusMembership == StatusMembership.Активный))
+        .Where(c => c.Memberships.Any(m => m.StatusMembership == StatusMembership.Active || 
+                                           m.StatusMembership == StatusMembership.OneTime || 
+                                           m.IsOneTimeTraining == true))
         .OrderByDescending(c =>
             c.FirstName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase) ||
             c.LastName.Contains(SearchClient, StringComparison.OrdinalIgnoreCase))
@@ -496,12 +523,30 @@
 
     private int? GetRemainingTrainings(Guid id, TypeTrainings type)
     {
-        return FilteredClients?
-            .FirstOrDefault(c => c?.Id == id)?
-            .Memberships?
-            .FirstOrDefault(m => m?.TypeTrainings == type &&
-                               m?.StatusMembership == StatusMembership.Активный)?
-            .AmountTraining;
+        var client = FilteredClients?.FirstOrDefault(c => c?.Id == id);
+        if (client == null) return null;
+
+        var membership = client.Memberships?.FirstOrDefault(m => 
+            m?.TypeTrainings == type && 
+            (m?.StatusMembership == StatusMembership.Active || 
+             m?.StatusMembership == StatusMembership.OneTime || 
+             m?.IsOneTimeTraining == true));
+
+        return membership?.AmountTraining;
+    }
+
+    private bool IsMorningMembership(Guid clientId, TypeTrainings type)
+    {
+        var client = FilteredClients?.FirstOrDefault(c => c?.Id == clientId);
+        if (client == null) return false;
+
+        var membership = client.Memberships?.FirstOrDefault(m => 
+            m?.TypeTrainings == type && 
+            (m?.StatusMembership == StatusMembership.Active || 
+             m?.StatusMembership == StatusMembership.OneTime || 
+             m?.IsOneTimeTraining == true));
+
+        return membership?.IsMorning == true;
     }
 
     private void LoadUI()
@@ -575,6 +620,7 @@
         else
         {
             IsModalOpen = true;
+            OnTimeSelectionChanged(); // Обновляем доступные типы при открытии модального окна
         }
     }
 
@@ -654,12 +700,12 @@
                     FirstName = trainerDto.FirstName,
                     LastName = trainerDto.LastName
                 },
-                    ClientsName = clientDtos.Select(c => new ScheduleMemberDto
-                    {
-                        Id = c.Id,
-                        FirstName = c.FirstName,
-                        LastName = c.LastName
-                    }).ToList(),
+                ClientsName = clientDtos.Select(c => new ScheduleMemberDto
+                {
+                    Id = c.Id,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName
+                }).ToList(),
             };
 
             await _trainingService.AddTrainingAsync(scheduleFull);
@@ -697,10 +743,33 @@
         LoadUI();
     }
 
-    private void OnClientSelectionChanged()
+    private void OnClientSelectionChanged(ChangeEventArgs e)
     {
+        // Обрабатываем множественный выбор
+        if (e.Value is string[] selectedValues)
+        {
+            SelectedClientId = selectedValues;
+        }
+        else if (e.Value is string selectedValue)
+        {
+            SelectedClientId = new[] { selectedValue };
+        }
+        
         // Сбрасываем тип тренировки при изменении выбранных клиентов
         SelectedTrainingType = default(TypeTrainings);
         StateHasChanged();
+    }
+
+    private void OnTimeSelectionChanged()
+    {
+        // Сбрасываем тип тренировки при изменении времени
+        SelectedTrainingType = default(TypeTrainings);
+        StateHasChanged();
+    }
+
+    private bool IsMorningTime(string time)
+    {
+        var parsedTime = TimeSpan.Parse(time);
+        return parsedTime <= new TimeSpan(14, 0, 0); // 14:00
     }
 }

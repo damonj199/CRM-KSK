@@ -26,7 +26,7 @@
                         <div class="mt-2 d-flex flex-wrap align-items-center">
                             @foreach (var m in client.Memberships.OrderByDescending(m => m.DateEnd))
                             {
-                                bool isActive = m.StatusMembership == StatusMembership.Активный;
+                                bool isActive = m.StatusMembership == StatusMembership.Active;
 
                                 <span class="badge me-2 @(isActive ? "bg-success" : "bg-secondary")">
                                     @m.TypeTrainings.GetDisplayName()

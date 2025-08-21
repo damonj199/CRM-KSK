@@ -10,20 +10,36 @@
 <div class="container-fluid">
     <h2 class="mb-4">Логи списаний занятий</h2>
 
-    <!-- Фильтры -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">Выбор даты</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4">
-                    <label class="form-label">Дата:</label>
-                    <input type="date" class="form-control" @bind="selectedDate" @bind:format="yyyy-MM-dd"/>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button class="btn btn-primary d-block" @onclick="LoadLogs">Загрузить</button>
+    <!-- Компактные фильтры -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label mb-1">Дата:</label>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="date" class="form-control form-control-sm" @bind="selectedDate" @bind:format="yyyy-MM-dd"/>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary btn-sm" @onclick="LoadLogs">
+                                <i class="bi bi-search"></i> Найти
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Быстрые кнопки выбора даты -->
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today)">Сегодня</button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-1))">Вчера</button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-2))">Позавчера</button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-7))">Неделю назад</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -67,7 +83,7 @@
                                     <td>@log.DeductionDate.ToString("dd.MM.yyyy")</td>
                                     <td>@log.ClientFullName</td>
                                     <td>
-                                        <span class="badge bg-info">@GetTrainingTypeName(log.TrainingType)</span>
+                                        <span class="badge bg-info">@GetTrainingTypeName(log.TrainingType)@(log.IsMorningMembership ? " У" : "")</span>
                                     </td>
                                     <td>@log.TrainingsBeforeDeduction</td>
                                     <td>@log.TrainingsAfterDeduction</td>
@@ -129,9 +145,10 @@
         }
     }
 
-    private void OnDateChanged(ChangeEventArgs e)
+    private async Task SetDate(DateTime date)
     {
-        // Дата автоматически обновится через @bind
+        selectedDate = date;
+        await LoadLogs();
     }
 
     private string GetTrainingTypeName(TypeTrainings type)

@@ -5,11 +5,11 @@ namespace CRM_KSK.Core.Enums;
 public enum Roles
 {
     [Display(Name = "Неизвестно")]
-    Unknown,
+    Unknown = 0,
 
     [Display(Name = "Администратор")]
-    Admin,
+    Admin = 1,
 
     [Display(Name = "Тренер")]
-    Trainer
+    Trainer = 2
 }
