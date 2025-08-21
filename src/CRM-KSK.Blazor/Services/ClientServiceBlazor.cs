@@ -14,8 +14,27 @@ public class ClientServiceBlazor
 
     public async Task<List<ClientDto>> GetAllClientsAsync()
     {
-        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients");
-        return response ?? [];
+        try
+        {
+            var response = await _httpClient.GetAsync("api/Clients");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<List<ClientDto>>();
+                return result ?? [];
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"API Error: {response.StatusCode} - {errorContent}");
+                return [];
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception in GetAllClientsAsync: {ex.Message}");
+            return [];
+        }
     }
 
     public async Task<List<ClientDto>> GetAllClientsWithMemberships()
@@ -26,8 +45,27 @@ public class ClientServiceBlazor
 
     public async Task<List<ClientDto>> GetClientsForSchedulesAsync()
     {
-        var response = await _httpClient.GetFromJsonAsync<List<ClientDto>>("api/Clients/for-schedule");
-        return response ?? [];
+        try
+        {
+            var response = await _httpClient.GetAsync("api/Clients/for-schedule");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<List<ClientDto>>();
+                return result ?? [];
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"API Error: {response.StatusCode} - {errorContent}");
+                return [];
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception in GetClientsForSchedulesAsync: {ex.Message}");
+            return [];
+        }
     }
 
     public async Task<IReadOnlyList<ClientDto>> GetClientsByNameAsync(string? firstName = null, string? lastName = null)

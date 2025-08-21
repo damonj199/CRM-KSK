@@ -3,6 +3,7 @@ using System;
 using CRM_KSK.Dal.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CRM_KSK.Dal.PostgreSQL.Migrations
 {
     [DbContext(typeof(CRM_KSKDbContext))]
-    partial class CRM_KSKDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250820195731_AddIsMorningMembership")]
+    partial class AddIsMorningMembership
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -240,8 +243,9 @@ namespace CRM_KSK.Dal.PostgreSQL.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("isOneTimeTraining");
 
-                    b.Property<byte>("StatusMembership")
-                        .HasColumnType("smallint")
+                    b.Property<string>("StatusMembership")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("statusMembership");
 
                     b.Property<int>("TypeTrainings")

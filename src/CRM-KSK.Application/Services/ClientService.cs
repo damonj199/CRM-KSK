@@ -80,6 +80,7 @@ public class ClientService : IClientService
             throw new DirectoryNotFoundException("Клиент не найден");
 
         var clientDto = _mapper.Map<ClientDto>(client);
+        
         return clientDto;
     }
 

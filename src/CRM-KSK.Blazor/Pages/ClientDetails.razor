@@ -52,7 +52,12 @@
                     {
                         <li class="mb-1">
                             <div>
-                                <strong>Статус:</strong> @(membership.IsOneTimeTraining ? "Разовый" : @membership.StatusMembership)<br />
+                                <strong>Статус:</strong> 
+                                    @(membership.IsOneTimeTraining
+                                        ? "Разовый"
+                                        : @membership.StatusMembership.GetDisplayName())
+                                    @(membership.IsMorning ? " 🌅 Утренний" : "")<br />
+
                                 <strong>Дата начала:</strong> @membership.DateStart<br />
                                 <strong>Дата окончания:</strong> @membership.DateEnd<br />
                                 <strong>Тренировки:</strong> @membership.AmountTraining<br />
@@ -95,6 +100,12 @@
                     <span class="toggle-label">Разовая тренировка</span>
                 </label>
 
+                <label class="toggle-switch">
+                    <input type="checkbox" checked="@NewMembership.IsMorning" @onchange="ToggleMorning" />
+                    <span class="slider"></span>
+                    <span class="toggle-label">Утренний абонемент</span>
+                </label>
+
                 <label>Количество тренировок:</label>
                 <input type="number" @bind="NewMembership.AmountTraining" disabled="@NewMembership.IsOneTimeTraining" />
 
@@ -110,25 +121,8 @@
                     }
                 </select>
 
-                @if (!string.IsNullOrEmpty(membershipErrorMessage))
-                {
-                    <p class="alert alert-danger">@membershipErrorMessage</p>
-                }
-
                 <button @onclick="AddMembership" class="btn btn-success mt-2" disabled="@(!CanAddMembership)">Сохранить</button>
                 <button @onclick="() => IsModalOpen = false" class="btn btn-secondary mt-2">Отмена</button>
-            </div>
-        </div>
-    }
-
-    @if (IsDeleteClientOpen)
-    {
-        <div class="modal-overlay">
-            <div class="modal-content">
-                <h4>Подтверждение удаления</h4>
-                <p>Вы действительно хотите удалить клиента?</p>
-                <button class="btn btn-danger mt-2" @onclick="DeleteClient">Удалить</button>
-                <button class="btn btn-secondary mt-2" @onclick="() => IsDeleteClientOpen = false">Отмена</button>
             </div>
         </div>
     }
@@ -275,7 +269,23 @@ else
         if (NewMembership.IsOneTimeTraining)
         {
             NewMembership.AmountTraining = 1;
-            NewMembership.DateEnd = NewMembership.DateStart;
+            NewMembership.StatusMembership = StatusMembership.OneTime;
+            NewMembership.DateEnd = NewMembership.DateStart.AddDays(1);
+        }
+        else
+        {
+            NewMembership.StatusMembership = StatusMembership.Active;
+            NewMembership.IsOneTimeTraining = false;
+            NewMembership.DateEnd = NewMembership.DateStart.AddMonths(1);
+        }
+    }
+
+    private void ToggleMorning(ChangeEventArgs e)
+    {
+        NewMembership.IsMorning = (bool)e.Value;
+        if (!NewMembership.IsMorning)
+        {
+            NewMembership.IsMorning = false;
         }
     }
 
