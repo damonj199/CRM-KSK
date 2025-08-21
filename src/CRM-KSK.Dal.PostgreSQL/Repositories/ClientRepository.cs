@@ -1,5 +1,6 @@
 ﻿using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Core.Entities;
+using CRM_KSK.Core.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -53,7 +54,11 @@ public class ClientRepository : IClientRepository
     {
         var clients = await _context.Clients
             .Include(c => c.Memberships)
-            .Where(m => m.Memberships.Any())
+            .Where(c => c.Memberships.Any(m => 
+                (m.StatusMembership == StatusMembership.Active || 
+                 m.StatusMembership == StatusMembership.OneTime || 
+                 m.IsOneTimeTraining == true) && 
+                m.AmountTraining > 0))
             .ToListAsync(token);
 
         return clients ?? [];
@@ -86,15 +91,6 @@ public class ClientRepository : IClientRepository
             query = query.Where(query => query.LastName.ToLower().Contains(lastName.ToLower()));
 
         return await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken) ?? [];
-    }
-
-    public async Task<Client> GetClientByPhoneNumberAsync(string phoneNumber, CancellationToken cancellationToken)
-    {
-        _logger.LogWarning("проверяем есть ли в БД клиент с таким номером");
-        var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(n => n.Phone == phoneNumber);
-
-        _logger.LogWarning("вот что в бд по этому клиенту {0}", client);
-        return client;
     }
 
     public async Task SoftDeleteClientAsync(Guid id, CancellationToken cancellationToken)
