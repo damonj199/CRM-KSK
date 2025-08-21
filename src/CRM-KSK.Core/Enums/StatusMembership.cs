@@ -2,6 +2,7 @@
 
 public enum StatusMembership
 {
-    Активный,
-    Закончился
+    Active,
+    Ended
 }
+
