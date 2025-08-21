@@ -26,16 +26,19 @@ jobs:
             cd /home/deploy/crm-ksk
 
             # Обновление кода проекта
+            git fetch origin
+            git reset --hard origin/dev
             git pull origin dev
 
             # Остановка и удаление старых контейнеров
-            docker-compose down
+            docker-compose down --rmi all --remove-orphans --volumes
             
-            # Очистка старых образов
-            docker system prune -af
+            # Полная очистка системы Docker
+            docker system prune -af --volumes
+            docker volume prune -f
 
             # Сборка новых образов и запуск контейнеров
-            docker-compose up -d --build
+            docker-compose up -d --build --force-recreate
 
             # Проверка запущенных контейнеров
             docker ps -a
