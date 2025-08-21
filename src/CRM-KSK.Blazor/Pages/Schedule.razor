@@ -100,7 +100,7 @@
                 @foreach (var client in FilteredClients)
                 {
                     var activeMemberships = client.Memberships
-                        .Where(m => m.StatusMembership != StatusMembership.Ended || m.IsOneTimeTraining)
+                        .Where(m => m.StatusMembership == StatusMembership.Active || m.StatusMembership == StatusMembership.OneTime || m.IsOneTimeTraining)
                         .ToList();
 
                     <option value="@client.Id">
@@ -127,7 +127,7 @@
 
                         availableTypes = selectedClients
                             .SelectMany(c => c.Memberships
-                                .Where(m => m.StatusMembership != StatusMembership.Ended && m.AmountTraining > 0)
+                            .Where(m => m.StatusMembership != StatusMembership.Active || m.StatusMembership == StatusMembership.OneTime || m.IsOneTimeTraining)
                                 .Select(m => m.TypeTrainings))
                             .Distinct()
                             .ToList();
