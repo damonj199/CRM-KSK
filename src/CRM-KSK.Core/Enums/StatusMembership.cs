@@ -2,14 +2,14 @@
 
 namespace CRM_KSK.Core.Enums;
 
-public enum StatusMembership
+public enum StatusMembership : byte
 {
     [Display(Name = "Активный")]
-    Active,
+    Active = 1,
 
     [Display(Name = "Закончился")]
-    Ended,
+    Ended = 2,
 
     [Display(Name = "Разовый")]
-    OneTime
+    OneTime = 3
 }

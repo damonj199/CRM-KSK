@@ -5,44 +5,44 @@ namespace CRM_KSK.Core.Enums;
 public enum TypeTrainings
 {
     [Display(Name = "Неизвестно")]
-    Unknown,
+    Unknown = 0,
 
     [Display(Name = "60 Спорт")]
-    Sport,
+    Sport = 1,
 
     [Display(Name = "60 Лайт")]
-    Light,
+    Light = 2,
 
     [Display(Name = "30М")]
-    BabiesHalf,
+    BabiesHalf = 3,
 
     [Display(Name = "30+30")]
-    BabiesMixed,
+    BabiesMixed = 4,
 
     [Display(Name = "60М")]
-    Babies,
+    Babies = 5,
 
     [Display(Name = "Иппотерапия")]
-    Hippotherapy,
+    Hippotherapy = 6,
 
     [Display(Name = "ОФП")]
-    PhysicalTraining,
+    PhysicalTraining = 7,
 
     [Display(Name = "Аренда")]
-    Rent,
+    Rent = 8,
 
     [Display(Name = "Частный владелец")]
-    Owner,
+    Owner = 9,
 
     [Display(Name = "Вольтижировка")]
-    Voltiger,
+    Voltiger = 10,
 
     [Display(Name = "Группа")]
-    Group,
+    Group = 11,
 
     [Display(Name = "Тренажёры 30")]
-    ExerciseMachine30,
+    ExerciseMachine30 = 12,
 
     [Display(Name = "Тренажёры 45")]
-    ExerciseMachine45
+    ExerciseMachine45 =13
 }
