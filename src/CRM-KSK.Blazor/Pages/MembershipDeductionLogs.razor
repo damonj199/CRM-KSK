@@ -33,7 +33,6 @@
                     <div class="row mt-2">
                         <div class="col-12">
                             <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today)">Сегодня</button>
                                 <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-1))">Вчера</button>
                                 <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-2))">Позавчера</button>
                                 <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-7))">Неделю назад</button>
@@ -49,7 +48,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Логи списаний</h5>
-            <span class="badge bg-secondary">Всего записей: @logs.Count</span>
+            <span class="badge bg-secondary">Всего записей: @Logs.Count</span>
         </div>
         <div class="card-body">
             @if (isLoading)
@@ -60,7 +59,7 @@
                     </div>
                 </div>
             }
-            else if (logs.Any())
+            else if (Logs.Any())
             {
                 <div class="table-responsive">
                     <table class="table table-striped table-hover">
@@ -77,13 +76,25 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var log in logs)
+                            @foreach (var log in Logs)
                             {
                                 <tr>
                                     <td>@log.DeductionDate.ToString("dd.MM.yyyy")</td>
                                     <td>@log.ClientFullName</td>
                                     <td>
-                                        <span class="badge bg-info">@GetTrainingTypeName(log.TrainingType)@(log.IsMorningMembership ? " У" : "")</span>
+                                        @log.TrainingType.GetDisplayName()
+                                        @if (log.IsMorningMembership && log.IsOneTimeTraining)
+                                        {
+                                            <span class="badge bg-info"> У/Р</span>
+                                        }
+                                        @if (log.IsMorningMembership)
+                                        {
+                                            <span class="badge bg-warning"> У </span>
+                                        }
+                                        @if (log.IsOneTimeTraining)
+                                        {
+                                            <span class="badge bg-info"> Р </span>
+                                        }
                                     </td>
                                     <td>@log.TrainingsBeforeDeduction</td>
                                     <td>@log.TrainingsAfterDeduction</td>
@@ -116,7 +127,7 @@
 </div>
 
 @code {
-    private List<MembershipDeductionLogDto> logs = new();
+    private List<MembershipDeductionLogDto> Logs = new();
     private bool isLoading = false;
     private DateTime selectedDate = DateTime.Today.AddDays(-1); // Вчерашняя дата по умолчанию
 
@@ -130,7 +141,7 @@
         isLoading = true;
         try
         {
-            logs = (await LogService.GetDeductionLogsAsync(DateOnly.FromDateTime(selectedDate))).ToList();
+            Logs = (await LogService.GetDeductionLogsAsync(DateOnly.FromDateTime(selectedDate))).ToList();
         }
         catch (Exception ex)
         {
