@@ -86,7 +86,8 @@ public class WorkWithMembership : IWorkWithMembership
                                 TrainingsBeforeDeduction = trainingsBefore,
                                 TrainingsAfterDeduction = trainingsAfter,
                                 MembershipExpired = false,
-                                IsMorningMembership = membershipToUse.IsMorning
+                                IsMorningMembership = membershipToUse.IsMorning,
+                                IsOneTimeTraining = membershipToUse.IsOneTimeTraining
                             };
 
                             if (membershipToUse.AmountTraining == 0)

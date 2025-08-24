@@ -53,9 +53,16 @@
                                         @($"{training.TrainerName.LastName} {training.TrainerName.FirstName}") -
                                         @foreach (var client in training.ClientsName)
                                         {
-                                            @($"{client.LastName} {client.FirstName} ")
-                                            var remaining = GetRemainingTrainings(client.Id, training.TypeTrainings);
-                                            @($"({training.TypeTrainings.GetDisplayName()}) {(remaining.HasValue ? remaining.ToString() : "N/A")}")
+                                            var trainingInfo = GetTrainingInfo(client.Id, training.TypeTrainings, time);
+                                            <div style="display: inline-block;">
+                                                @($"{client.LastName} {client.FirstName} ")
+                                                @($"({training.TypeTrainings.GetDisplayName()})")
+                                                @if (trainingInfo.isMorning)
+                                                {
+                                                    <span title="Утренний абонемент" style="color: #ff6b00; font-weight: bold;"> У</span>
+                                                }
+                                                @($" {(trainingInfo.remaining.HasValue ? trainingInfo.remaining.ToString() : "N/A")}")
+                                            </div>
                                         }
                                     </div>
                                 }
@@ -96,7 +103,7 @@
 
             <label>Клиент:</label>
             <input type="text" @bind="SearchClient" @bind:event="oninput" placeholder="Введите имя клиента..." />
-            <select multiple @bind="SelectedClientId">
+            <select multiple @bind="SelectedClientId" @bind:after="OnClientSelectionChanged">
                 @foreach (var client in FilteredClients)
                 {
                     var activeMemberships = client.Memberships
@@ -119,7 +126,7 @@
             <select @bind="SelectedTrainingType">
                 @{
                     var availableTypes = new List<TypeTrainings>();
-                    if (SelectedClientId.Length > 0)
+                    if (SelectedClientId.Length > 0 && !HasMorningRestriction)
                     {
                         var selectedClients = Clients
                             .Where(c => SelectedClientId.Contains(c.Id.ToString()))
@@ -127,7 +134,9 @@
 
                         availableTypes = selectedClients
                             .SelectMany(c => c.Memberships
-                                .Where(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining) && m.AmountTraining > 0)
+                                .Where(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining) &&
+                                    m.AmountTraining > 0 &&
+                                    (!m.IsMorning || IsTimeValidForMembership(m, SelectedTime))) // Проверка времени
                                 .Select(m => m.TypeTrainings))
                             .Distinct()
                             .ToList();
@@ -148,6 +157,13 @@
                 }
             </select>
 
+            @if (HasMorningRestriction)
+            {
+                <div class="alert alert-warning mt-2">
+                    <small>@RestrictionMessage</small>
+                </div>
+            }
+
             <div class="comment-section">
                 <h4>Комментарии</h4>
                 @if (CellComments.TryGetValue((SelectedDay, SelectedTime), out var currentComments) && currentComments.Any())
@@ -156,10 +172,7 @@
                         {
                         <div class="comment-box mb-2">
                             @comment.CommentText
-                            <button class="btn-comment-delete"
-                                    @onclick="() => RemoveComment(comment.Id)">
-                                ×
-                            </button>
+                            <button class="btn-comment-delete" @onclick="() => RemoveComment(comment.Id)"> × </button>
                         </div>
                         }
                     }
@@ -168,8 +181,23 @@
             </div>
 
             <div class="from-actions mt-2">
-                <button class="btn btn-primary" @onclick="SaveTraining">Сохранить</button>
+                <button class="btn btn-primary" @onclick="SaveTraining" disabled="@(!CanSaveTraining)"> Сохранить </button>
                 <button @onclick="CloseModal">Отмена</button>
+
+                @if (!CanSaveTraining)
+                {
+                    <div class="validation-hints mt-2">
+                        <small class="text-muted">
+                            Для сохранения необходимо:
+                            <ul>
+                                <li class="@(SelectedTrainerId == null ? "text-danger" : "text-success")">✓ Выбрать тренера</li>
+                                <li class="@(SelectedClientId.Length == 0 ? "text-danger" : "text-success")">✓ Выбрать клиента</li>
+                                <li class="@(SelectedTrainingType == TypeTrainings.Unknown ? "text-danger" : "text-success")">✓ Выбрать тип тренировки</li>
+                                <li class="@(HasMorningRestriction ? "text-danger" : "text-success")">✓ Нет ограничений по времени</li>
+                            </ul>
+                        </small>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -241,6 +269,18 @@
         text-overflow: ellipsis;
         padding: 5px;
         white-space: nowrap;
+    }
+
+    .morning-badge {
+        display: inline-block;
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+        border-radius: 3px;
+        padding: 0 3px;
+        font-size: 0.8em;
+        font-weight: bold;
+        margin-left: 2px;
     }
 
     .schedule-table th {
@@ -356,6 +396,30 @@
         color: #f00;
     }
 
+    .validation-hints ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .validation-hints li {
+        list-style-type: none;
+        position: relative;
+    }
+
+        .validation-hints li:before {
+            content: "•";
+            position: absolute;
+            left: -15px;
+        }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+    }
+
     .comment-section {
         margin-top: 15px;
         padding: 10px;
@@ -385,11 +449,28 @@
     private TypeTrainings SelectedTrainingType = TypeTrainings.Unknown;
 
     private string SelectedDay = string.Empty;
-    private string SelectedTime = string.Empty;
+    private string _selectedTime = string.Empty;
+    private string SelectedTime
+    {
+        get => _selectedTime;
+        set
+        {
+            _selectedTime = value;
+            CheckMorningRestrictions(); // ← Проверяем при изменении времени
+            StateHasChanged();
+        }
+    }
     private List<TrainingDto> SelectedTrainings = [];
 
     private bool ShowTrainingsModal = false;
     private bool IsModalOpen = false;
+    private bool HasMorningRestriction { get; set; }
+    private string RestrictionMessage { get; set; } = string.Empty;
+    private bool CanSaveTraining =>
+        SelectedTrainerId != null &&
+        SelectedClientId.Length > 0 &&
+        SelectedTrainingType != TypeTrainings.Unknown &&
+        !HasMorningRestriction;
 
     private string SearchClient { get; set; } = string.Empty;
     private List<ClientDto> FilteredClients => Clients
@@ -407,6 +488,15 @@
         await LoadDataFromApi();
         await LoadScheduleFromApi();
         EnsureScheduleDataInitialized();
+    }
+
+    private bool IsTimeValidForMembership(MembershipDto membership, string time)
+    {
+        if (!membership.IsMorning)
+            return true;
+
+        var trainingTime = TimeSpan.Parse(time);
+        return trainingTime <= new TimeSpan(14, 0, 0);
     }
 
     private async Task LoadCommentsFromDatabase()
@@ -494,14 +584,41 @@
         LoadUI();
     }
 
-    private int? GetRemainingTrainings(Guid id, TypeTrainings type)
+    private (int? remaining, bool isMorning) GetTrainingInfo(Guid id, TypeTrainings type, string time)
     {
-        return FilteredClients?
-            .FirstOrDefault(c => c?.Id == id)?
-            .Memberships?
-            .FirstOrDefault(m => m?.TypeTrainings == type &&
-                               m?.StatusMembership != StatusMembership.Ended)?
-            .AmountTraining;
+        var client = FilteredClients?.FirstOrDefault(c => c?.Id == id);
+        
+        if (client == null) return (null, false);
+
+        var memberships = client.Memberships?
+            .Where(m => m?.TypeTrainings == type && m?.StatusMembership != StatusMembership.Ended)
+            .ToList();
+
+        if (memberships == null || !memberships.Any()) return (null, false);
+
+        // Определяем время тренировки
+        var trainingTime = TimeSpan.Parse(time);
+        var isEveningTime = trainingTime > new TimeSpan(14, 0, 0);
+
+        MembershipDto? membershipToUse;
+
+        if (isEveningTime)
+        {
+            // После 14:00 используем обычный абонемент
+            membershipToUse = memberships.FirstOrDefault(m => !m.IsMorning);
+            if (membershipToUse == null)
+            {
+                // Если нет обычного, но тренировка добавлена - используем первый доступный
+                membershipToUse = memberships.FirstOrDefault();
+            }
+        }
+        else
+        {
+            // До 14:00 можно использовать любой
+            membershipToUse = memberships.FirstOrDefault();
+        }
+
+        return (membershipToUse?.AmountTraining, membershipToUse?.IsMorning ?? false);
     }
 
     private void LoadUI()
@@ -620,6 +737,9 @@
 
     private async Task SaveTraining()
     {
+        if (HasMorningRestriction)
+            return;
+
         if (SelectedTrainerId != null && SelectedClientId.Length > 0 && SelectedTrainingType != TypeTrainings.Unknown)
         {
             var Date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU"));
@@ -699,8 +819,50 @@
 
     private void OnClientSelectionChanged()
     {
-        // Сбрасываем тип тренировки при изменении выбранных клиентов
-        SelectedTrainingType = default(TypeTrainings);
+        CheckMorningRestrictions();
         StateHasChanged();
+    }
+
+    private void CheckMorningRestrictions()
+    {
+        if (SelectedClientId.Length == 0 || string.IsNullOrEmpty(SelectedTime))
+        {
+            HasMorningRestriction = false;
+            RestrictionMessage = "";
+            return;
+        }
+
+        var selectedClientGuids = SelectedClientId.Select(Guid.Parse).ToList();
+        var selectedClients = Clients.Where(c => selectedClientGuids.Contains(c.Id)).ToList();
+
+        // Проверяем время тренировки
+        var trainingTime = TimeSpan.Parse(SelectedTime);
+        var isEveningTime = trainingTime > new TimeSpan(14, 0, 0);
+
+        if (!isEveningTime)
+        {
+            HasMorningRestriction = false;
+            RestrictionMessage = "";
+            return;
+        }
+
+        // Ищем клиентов с ТОЛЬКО утренними абонементами
+        var clientsWithOnlyMorning = selectedClients
+            .Where(client => client.Memberships
+                .Where(m => m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining)
+                .All(m => m.IsMorning))
+            .ToList();
+
+        if (clientsWithOnlyMorning.Any())
+        {
+            HasMorningRestriction = true;
+            var clientNames = string.Join(", ", clientsWithOnlyMorning.Select(c => $"{c.FirstName} {c.LastName}"));
+            RestrictionMessage = $"Клиент: {clientNames} имеет только утренний абонемент и не может быть добавлены после 14:00";
+        }
+        else
+        {
+            HasMorningRestriction = false;
+            RestrictionMessage = "";
+        }
     }
 }
