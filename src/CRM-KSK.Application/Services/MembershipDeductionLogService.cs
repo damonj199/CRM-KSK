@@ -14,6 +14,23 @@ public class MembershipDeductionLogService : IMembershipDeductionLogService
 
     public async Task<IEnumerable<MembershipDeductionLogDto>> GetDeductionLogsAsync(DateOnly date, CancellationToken token)
     {
-        return await _logRepository.GetLogsAsync(date, token);
+        var entities = await _logRepository.GetLogsAsync(date, token);
+        
+        var dtos = entities.Select(entity => new MembershipDeductionLogDto
+        {
+            Id = entity.Id,
+            DeductionDate = entity.DeductionDate,
+            ClientFullName = $"{entity.Client?.LastName} {entity.Client?.FirstName}",
+            TrainingType = entity.TrainingType,
+            TrainingsBeforeDeduction = entity.TrainingsBeforeDeduction,
+            TrainingsAfterDeduction = entity.TrainingsAfterDeduction,
+            MembershipExpired = entity.MembershipExpired,
+            IsMorningMembership = entity.IsMorningMembership,
+            IsOneTimeTraining = entity.IsOneTimeTraining,
+            ScheduleDate = entity.Schedule?.Date.ToString("dd.MM.yyyy") ?? "",
+            TrainerName = entity.Training?.Trainer != null ? $"{entity.Training.Trainer.LastName} {entity.Training.Trainer.FirstName}" : null
+        }).ToList();
+        
+        return dtos;
     }
 } 

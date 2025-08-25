@@ -1,4 +1,3 @@
-using CRM_KSK.Application.Extensions;
 using CRM_KSK.Core.Enums;
 
 namespace CRM_KSK.Application.Dtos;
@@ -16,9 +15,4 @@ public class MembershipDeductionLogDto
     public bool IsOneTimeTraining { get; set; }
     public string ScheduleDate { get; set; } = string.Empty;
     public string? TrainerName { get; set; }
-
-    public string TrainingTypeDisplay =>
-        $"{TrainingType.GetDisplayName()}" +
-        $"{(IsMorningMembership ? " Ó" : "")}" +
-        $"{(IsOneTimeTraining ? " P" : "")}";
-} 
+}
