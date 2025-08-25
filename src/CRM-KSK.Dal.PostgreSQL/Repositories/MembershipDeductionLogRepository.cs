@@ -1,10 +1,7 @@
-using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System.Text.Json.Serialization;
 
 namespace CRM_KSK.Dal.PostgreSQL.Repositories;
 
@@ -47,4 +44,4 @@ public class MembershipDeductionLogRepository : IMembershipDeductionLogRepositor
 
         return logs;
     }
-} 
+}
