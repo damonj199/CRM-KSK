@@ -5,16 +5,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CRM_KSK.Api.Controllers;
 
-//[Authorize]
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class MembershipDeductionLogController : ControllerBase
 {
     private readonly IMembershipDeductionLogService _logService;
+    private readonly ILogger<MembershipDeductionLogController> _logger;
 
-    public MembershipDeductionLogController(IMembershipDeductionLogService logService)
+    public MembershipDeductionLogController(IMembershipDeductionLogService logService, ILogger<MembershipDeductionLogController> logger)
     {
         _logService = logService;
+        _logger = logger;
     }
 
     [HttpGet]

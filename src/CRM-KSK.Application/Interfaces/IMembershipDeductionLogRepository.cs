@@ -6,5 +6,5 @@ namespace CRM_KSK.Application.Interfaces;
 public interface IMembershipDeductionLogRepository
 {
     Task<MembershipDeductionLog> CreateLogAsync(MembershipDeductionLog log, CancellationToken token);
-    Task<IEnumerable<MembershipDeductionLogDto>> GetLogsAsync(DateOnly date, CancellationToken token);
+    Task<IEnumerable<MembershipDeductionLog>> GetLogsAsync(DateOnly date, CancellationToken token);
 } 
