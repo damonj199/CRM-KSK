@@ -1,17 +1,19 @@
-using CRM_KSK.Application.Dtos;
 using CRM_KSK.Application.Interfaces;
 using CRM_KSK.Core.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CRM_KSK.Dal.PostgreSQL.Repositories;
 
 public class MembershipDeductionLogRepository : IMembershipDeductionLogRepository
 {
     private readonly CRM_KSKDbContext _context;
+    private readonly ILogger<MembershipDeductionLogRepository> _logger;
 
-    public MembershipDeductionLogRepository(CRM_KSKDbContext context)
+    public MembershipDeductionLogRepository(CRM_KSKDbContext context, ILogger<MembershipDeductionLogRepository> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<MembershipDeductionLog> CreateLogAsync(MembershipDeductionLog log, CancellationToken token)
@@ -29,7 +31,7 @@ public class MembershipDeductionLogRepository : IMembershipDeductionLogRepositor
         }
     }
 
-    public async Task<IEnumerable<MembershipDeductionLogDto>> GetLogsAsync(DateOnly date, CancellationToken token)
+    public async Task<IEnumerable<MembershipDeductionLog>> GetLogsAsync(DateOnly date, CancellationToken token)
     {
         var logs = await _context.MembershipDeductionLogs
             .Include(l => l.Client)
@@ -38,21 +40,8 @@ public class MembershipDeductionLogRepository : IMembershipDeductionLogRepositor
             .Include(l => l.Training.Trainer)
             .Where(l => l.DeductionDate == date)
             .OrderByDescending(l => l.DeductionDate)
-            .Select(l => new MembershipDeductionLogDto
-            {
-                Id = l.Id,
-                DeductionDate = l.DeductionDate,
-                ClientFullName = $"{l.Client.LastName} {l.Client.FirstName}",
-                TrainingType = l.TrainingType,
-                TrainingsBeforeDeduction = l.TrainingsBeforeDeduction,
-                TrainingsAfterDeduction = l.TrainingsAfterDeduction,
-                MembershipExpired = l.MembershipExpired,
-                IsMorningMembership = l.IsMorningMembership,
-                ScheduleDate = l.Schedule.Date.ToString("dd.MM.yyyy"),
-                TrainerName = l.Training != null ? $"{l.Training.Trainer.LastName} {l.Training.Trainer.FirstName}" : null
-            })
             .ToListAsync(token);
 
         return logs;
     }
-} 
+}
