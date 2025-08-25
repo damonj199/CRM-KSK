@@ -157,6 +157,13 @@
                 }
             </select>
 
+            @if (ShowError)
+            {
+                <div class="alert alert-warning mt-2">
+                    <small>@ErrorMessage</small>
+                </div>
+            }
+
             @if (HasMorningRestriction)
             {
                 <div class="alert alert-warning mt-2">
@@ -183,21 +190,6 @@
             <div class="from-actions mt-2">
                 <button class="btn btn-primary" @onclick="SaveTraining" disabled="@(!CanSaveTraining)"> Сохранить </button>
                 <button @onclick="CloseModal">Отмена</button>
-
-                @if (!CanSaveTraining)
-                {
-                    <div class="validation-hints mt-2">
-                        <small class="text-muted">
-                            Для сохранения необходимо:
-                            <ul>
-                                <li class="@(SelectedTrainerId == null ? "text-danger" : "text-success")">✓ Выбрать тренера</li>
-                                <li class="@(SelectedClientId.Length == 0 ? "text-danger" : "text-success")">✓ Выбрать клиента</li>
-                                <li class="@(SelectedTrainingType == TypeTrainings.Unknown ? "text-danger" : "text-success")">✓ Выбрать тип тренировки</li>
-                                <li class="@(HasMorningRestriction ? "text-danger" : "text-success")">✓ Нет ограничений по времени</li>
-                            </ul>
-                        </small>
-                    </div>
-                }
             </div>
         </div>
     </div>
@@ -465,6 +457,8 @@
     private bool ShowTrainingsModal = false;
     private bool IsModalOpen = false;
     private bool HasMorningRestriction { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private bool ShowError { get; set; } = false;
     private string RestrictionMessage { get; set; } = string.Empty;
     private bool CanSaveTraining =>
         SelectedTrainerId != null &&
@@ -731,14 +725,44 @@
         SelectedTrainerId = null;
         SelectedClientId = [];
         SelectedTrainingType = default(TypeTrainings);
+        ShowError = false;
+        ErrorMessage = string.Empty;
         await IsVisibleChanged.InvokeAsync(IsModalOpen);
         await IsVisibleChanged.InvokeAsync(ShowTrainingsModal);
     }
 
     private async Task SaveTraining()
     {
-        if (HasMorningRestriction)
-            return;
+        // Проверка ограничений утренних абонементов
+        if (HasMorningRestriction) return;
+
+        // Дополнительная проверка на сервере
+        var date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU"));
+        var time = TimeSpan.Parse(SelectedTime);
+        var dateTime = date.ToDateTime(TimeOnly.MinValue);
+
+        var isWeekend = dateTime.DayOfWeek == DayOfWeek.Saturday || dateTime.DayOfWeek == DayOfWeek.Sunday;
+        var isEveningTime = time > new TimeSpan(15, 0, 0);
+
+        if (isWeekend || isEveningTime)
+        {
+            var selectedClientGuids = SelectedClientId.Select(Guid.Parse).ToList();
+            var hasMorningMembership = Clients
+                .Where(c => selectedClientGuids.Contains(c.Id))
+                .Any(c => c.Memberships.Any(m => m.IsMorning &&
+                    (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining)));
+
+            if (hasMorningMembership)
+            {
+                ErrorMessage = isWeekend
+                    ? "Утренние абонементы нельзя использовать в выходные дни"
+                    : "Утренние абонементы можно использовать только до 15:00";
+
+                ShowError = true;
+                StateHasChanged();
+                return;
+            }
+        }
 
         if (SelectedTrainerId != null && SelectedClientId.Length > 0 && SelectedTrainingType != TypeTrainings.Unknown)
         {
@@ -825,44 +849,56 @@
 
     private void CheckMorningRestrictions()
     {
-        if (SelectedClientId.Length == 0 || string.IsNullOrEmpty(SelectedTime))
+        ErrorMessage = string.Empty;
+        ShowError = false;
+
+        if (SelectedClientId.Length == 0 || string.IsNullOrEmpty(SelectedTime) || string.IsNullOrEmpty(SelectedDay))
         {
             HasMorningRestriction = false;
             RestrictionMessage = "";
             return;
         }
+
+        // Проверяем выходной день
+        var date = DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU"));
+        var dateTime = date.ToDateTime(TimeOnly.MinValue);
+        var isWeekend = dateTime.DayOfWeek == DayOfWeek.Saturday || dateTime.DayOfWeek == DayOfWeek.Sunday;
+
+        // Проверяем время тренировки
+        var trainingTime = TimeSpan.Parse(SelectedTime);
+        var isEveningTime = trainingTime > new TimeSpan(15, 0, 0); // После 15:00
 
         var selectedClientGuids = SelectedClientId.Select(Guid.Parse).ToList();
         var selectedClients = Clients.Where(c => selectedClientGuids.Contains(c.Id)).ToList();
 
-        // Проверяем время тренировки
-        var trainingTime = TimeSpan.Parse(SelectedTime);
-        var isEveningTime = trainingTime > new TimeSpan(14, 0, 0);
-
-        if (!isEveningTime)
-        {
-            HasMorningRestriction = false;
-            RestrictionMessage = "";
-            return;
-        }
-
-        // Ищем клиентов с ТОЛЬКО утренними абонементами
-        var clientsWithOnlyMorning = selectedClients
+        // Ищем клиентов с утренними абонементами
+        var clientsWithMorning = selectedClients
             .Where(client => client.Memberships
-                .Where(m => m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining)
-                .All(m => m.IsMorning))
+                .Any(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining) &&
+                         m.IsMorning))
             .ToList();
 
-        if (clientsWithOnlyMorning.Any())
+        if (clientsWithMorning.Any() && (isWeekend || isEveningTime))
         {
             HasMorningRestriction = true;
-            var clientNames = string.Join(", ", clientsWithOnlyMorning.Select(c => $"{c.FirstName} {c.LastName}"));
-            RestrictionMessage = $"Клиент: {clientNames} имеет только утренний абонемент и не может быть добавлены после 14:00";
+            var clientNames = string.Join(", ", clientsWithMorning.Select(c => $"{c.FirstName} {c.LastName}"));
+
+            if (isWeekend)
+            {
+                ErrorMessage = $"Клиент {clientNames} имеет утренний абонемент и не может быть добавлен в выходной день";
+            }
+            else if (isEveningTime)
+            {
+                ErrorMessage = $"Клиент {clientNames} имеет утренний абонемент и не может быть добавлен после 15:00";
+            }
+
+            ShowError = true;
         }
         else
         {
             HasMorningRestriction = false;
             RestrictionMessage = "";
+            ShowError = false;
         }
     }
 }
