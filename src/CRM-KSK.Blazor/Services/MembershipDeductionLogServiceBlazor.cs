@@ -7,9 +7,9 @@ public class MembershipDeductionLogServiceBlazor
 {
     private readonly HttpClient _httpClient;
 
-    public MembershipDeductionLogServiceBlazor(HttpClient httpClient)
+    public MembershipDeductionLogServiceBlazor(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient("ApiClient");
     }
 
     public async Task<IEnumerable<MembershipDeductionLogDto>> GetDeductionLogsAsync(DateOnly date)
