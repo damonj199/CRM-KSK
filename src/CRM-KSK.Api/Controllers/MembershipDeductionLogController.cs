@@ -11,12 +11,10 @@ namespace CRM_KSK.Api.Controllers;
 public class MembershipDeductionLogController : ControllerBase
 {
     private readonly IMembershipDeductionLogService _logService;
-    private readonly ILogger<MembershipDeductionLogController> _logger;
 
-    public MembershipDeductionLogController(IMembershipDeductionLogService logService, ILogger<MembershipDeductionLogController> logger)
+    public MembershipDeductionLogController(IMembershipDeductionLogService logService)
     {
         _logService = logService;
-        _logger = logger;
     }
 
     [HttpGet]
