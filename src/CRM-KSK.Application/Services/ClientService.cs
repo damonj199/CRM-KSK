@@ -53,9 +53,16 @@ public class ClientService : IClientService
         {
             membership.ClientId = newClientId;
         }
-        await _membershipRepository.AddMembershipAsync(memberships, cancellationToken);
+        var addedMemberships = await _membershipRepository.AddMembershipAsync(memberships, cancellationToken);
 
         scope.Complete();
+
+        // Логируем добавленные абонементы
+        foreach (var addedMembership in addedMemberships)
+        {
+            _logger.LogWarning($"Добавлен абонемент для клиента {clientEntity.FirstName} {clientEntity.LastName}," +
+                $"на {addedMembership.AmountTraining} занятий, абонемент типа - {addedMembership.TypeTrainings}");
+        }
 
         _logger.LogWarning($"{clientEntity.FirstName} добавлен");
         return $"{clientEntity.FirstName} добавлен";
