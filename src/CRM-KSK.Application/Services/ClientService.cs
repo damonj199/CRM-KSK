@@ -57,7 +57,6 @@ public class ClientService : IClientService
 
         scope.Complete();
 
-        // Логируем добавленные абонементы
         foreach (var addedMembership in addedMemberships)
         {
             _logger.LogWarning($"Добавлен абонемент для клиента {clientEntity.FirstName} {clientEntity.LastName}," +
