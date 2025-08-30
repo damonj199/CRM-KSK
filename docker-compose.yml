@@ -12,7 +12,7 @@ services:
       ConnectionStrings__DefaultConnection: ${POSTGRES_CONNECTION}
       ASPNETCORE_ENVIRONMENT: Production 
     volumes:
-      - /var/log/crm-ksk/api:/app/logs:rw 
+      - /var/log/crm-ksk/api/:/var/log/crm-ksk/api/ 
     networks:
     - crm-network
     
