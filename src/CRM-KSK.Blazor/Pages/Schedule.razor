@@ -670,7 +670,6 @@
     private (int? remaining, bool isMorning, bool isOneTime) GetTrainingInfo(Guid id, TypeTrainings type, string time)
     {
         var client = FilteredClients?.FirstOrDefault(c => c?.Id == id);
-        
         if (client == null) return (null, false, false);
 
         var memberships = client.Memberships?
@@ -679,25 +678,36 @@
 
         if (memberships == null || !memberships.Any()) return (null, false, false);
 
-        // Определяем время тренировки
+        // Определяем дату и время
+        var selectedDay = DaysOfWeekWithDates.FirstOrDefault(day => ScheduleData.ContainsKey((day, time)) &&
+            ScheduleData[(day, time)].Any(t => t.ClientsName.Any(cn => cn.Id == id) && t.TypeTrainings == type));
+        var isWeekend = false;
+
+        if (!string.IsNullOrEmpty(selectedDay))
+        {
+            var date = DateOnly.Parse(selectedDay, new CultureInfo("ru-RU"));
+            var dateTime = date.ToDateTime(TimeOnly.MinValue);
+            isWeekend = dateTime.DayOfWeek == DayOfWeek.Saturday || dateTime.DayOfWeek == DayOfWeek.Sunday;
+        }
+
         var trainingTime = TimeSpan.Parse(time);
         var isEveningTime = trainingTime > new TimeSpan(15, 0, 0);
 
-        MembershipDto? membershipToUse;
+        MembershipDto? membershipToUse = null;
 
-        if (isEveningTime)
+        if (isWeekend || isEveningTime)
         {
-            // После 15:00 используем обычный абонемент
+            // В выходные и после 15:00 используем только обычный абонемент
             membershipToUse = memberships.FirstOrDefault(m => !m.IsMorning);
             if (membershipToUse == null)
             {
-                // Если нет обычного, но тренировка добавлена - используем первый доступный
+                // Если нет обычного, используем первый доступный (например, если только утренний)
                 membershipToUse = memberships.FirstOrDefault();
             }
         }
         else
         {
-            // До 15:00 можно использовать любой
+            // В остальное время — любой
             membershipToUse = memberships.FirstOrDefault();
         }
 
