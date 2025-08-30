@@ -10,11 +10,9 @@ public class MembershipService : IMembershipService
 {
     private readonly IMembershipRepository _membershipRepository;
     private readonly IMapper _mapper;
-    private readonly ILogger<MembershipService> _logger;
 
-    public MembershipService(IMembershipRepository membershipRepository, IMapper mapper, ILogger<MembershipService> logger)
+    public MembershipService(IMembershipRepository membershipRepository, IMapper mapper)
     {
-        _logger = logger;
         _mapper = mapper;
         _membershipRepository = membershipRepository;
     }

@@ -10,6 +10,7 @@ public class Membership
     public int AmountTraining { get; set; }
     public StatusMembership StatusMembership { get; set; } = StatusMembership.Active;
     public TypeTrainings TypeTrainings { get; set; } = TypeTrainings.Unknown;
+    public DateTime CreateDate { get; set; } = DateTime.UtcNow;
     public bool IsOneTimeTraining { get; set; } = false;
     public bool IsMorning { get; set; } = false;
     public bool IsDeleted { get; set; } = false;

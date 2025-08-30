@@ -24,8 +24,7 @@
     </div>
 </div>
 
-
-<div class="table-conrainer">
+<div class="table-container">
     <table class="schedule-table">
         <thead>
             <tr>
@@ -60,6 +59,10 @@
                                                 @if (trainingInfo.isMorning)
                                                 {
                                                     <span title="Утренний абонемент" style="color: #ff6b00; font-weight: bold;"> У</span>
+                                                }
+                                                @if (trainingInfo.isOneTime)
+                                                {
+                                                    <span title="Разовый абонемент" style="color: #007bff; font-weight: bold;"> Р</span>
                                                 }
                                                 @($" {(trainingInfo.remaining.HasValue ? trainingInfo.remaining.ToString() : "N/A")}")
                                             </div>
@@ -125,23 +128,7 @@
             <label>Тип тренировки:</label>
             <select @bind="SelectedTrainingType">
                 @{
-                    var availableTypes = new List<TypeTrainings>();
-                    if (SelectedClientId.Length > 0 && !HasMorningRestriction)
-                    {
-                        var selectedClients = Clients
-                            .Where(c => SelectedClientId.Contains(c.Id.ToString()))
-                            .ToList();
-
-                        availableTypes = selectedClients
-                            .SelectMany(c => c.Memberships
-                                .Where(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining) &&
-                                    m.AmountTraining > 0 &&
-                                    (!m.IsMorning || IsTimeValidForMembership(m, SelectedTime))) // Проверка времени
-                                .Select(m => m.TypeTrainings))
-                            .Distinct()
-                            .ToList();
-                    }
-
+                    var availableTypes = GetAvailableTrainingTypes();
                     if (availableTypes.Any())
                     {
                         <option value="">Выберите тип тренировки</option>
@@ -163,7 +150,6 @@
                     <small>@ErrorMessage</small>
                 </div>
             }
-
             @if (HasMorningRestriction)
             {
                 <div class="alert alert-warning mt-2">
@@ -490,7 +476,7 @@
             return true;
 
         var trainingTime = TimeSpan.Parse(time);
-        return trainingTime <= new TimeSpan(14, 0, 0);
+        return trainingTime <= new TimeSpan(15, 0, 0);
     }
 
     private async Task LoadCommentsFromDatabase()
@@ -578,27 +564,27 @@
         LoadUI();
     }
 
-    private (int? remaining, bool isMorning) GetTrainingInfo(Guid id, TypeTrainings type, string time)
+    private (int? remaining, bool isMorning, bool isOneTime) GetTrainingInfo(Guid id, TypeTrainings type, string time)
     {
         var client = FilteredClients?.FirstOrDefault(c => c?.Id == id);
         
-        if (client == null) return (null, false);
+        if (client == null) return (null, false, false);
 
         var memberships = client.Memberships?
             .Where(m => m?.TypeTrainings == type && m?.StatusMembership != StatusMembership.Ended)
             .ToList();
 
-        if (memberships == null || !memberships.Any()) return (null, false);
+        if (memberships == null || !memberships.Any()) return (null, false, false);
 
         // Определяем время тренировки
         var trainingTime = TimeSpan.Parse(time);
-        var isEveningTime = trainingTime > new TimeSpan(14, 0, 0);
+        var isEveningTime = trainingTime > new TimeSpan(15, 0, 0);
 
         MembershipDto? membershipToUse;
 
         if (isEveningTime)
         {
-            // После 14:00 используем обычный абонемент
+            // После 15:00 используем обычный абонемент
             membershipToUse = memberships.FirstOrDefault(m => !m.IsMorning);
             if (membershipToUse == null)
             {
@@ -608,11 +594,11 @@
         }
         else
         {
-            // До 14:00 можно использовать любой
+            // До 15:00 можно использовать любой
             membershipToUse = memberships.FirstOrDefault();
         }
 
-        return (membershipToUse?.AmountTraining, membershipToUse?.IsMorning ?? false);
+        return (membershipToUse?.AmountTraining, membershipToUse?.IsMorning ?? false, membershipToUse?.IsOneTimeTraining ?? false);
     }
 
     private void LoadUI()
@@ -845,6 +831,72 @@
     {
         CheckMorningRestrictions();
         StateHasChanged();
+    }
+
+    private List<TypeTrainings> GetAvailableTrainingTypes()
+    {
+        var availableTypes = new List<TypeTrainings>();
+        if (SelectedClientId.Length == 0 || HasMorningRestriction)
+            return availableTypes;
+
+        var selectedClients = Clients
+            .Where(c => SelectedClientId.Contains(c.Id.ToString()))
+            .ToList();
+
+        // Определяем дату и время
+        var date = !string.IsNullOrEmpty(SelectedDay)
+            ? DateOnly.Parse(SelectedDay, new CultureInfo("ru-RU"))
+            : DateOnly.MinValue;
+        var time = !string.IsNullOrEmpty(SelectedTime)
+            ? TimeSpan.Parse(SelectedTime)
+            : TimeSpan.Zero;
+        var dateTime = date.ToDateTime(TimeOnly.MinValue);
+        var isWeekend = dateTime.DayOfWeek == DayOfWeek.Saturday || dateTime.DayOfWeek == DayOfWeek.Sunday;
+        var isAfter15 = time > new TimeSpan(15, 0, 0);
+
+        if (isWeekend)
+        {
+            // Только обычные абонементы
+            availableTypes = selectedClients
+                .SelectMany(c => c.Memberships
+                    .Where(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining)
+                        && !m.IsMorning
+                        && m.AmountTraining > 0)
+                    .Select(m => m.TypeTrainings))
+                .Distinct()
+                .ToList();
+        }
+        else if (isAfter15)
+        {
+            // Если есть обычный абонемент — только его тип
+            var regularTypes = selectedClients
+                .SelectMany(c => c.Memberships
+                    .Where(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining)
+                        && !m.IsMorning
+                        && m.AmountTraining > 0)
+                    .Select(m => m.TypeTrainings))
+                .Distinct()
+                .ToList();
+
+            if (regularTypes.Any())
+            {
+                availableTypes = regularTypes;
+            }
+        }
+        else
+        {
+            // В остальное время — все доступные
+            availableTypes = selectedClients
+                .SelectMany(c => c.Memberships
+                    .Where(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining)
+                        && m.AmountTraining > 0
+                        && (!m.IsMorning || IsTimeValidForMembership(m, SelectedTime)))
+                    .Select(m => m.TypeTrainings))
+                .Distinct()
+                .ToList();
+        }
+
+        return availableTypes;
     }
 
     private void CheckMorningRestrictions()

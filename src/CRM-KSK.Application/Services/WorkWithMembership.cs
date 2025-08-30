@@ -29,6 +29,7 @@ public class WorkWithMembership : IWorkWithMembership
         //var day = DateOnly.FromDateTime(DateTime.Today); //для тестирования
         var day = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
         var schedules = await _scheduleRepository.GetYesterdaysScheduleAsync(day, token);
+        var totalDeductions = 0;
 
         foreach (var schedule in schedules)
         {
@@ -36,8 +37,11 @@ public class WorkWithMembership : IWorkWithMembership
             {
                 foreach (var client in training.Clients)
                 {
-                    // Проверяем, является ли время тренировки утренним (до 14:00 включительно)
-                    var isMorningTime = schedule.Time <= new TimeSpan(14, 0, 0);
+                    // Проверяем, является ли время тренировки утренним (до 16:00 включительно, последняя тренировка в 15:00)
+                    var isMorningTime = schedule.Time <= new TimeSpan(15, 0, 0);
+                    
+                    // Проверяем, является ли день выходным (суббота или воскресенье)
+                    var isWeekend = schedule.Date.DayOfWeek == DayOfWeek.Saturday || schedule.Date.DayOfWeek == DayOfWeek.Sunday;
                     
                     // Получаем все абонементы клиента данного типа
                     var memberships = await _membershipRepository
@@ -48,9 +52,9 @@ public class WorkWithMembership : IWorkWithMembership
                         // Выбираем подходящий абонемент
                         Membership? membershipToUse = null;
                         
-                        if (isMorningTime)
+                        if (isMorningTime && !isWeekend)
                         {
-                            // Если время утреннее, сначала ищем утренний абонемент
+                            // Если время утреннее и не выходной, сначала ищем утренний абонемент
                             membershipToUse = memberships.FirstOrDefault(m => m.IsMorning && m.AmountTraining > 0);
                             
                             // Если утреннего нет, берем обычный
@@ -59,9 +63,14 @@ public class WorkWithMembership : IWorkWithMembership
                                 membershipToUse = memberships.FirstOrDefault(m => !m.IsMorning && m.AmountTraining > 0);
                             }
                         }
+                        else if (isMorningTime && isWeekend)
+                        {
+                            // В выходные используем только обычный абонемент
+                            membershipToUse = memberships.FirstOrDefault(m => !m.IsMorning && m.AmountTraining > 0);
+                        }
                         else
                         {
-                            // Если время не утреннее, берем только обычный абонемент
+                            // Если время не утреннее (после 15:00), берем только обычный абонемент
                             membershipToUse = memberships.FirstOrDefault(m => !m.IsMorning && m.AmountTraining > 0);
                         }
 
@@ -69,9 +78,14 @@ public class WorkWithMembership : IWorkWithMembership
                         {
                             var trainingsBefore = membershipToUse.AmountTraining;
                             membershipToUse.AmountTraining--;
+                            totalDeductions++;
                             var trainingsAfter = membershipToUse.AmountTraining;
                             
-                            _logger.LogWarning($"Удачно списали занятие у {client.LastName} {client.FirstName} с абонемента {(membershipToUse.IsMorning ? "утреннего" : "обычного")}");
+                            var membershipType = membershipToUse.IsMorning ? "утреннего" : "обычного";
+                            var timeInfo = isMorningTime ? $"утреннее время ({schedule.Time})" : $"вечернее время ({schedule.Time})";
+                            var dayInfo = isWeekend ? $"выходной день ({schedule.Date.DayOfWeek})" : "будний день";
+                            
+                            _logger.LogWarning($"Удачно списали занятие у {client.LastName} {client.FirstName} с {membershipType} абонемента. Время: {timeInfo}, День: {dayInfo}");
 
                             // Создаем лог списания
                             var deductionLog = new MembershipDeductionLog
@@ -110,12 +124,16 @@ public class WorkWithMembership : IWorkWithMembership
                             }
                             catch (Exception ex)
                             {
+                                _logger.LogError($"До ошибки успели списать с {totalDeductions} абонементов");
                                 _logger.LogError(ex, "Ошибка при сохранении лога списания для клиента {ClientName}", $"{client.LastName} {client.FirstName}");
                             }
                         }
                         else
                         {
-                            _logger.LogError($"Не нашли подходящий абонемент для клиента {client.LastName} {client.FirstName} на время {schedule.Time}");
+                            var timeInfo = isMorningTime ? $"утреннее время ({schedule.Time})" : $"вечернее время ({schedule.Time})";
+                            var dayInfo = isWeekend ? $"выходной день ({schedule.Date.DayOfWeek})" : "будний день";
+                            
+                            _logger.LogError($"Не нашли подходящий абонемент для клиента {client.LastName} {client.FirstName}. Время: {timeInfo}, День: {dayInfo}");
                         }
                     }
                     else
@@ -125,6 +143,6 @@ public class WorkWithMembership : IWorkWithMembership
                 }
             }
         }
-        _logger.LogWarning("Списание со всех абонементов прошло успешно");
+        _logger.LogWarning($"Списание со всех абонементов прошло успешно, было списано {totalDeductions} занятий");
     }
 }

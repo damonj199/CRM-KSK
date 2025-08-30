@@ -21,7 +21,6 @@ public class ProcessBirthdays : IProcessBirthdays
 
     public async Task ProcessBodAsync(CancellationToken token)
     {
-        _logger.LogWarning("Попали в сервис обновления таблицы дней рождений");
         var month = DateTime.Today.Month;
 
         await _birtDaysRepository.DeleteAllDataAsync(token);
@@ -34,6 +33,6 @@ public class ProcessBirthdays : IProcessBirthdays
             .ToList();
 
         await _birtDaysRepository.AddPeopleWithBirthDaysThisMonth(allBodays, token);
-        _logger.LogWarning("Обновили данные о днях рождениях в ДБ ");
+        _logger.LogWarning($"Обновили данные о днях рождениях в ДБ. для {allBodays.Count} человек");
     }
 }
