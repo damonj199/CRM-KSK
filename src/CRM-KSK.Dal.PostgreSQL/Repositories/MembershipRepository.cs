@@ -17,13 +17,18 @@ public class MembershipRepository : IMembershipRepository
         _logger = logger;
     }
 
-    public async Task AddMembershipAsync(List<Membership> memberships, CancellationToken token)
+    public async Task<List<Membership>> AddMembershipAsync(List<Membership> memberships, CancellationToken token)
     {
-        _logger.LogWarning($"Добавили абонемент для клиента {memberships.FirstOrDefault()?.Client.LastName}," +
-            $"на {memberships.FirstOrDefault()?.AmountTraining} занятий, абонемент типа - {memberships.FirstOrDefault()?.TypeTrainings.ToString()}");
-
         _context.Memberships.AddRange(memberships);
         await _context.SaveChangesAsync(token);
+        
+        var membershipIds = memberships.Select(m => m.Id).ToList();
+        var addedMemberships = await _context.Memberships
+            .Include(m => m.Client)
+            .Where(m => membershipIds.Contains(m.Id))
+            .ToListAsync(token);
+        
+        return addedMemberships;
     }
 
     public async Task<List<Membership>> GetAllMembershipClientAsync(Guid id, CancellationToken token)
@@ -68,11 +73,14 @@ public class MembershipRepository : IMembershipRepository
 
     public async Task SoftDeleteMembershipAsync(Guid id, CancellationToken token)
     {
-        var mem = await _context.Memberships.FindAsync(id, token);
+        var mem = await _context.Memberships
+            .Include(m => m.Client)
+            .FirstOrDefaultAsync(m => m.Id == id, token);
+            
         if (mem != null)
         {
             _logger.LogWarning($"Абонемент {mem.TypeTrainings.ToString()}" +
-                $"для клиента {mem.Client.LastName} {mem.Client.FirstName} был удален. Остаток занятий был {mem.AmountTraining}");
+                $"для клиента {mem.Client?.LastName ?? "Неизвестно"} {mem.Client?.FirstName ?? "Неизвестно"} был удален. Остаток занятий был {mem.AmountTraining}");
 
             mem.SoftDelete();
             await _context.SaveChangesAsync(token);
