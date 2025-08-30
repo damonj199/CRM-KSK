@@ -28,36 +28,37 @@ public class ClientService : IClientService
 
     public async Task<string> AddClientAsync(ClientDto clientDto, CancellationToken cancellationToken)
     {
-        _logger.LogWarning("попали в метод добавления клиента в сервисе, проверяем есть ли уже такой клиент");
         var existingClient = await _clientRepository.ClientVerificationAsync(clientDto.Phone, cancellationToken);
 
         if (existingClient)
+        { 
+            _logger.LogWarning("Клиент с номером {0} уже существует", clientDto.Phone);
             return "Клиент уже зарегистрирован";
+        }
 
         var transactionOptions = new TransactionOptions
         {
             IsolationLevel = IsolationLevel.ReadCommitted
         };
+            
+        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        var clientEntity = _mapper.Map<Client>(clientDto);
+        var newClientId = await _clientRepository.AddClientAsync(clientEntity, cancellationToken);
 
-        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        var membershipDto = clientDto.Memberships;
+
+        var memberships = _mapper.Map<List<Membership>>(clientDto.Memberships);
+
+        foreach (var membership in memberships)
         {
-            var clientEntity = _mapper.Map<Client>(clientDto);
-            var newClientId = await _clientRepository.AddClientAsync(clientEntity, cancellationToken);
-
-            var membershipDto = clientDto.Memberships;
-
-            var memberships = _mapper.Map<List<Membership>>(clientDto.Memberships);
-
-            foreach(var membership in memberships)
-            {
-                membership.ClientId = newClientId;
-            }
-            await _membershipRepository.AddMembershipAsync(memberships, cancellationToken);
-
-            scope.Complete();
-
-            return clientEntity.FirstName;
+            membership.ClientId = newClientId;
         }
+        await _membershipRepository.AddMembershipAsync(memberships, cancellationToken);
+
+        scope.Complete();
+
+        _logger.LogWarning($"{clientEntity.FirstName} добавлен");
+        return $"{clientEntity.FirstName} добавлен";
     }
 
     public async Task<List<ClientDto>> GetAllClientsWithMemberships(CancellationToken token)

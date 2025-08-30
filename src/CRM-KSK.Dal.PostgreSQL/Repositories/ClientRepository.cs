@@ -19,11 +19,10 @@ public class ClientRepository : IClientRepository
 
     public async Task<Guid> AddClientAsync(Client client, CancellationToken cancellationToken)
     {
-        _logger.LogWarning("передаем клиента на добавление в БД");
-        
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(cancellationToken); 
-        _logger.LogWarning("Клиент добавлен!");
+
+        _logger.LogWarning($"Клиент {client.FirstName} {client.LastName} добавлен!");
         return client.Id;
     }
 
