@@ -24,7 +24,6 @@ public class MembershipService : IMembershipService
         var membership = _mapper.Map<List<Membership>>(membershipsDto);
         var addedMemberships = await _membershipRepository.AddMembershipAsync(membership, token);
         
-        // Логируем добавленные абонементы
         foreach (var addedMembership in addedMemberships)
         {
             _logger.LogWarning($"Добавлен абонемент для клиента {addedMembership.Client?.LastName ?? "Неизвестно"} {addedMembership.Client?.FirstName ?? "Неизвестно"}," +
