@@ -17,6 +17,12 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     serverOptions.ListenAnyIP(5000);
 });
 
+// Принудительно устанавливаем URL для разработки
+if (builder.Environment.IsDevelopment())
+{
+    builder.WebHost.UseUrls("http://localhost:5000");
+}
+
 builder.Configuration.AddEnvironmentVariables();
 builder.Host.UseDefaultServiceProvider(options =>
 {

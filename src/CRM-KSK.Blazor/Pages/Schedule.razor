@@ -150,12 +150,6 @@
                     <small>@ErrorMessage</small>
                 </div>
             }
-            @if (HasMorningRestriction)
-            {
-                <div class="alert alert-warning mt-2">
-                    <small>@RestrictionMessage</small>
-                </div>
-            }
 
             <div class="comment-section">
                 <h4>Комментарии</h4>
@@ -423,7 +417,6 @@
 
     private Guid? SelectedTrainerId;
     private string[] SelectedClientId = [];
-    private Guid? SelectedTrainingId;
     private TypeTrainings SelectedTrainingType = TypeTrainings.Unknown;
 
     private string SelectedDay = string.Empty;
@@ -445,7 +438,6 @@
     private bool HasMorningRestriction { get; set; }
     private string ErrorMessage { get; set; } = string.Empty;
     private bool ShowError { get; set; } = false;
-    private string RestrictionMessage { get; set; } = string.Empty;
     private bool CanSaveTraining =>
         SelectedTrainerId != null &&
         SelectedClientId.Length > 0 &&
@@ -821,12 +813,6 @@
         CloseModal();
     }
 
-    private void UpdateScheduleData()
-    {
-        ScheduleData.Clear();
-        LoadUI();
-    }
-
     private void OnClientSelectionChanged()
     {
         CheckMorningRestrictions();
@@ -907,7 +893,6 @@
         if (SelectedClientId.Length == 0 || string.IsNullOrEmpty(SelectedTime) || string.IsNullOrEmpty(SelectedDay))
         {
             HasMorningRestriction = false;
-            RestrictionMessage = "";
             return;
         }
 
@@ -923,25 +908,36 @@
         var selectedClientGuids = SelectedClientId.Select(Guid.Parse).ToList();
         var selectedClients = Clients.Where(c => selectedClientGuids.Contains(c.Id)).ToList();
 
-        // Ищем клиентов с утренними абонементами
-        var clientsWithMorning = selectedClients
-            .Where(client => client.Memberships
-                .Any(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining) &&
-                         m.IsMorning))
+        // Для каждого клиента проверяем: если есть обычный абонемент — не блокируем
+        var clientsWithOnlyMorning = selectedClients
+            .Where(client =>
+            {
+                var activeMemberships = client.Memberships
+                    .Where(m => (m.StatusMembership == StatusMembership.Active || m.IsOneTimeTraining))
+                    .ToList();
+
+                // Есть хотя бы один обычный абонемент
+                bool hasRegular = activeMemberships.Any(m => !m.IsMorning);
+                // Есть хотя бы один утренний абонемент
+                bool hasMorning = activeMemberships.Any(m => m.IsMorning);
+
+                // Блокируем только если нет обычных, но есть утренние
+                return !hasRegular && hasMorning;
+            })
             .ToList();
 
-        if (clientsWithMorning.Any() && (isWeekend || isEveningTime))
+        if (clientsWithOnlyMorning.Any() && (isWeekend || isEveningTime))
         {
             HasMorningRestriction = true;
-            var clientNames = string.Join(", ", clientsWithMorning.Select(c => $"{c.FirstName} {c.LastName}"));
+            var clientNames = string.Join(", ", clientsWithOnlyMorning.Select(c => $"{c.FirstName} {c.LastName}"));
 
             if (isWeekend)
             {
-                ErrorMessage = $"Клиент {clientNames} имеет утренний абонемент и не может быть добавлен в выходной день";
+                ErrorMessage = $"Клиент {clientNames} имеет только утренний абонемент и не может быть добавлен в выходной день";
             }
             else if (isEveningTime)
             {
-                ErrorMessage = $"Клиент {clientNames} имеет утренний абонемент и не может быть добавлен после 15:00";
+                ErrorMessage = $"Клиент {clientNames} имеет только утренний абонемент и не может быть добавлен после 15:00";
             }
 
             ShowError = true;
@@ -949,7 +945,6 @@
         else
         {
             HasMorningRestriction = false;
-            RestrictionMessage = "";
             ShowError = false;
         }
     }
