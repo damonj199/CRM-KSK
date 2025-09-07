@@ -3,9 +3,20 @@
 @inject TrainerServiceBlazor _trainerService
 @inject ClientServiceBlazor _clientService
 
-<h3>История тренировок</h3>
+<div class="container-fluid">
+    <!-- Заголовок страницы -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    История тренировок
+                </h2>
+            </div>
+        </div>
+    </div>
 
-<div class="filters">
+    <div class="filters">
     <label>Показать с:</label>
     <input type="date" @bind="StartDate" />
 
@@ -243,3 +254,4 @@
         }
     }
 }
+</div>

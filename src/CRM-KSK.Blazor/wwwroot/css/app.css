@@ -2,6 +2,60 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+/* Общие стили для заголовков страниц */
+.page-header {
+    text-align: center;
+    padding: 8px 0;
+    margin-bottom: 0;
+}
+
+.page-header.text-start {
+    text-align: left;
+}
+
+.page-title {
+    color: #212529;
+    font-weight: 600;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    font-size: 28px;
+}
+
+.page-title i {
+    color: #007bff;
+    font-size: 32px;
+}
+
+/* Адаптивные стили для заголовков */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 24px;
+    }
+
+    .page-title i {
+        font-size: 28px;
+    }
+
+    .page-header {
+        padding: 6px 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title {
+        font-size: 20px;
+    }
+
+    .page-title i {
+        font-size: 24px;
+    }
+
+    .page-header {
+        padding: 4px 0;
+    }
+}
+
 h1:focus {
     outline: none;
 }

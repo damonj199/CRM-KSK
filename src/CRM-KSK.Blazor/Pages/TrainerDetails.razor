@@ -3,13 +3,24 @@
 @inject TrainerServiceBlazor _trainerService
 @inject NavigationManager _navigation
 
-<h3>Подродная информация о тренере </h3>
+<div class="container-fluid">
+    <!-- Заголовок страницы -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="bi bi-person-lines-fill me-2"></i>
+                    Информация о тренере
+                </h2>
+            </div>
+        </div>
+    </div>
 
-@if (_trainerState.SelectedTrainer != null)
-{
-    var trainer = _trainerState.SelectedTrainer;
+    @if (_trainerState.SelectedTrainer != null)
+    {
+        var trainer = _trainerState.SelectedTrainer;
 
-    <div class="component-details">
+        <div class="component-details">
         @if (IsEditing)
         {
             <label>Имя:</label>
@@ -119,3 +130,5 @@ else
         _navigation.NavigateTo("/trainers");
     }
 }
+</div>
+

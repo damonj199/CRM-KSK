@@ -7,18 +7,23 @@
 @inject ClientStateService _clientState
 @inject NavigationManager _navigation
 
-<div class="row align-items-center mb-3">
-    <div class="col-4">
-        <a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
-    </div>
-    <div class="col-4 text-center">
-        <h3>Расписание тренировок</h3>
-    </div>
-    <div class="col-4 text-end">
-        <button class="btn btn-secondary me-2" @onclick="LoadPreviousWeek" disabled="@(!CanLoadPreviousWeek)">
-            &#8592;
-        </button>
-        <button class="btn btn-secondary" @onclick="LoadNextWeek">
+<div class="container-fluid">
+    <!-- Заголовок страницы с навигацией -->
+    <div class="row align-items-center mb-3">
+        <div class="col-4">
+            <a href="/history" @onclick="() => ShowHistory()"> История тренировок</a>
+        </div>
+        <div class="col-4 text-center">
+            <h2 class="page-title mb-0">
+                <i class="bi bi-calendar3 me-2"></i>
+                Расписание тренировок
+            </h2>
+        </div>
+        <div class="col-4 text-end">
+            <button class="btn btn-secondary me-2" @onclick="LoadPreviousWeek" disabled="@(!CanLoadPreviousWeek)">
+                &#8592;
+            </button>
+            <button class="btn btn-secondary" @onclick="LoadNextWeek">
             &#8594;
         </button>
     </div>
@@ -793,6 +798,7 @@
         }
     }
 }
+</div>
 
 <style>
     .table-container {

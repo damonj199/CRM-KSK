@@ -2,22 +2,32 @@
 @inject HorsesServiceBlazor _horsesService
 @implements IDisposable
 
-<div class="header-container">
-    <button @onclick="TransferFromLastWeek"
-            class="btn-transfer"
-            disabled="@_isTransferring">
-        @(_isTransferring ? "Перенос..." : "Перенести лошадей")
-    </button>
-
-    <div class="header-center">
-        <h3 class="title">Работа лошадей</h3>
-        <div class="navigation-buttons">
-            <button @onclick="NavigateToPreviousWeek" class="btn btn-secondary">← Пред.</button>
-            <span class="current-week">@GetCurrentWeekRange()</span>
-            <button @onclick="NavigateToNextWeek" class="btn btn-secondary">След. →</button>
+<div class="container-fluid">
+    <!-- Заголовок страницы с навигацией -->
+    <div class="row align-items-center mb-3">
+        <div class="col-3">
+            <button @onclick="TransferFromLastWeek"
+                    class="btn btn-primary"
+                    disabled="@_isTransferring">
+                @(_isTransferring ? "Перенос..." : "Перенести лошадей")
+            </button>
+        </div>
+        <div class="col-6 text-center">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="bi bi-horse me-2"></i>
+                    Работа лошадей
+                </h2>
+            </div>
+        </div>
+        <div class="col-3">
+            <div class="navigation-buttons d-flex justify-content-end">
+                <button @onclick="NavigateToPreviousWeek" class="btn btn-secondary me-2">← Пред.</button>
+                <span class="current-week me-2">@GetCurrentWeekRange()</span>
+                <button @onclick="NavigateToNextWeek" class="btn btn-secondary">След. →</button>
+            </div>
         </div>
     </div>
-</div>
 
 <div class="horse-schedule-container">
     <table class="horse-schedule-table">
@@ -116,50 +126,11 @@
         color: #666;
     }
 
-    .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 0 0 4px 0;
-        position: relative;
-    }
-
-    .header-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex-grow: 1;
-    }
-
-    .title {
-        margin: 0;
-        padding: 0;
-        white-space: nowrap;
-    }
-
-    .btn-transfer {
-        background-color: #6c757d;
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-right: 10px;
-    }
-
-        .btn-transfer:hover {
-            background-color: #5a6268;
-        }
-
-        .btn-transfer:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-        }
 
     .navigation-buttons {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 8px;
         margin: 0;
     }
 
@@ -390,3 +361,4 @@
         _cts?.Dispose();
     }
 }
+</div>
