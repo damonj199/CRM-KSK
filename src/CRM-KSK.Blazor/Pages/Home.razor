@@ -3,7 +3,19 @@
 
 <PageTitle>Главная</PageTitle>
 
-<h3>Дни рождения в этом месяце</h3>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="bi bi-house-door me-2"></i>
+                    Дни рождения в этом месяце
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if(Birthdays is null)
 {
     <p>Загрузка данных...</p>
@@ -32,7 +44,6 @@ else
 }
 
 <style>
-
     .birthday-container {
     display: flex;
     flex-wrap: wrap;

@@ -4,13 +4,25 @@
 @inject ClientServiceBlazor _clientService
 @inject MembershipServiceBlazor _membershipService
 
-<h3>Подробная информация о клиенте</h3>
-
 @if (_clientState.SelectedClient != null)
 {
     var client = _clientState.SelectedClient;
 
-    <div class="component-details">
+    <div class="container-fluid">
+        <!-- Заголовок страницы -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="page-header">
+                    <h2 class="page-title">
+                        <i class="bi bi-person-circle me-2"></i>
+                        Информация о клиенте
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div class="component-details">
         @if (IsEditing)
         {
             <label>Имя:</label>
@@ -36,51 +48,132 @@
         }
         else
         {
-            <p><strong>Имя:</strong> @client.FirstName</p>
-            <p><strong>Фамилия:</strong> @client.LastName</p>
-            <p><strong>Телефон:</strong> @FormatPhoneNumber(client.Phone)</p>
-            <p><strong>Дата рождения:</strong> @client.DateOfBirth.ToShortDateString()</p>
-
-            <h5>Данные о родителях</h5>
-            <p><strong>Родитель:</strong> @client.ParentName</p>
-            <p><strong>Телефон родителя:</strong>@FormatPhoneNumber(client.ParentPhone)</p>
-
-            @if (Memberships.Any())
-            {
-                <ul>
-                    @foreach (var membership in Memberships)
-                    {
-                        <li class="mb-1">
-                            <div>
-                                <strong>Статус:</strong> 
-                                    @(membership.IsOneTimeTraining
-                                        ? "Разовый"
-                                        : @membership.StatusMembership.GetDisplayName())
-                                    @(membership.IsMorning ? " 🌅 Утренний" : "")<br />
-
-                                <strong>Дата начала:</strong> @membership.DateStart<br />
-                                <strong>Дата окончания:</strong> @membership.DateEnd<br />
-                                <strong>Тренировки:</strong> @membership.AmountTraining<br />
-                                <strong>Тип:</strong> @membership.TypeTrainings.GetDisplayName()
-                                <button class="btn btn-danger" title="Удалить абонемент"
-                                @onclick="() => ConfirmDelete(membership)">X
-                                </button>
+            <!-- Основная информация о клиенте -->
+            <div class="client-info-card">
+                <div class="client-header">
+                    <div class="client-avatar">
+                        <span class="avatar-text">@client.FirstName[0]@client.LastName[0]</span>
+                    </div>
+                    <div class="client-main-info">
+                        <h4 class="client-name">@client.LastName @client.FirstName</h4>
+                        <div class="client-details">
+                            <div class="detail-item">
+                                <i class="bi bi-telephone"></i>
+                                <span>@FormatPhoneNumber(client.Phone)</span>
                             </div>
-                        </li>
-                    }
-                </ul>
-            }
-            else
-            {
-                <p>Абонементов пока нет.</p>
-            }
+                            <div class="detail-item">
+                                <i class="bi bi-calendar3"></i>
+                                <span>@client.DateOfBirth.ToShortDateString() (@CalculateAge(client.DateOfBirth) лет)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <button class="btn btn-success" @onclick="() => IsModalOpen = true" >Добавить абонемент</button>
-            <button class="btn btn-primary mt-2" @onclick="EditTrainer">Изменить</button>
+                <!-- Информация о родителях -->
+                <div class="parents-section">
+                    <h5 class="section-title">
+                        <i class="bi bi-people"></i>
+                        Данные о родителях
+                    </h5>
+                    <div class="parents-info">
+                        <div class="detail-item">
+                            <i class="bi bi-person"></i>
+                            <span>@client.ParentName</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="bi bi-telephone"></i>
+                            <span>@FormatPhoneNumber(client.ParentPhone)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Абонементы -->
+            <div class="memberships-section">
+                <h5 class="section-title">
+                    <i class="bi bi-credit-card"></i>
+                    Абонементы
+                </h5>
+                
+                @if (Memberships.Any())
+                {
+                    <div class="memberships-grid">
+                        @foreach (var membership in Memberships)
+                        {
+                            <div class="membership-card @(membership.IsOneTimeTraining ? "one-time" : "regular")">
+                                <div class="membership-header">
+                                    <div class="membership-type">
+                                        <span class="type-badge">@membership.TypeTrainings.GetDisplayName()</span>
+                                        @if (membership.IsMorning)
+                                        {
+                                            <span class="morning-badge">🌅 Утренний</span>
+                                        }
+                                    </div>
+                                    <button class="btn btn-danger delete-membership-btn" title="Удалить абонемент"
+                                            @onclick="() => ConfirmDelete(membership)">🗑️</button>
+                                </div>
+                                
+                                <div class="membership-status">
+                                    <span class="status-badge @GetStatusClass(membership)">
+                                        @(membership.IsOneTimeTraining ? "Разовый" : membership.StatusMembership.GetDisplayName())
+                                    </span>
+                                </div>
+                                
+                                <div class="membership-details">
+                                    <div class="detail-row">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <span>@membership.DateStart.ToShortDateString() - @membership.DateEnd.ToShortDateString()</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <i class="bi bi-activity"></i>
+                                        <span>Осталось тренировок: <strong>@membership.AmountTraining</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="no-memberships">
+                        <i class="bi bi-info-circle"></i>
+                        <span>Абонементов пока нет</span>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-success compact-btn" @onclick="() => IsModalOpen = true" >+ абонемент</button>
+                
+                <!-- Быстрое добавление разовой тренировки -->
+                <div class="quick-training-container d-flex gap-2 align-items-center">
+                    <select @bind="SelectedQuickTrainingType" class="form-select quick-select">
+                        <option value="">Разовая тренировка</option>
+                        @foreach (var type in Enum.GetValues(typeof(TypeTrainings)))
+                        {
+                            @if (type is TypeTrainings trainingType && trainingType != TypeTrainings.Unknown)
+                            {
+                                <option value="@type">@((type as Enum).GetDisplayName())</option>
+                            }
+                        }
+                    </select>
+                    <button class="btn btn-warning quick-btn" @onclick="AddQuickOneTimeTraining" 
+                            disabled="@(SelectedQuickTrainingType == TypeTrainings.Unknown || SelectedQuickTrainingType == default(TypeTrainings))">
+                        Добавить
+                    </button>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-2 align-items-center mt-2">
+                <button class="btn btn-primary wide-btn" @onclick="EditTrainer">Изменить</button>
+            </div>
         }
     </div>
 
-    <button class="btn btn-danger mt-3" @onclick="() => IsDeleteClientOpen = true">❌ Удалить клиента</button>
+    <div class="d-flex gap-2 align-items-center mt-3">
+        <button class="btn btn-danger delete-client-btn" @onclick="() => IsDeleteClientOpen = true">Удалить клиента</button>
+        <button class="btn btn-secondary compact-btn" @onclick="GoBack">Назад</button>
+    </div>
 
     @if (IsModalOpen)
     {
@@ -131,7 +224,6 @@ else
 {
     <p class="alert alert-warning">Клиент не выбран. Перейдите на страницу <a href="/clients">управления клиентами</a>.</p>
 }
-<button class="btn btn-secondary mt-3" @onclick="GoBack">Назад</button>
 
 <style>
     .modal-overlay {
@@ -201,6 +293,335 @@ else
     margin-left: 10px;
     font-size: 14px;
     }
+
+    /* Стили для быстрого добавления разовой тренировки */
+    .quick-training-container {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 1px solid #ffc107;
+        border-radius: 6px;
+        padding: 6px 8px;
+        min-width: 200px;
+        max-width: 200px;
+    }
+
+    .quick-select {
+        border: 1px solid #ffc107;
+        border-radius: 4px;
+        font-size: 13px;
+        padding: 4px 8px;
+        height: auto;
+        min-height: 32px;
+    }
+
+    .quick-btn {
+        background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+        border: none;
+        color: #000;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 4px 12px;
+        min-height: 32px;
+        box-shadow: 0 1px 3px rgba(255, 193, 7, 0.3);
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .quick-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+    }
+
+    .quick-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Стили для компактных кнопок одинаковой ширины */
+    .compact-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+        white-space: nowrap;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+    }
+
+    /* Стили для широких кнопок (ширина = кнопка + абонемент + плашка) */
+    .wide-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+        white-space: nowrap;
+        min-width: 330px; /* 120px (кнопка) + 2px (gap) + 200px (плашка) + 2px (gap) */
+        max-width: 330px;
+        text-align: center;
+    }
+
+    /* Стили для кнопки удаления клиента (204px) */
+    .delete-client-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+        white-space: nowrap;
+        min-width: 204px;
+        max-width: 204px;
+        text-align: center;
+    }
+
+    /* Стили для красивой кнопки удаления абонемента */
+    .delete-membership-btn {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        font-size: 16px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        transition: all 0.2s ease;
+        margin-left: 8px;
+        min-width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .delete-membership-btn:hover {
+        background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+    }
+
+    .delete-membership-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    }
+
+    /* Стили для карточки информации о клиенте */
+    .client-info-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .client-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .client-avatar {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    }
+
+    .avatar-text {
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .client-main-info {
+        flex: 1;
+    }
+
+    .client-name {
+        margin: 0 0 8px 0;
+        color: #212529;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .client-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .detail-item i {
+        width: 16px;
+        color: #007bff;
+    }
+
+    .parents-section {
+        border-top: 1px solid #dee2e6;
+        padding-top: 16px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 12px 0;
+        color: #495057;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .section-title i {
+        color: #007bff;
+    }
+
+    .parents-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    /* Стили для секции абонементов */
+    .memberships-section {
+        margin-bottom: 20px;
+    }
+
+    .memberships-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 12px;
+        align-items: flex-start;
+    }
+
+    .membership-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        flex: 0 0 300px;
+        min-width: 300px;
+        max-width: 300px;
+    }
+
+    .membership-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .membership-card.one-time {
+        border-left: 4px solid #ffc107;
+    }
+
+    .membership-card.regular {
+        border-left: 4px solid #28a745;
+    }
+
+    .membership-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .membership-type {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .type-badge {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .morning-badge {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .membership-status {
+        margin-bottom: 12px;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-paused {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-one-time {
+        background: #ffeaa7;
+        color: #6c5ce7;
+    }
+
+    .status-unknown {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    .membership-details {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .detail-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .detail-row i {
+        width: 14px;
+        color: #007bff;
+    }
+
+    .no-memberships {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 20px;
+        background: #f8f9fa;
+        border: 1px dashed #dee2e6;
+        border-radius: 8px;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .no-memberships i {
+        color: #007bff;
+    }
 </style>
 
 @code {
@@ -214,6 +635,7 @@ else
     private List<MembershipDto> Memberships = [];
     private ClientDto? OriginalClientCopy;
     private string membershipErrorMessage = string.Empty;
+    private TypeTrainings SelectedQuickTrainingType = TypeTrainings.Unknown;
 
     protected override async Task OnInitializedAsync()
     {
@@ -260,6 +682,35 @@ else
         IsModalOpen = false;
         NewMemberships.Clear();
         NewMembership = new(); // Сбрасываем для следующего абонемента
+    }
+
+    private async Task AddQuickOneTimeTraining()
+    {
+        if (SelectedQuickTrainingType == TypeTrainings.Unknown || SelectedQuickTrainingType == default(TypeTrainings))
+        {
+            return;
+        }
+
+        var quickMembership = new MembershipDto
+        {
+            ClientId = _clientState.SelectedClient.Id,
+            TypeTrainings = SelectedQuickTrainingType,
+            AmountTraining = 1,
+            DateStart = DateOnly.FromDateTime(DateTime.Today),
+            DateEnd = DateOnly.FromDateTime(DateTime.Today.AddDays(1)),
+            IsOneTimeTraining = true,
+            StatusMembership = StatusMembership.OneTime,
+            IsMorning = false
+        };
+
+        var membershipsToAdd = new List<MembershipDto> { quickMembership };
+        
+        await _membershipService.AddMembership(membershipsToAdd);
+        Memberships = await _membershipService.GetAllMembershipClient(_clientState.SelectedClient.Id);
+        
+        // Сбрасываем выбор
+        SelectedQuickTrainingType = TypeTrainings.Unknown;
+        StateHasChanged();
     }
 
     private void ToggleOneTimeTraining(ChangeEventArgs e)
@@ -359,5 +810,27 @@ else
     private void GoBack()
     {
         _navigation.NavigateTo("/clients");
+    }
+
+    private int CalculateAge(DateOnly birthDate)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var age = today.Year - birthDate.Year;
+        if (birthDate > today.AddYears(-age)) age--;
+        return age;
+    }
+
+    private string GetStatusClass(MembershipDto membership)
+    {
+        if (membership.IsOneTimeTraining)
+            return "status-one-time";
+        
+        return membership.StatusMembership switch
+        {
+            StatusMembership.Active => "status-active",
+            StatusMembership.Ended => "status-ended",
+            StatusMembership.OneTime => "status-paused",
+            _ => "status-unknown"
+        };
     }
 }
