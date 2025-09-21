@@ -1,7 +1,7 @@
 services:
   api:
     image: ${DOCKER_REGISTRY-}webapi-crm-ksk
-    restart: always
+    restart: unless-stopped 
     build:
       context: .
       dockerfile: src/CRM-KSK.Api/Dockerfile
@@ -10,16 +10,16 @@ services:
     environment:
       ASPNETCORE_URLS: ${ASPNETCORE_URLS}
       ConnectionStrings__DefaultConnection: ${POSTGRES_CONNECTION}
-      Logging__LogLevel__Default: Warning
-      Logging__LogLevel__Microsoft: Warning
-      Logging__LogLevel__Microsoft.AspNetCore: Warning
+      ASPNETCORE_ENVIRONMENT: Production 
+    volumes:
+      - /var/log/crm-ksk/api/:/var/log/crm-ksk/api/ 
     networks:
     - crm-network
     
      
   blazor:
     image: ${DOCKER_REGISTRY-}blazor-webassembly-docker
-    restart: always
+    restart: unless-stopped 
     build:
       context: .
       dockerfile: src/CRM-KSK.Blazor/Dockerfile

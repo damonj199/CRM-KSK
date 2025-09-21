@@ -6,9 +6,20 @@
 @inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider _authStateProvider
 
-<h3>Тренеры</h3>
+<div class="container-fluid">
+    <!-- Заголовок страницы -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="bi bi-person-badge me-2"></i>
+                    Тренеры
+                </h2>
+            </div>
+        </div>
+    </div>
 
-<div class="button-container">
+    <div class="button-container">
     <button class="btn btn-primary" @onclick="ShowAddTrainerModal">Добавить тренера</button>
     <button class="btn btn-success" @onclick="() => showModal = true">Сменить пароль</button>
 </div>
@@ -46,6 +57,8 @@
     </div>
 }
 <AddTrainerModal @bind-IsVisible="isAddTrainerModalVisible" />
+
+</div>
 
 <style>
     .trainers-container {

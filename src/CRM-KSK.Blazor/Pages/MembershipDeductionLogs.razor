@@ -4,40 +4,43 @@
 @using CRM_KSK.Blazor.Services
 @inject MembershipDeductionLogServiceBlazor LogService
 @inject NavigationManager Navigation
+@inject ClientServiceBlazor ClientService
+@inject MembershipServiceBlazor MembershipService
 
-<PageTitle>Логи списаний занятий</PageTitle>
+<PageTitle>Списания занятий</PageTitle>
 
 <div class="container-fluid">
-    <h2 class="mb-4">Логи списаний занятий</h2>
-
-    <!-- Компактные фильтры -->
+    <!-- Заголовок страницы -->
     <div class="row mb-4">
-        <div class="col-md-6">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Логи списаний занятий
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-4">
             <div class="card">
                 <div class="card-body py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <label class="form-label mb-1">Дата:</label>
-                        </div>
-                        <div class="col-md-6">
-                            <input type="date" class="form-control form-control-sm" @bind="selectedDate" @bind:format="yyyy-MM-dd"/>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-primary btn-sm" @onclick="LoadLogs">
-                                <i class="bi bi-search"></i> Найти
-                            </button>
-                        </div>
+                    <!-- Дата и кнопка поиска в одной строке -->
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <label class="form-label mb-0" style="min-width: 50px;">Дата:</label>
+                        <input type="date" class="form-control form-control-sm" style="max-width: 150px;" @bind="selectedDate" @bind:format="yyyy-MM-dd"/>
+                        <button class="btn btn-primary btn-sm" @onclick="LoadLogs">
+                            <i class="bi bi-search"></i> Найти
+                        </button>
                     </div>
                     
                     <!-- Быстрые кнопки выбора даты -->
-                    <div class="row mt-2">
-                        <div class="col-12">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-1))">Вчера</button>
-                                <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-2))">Позавчера</button>
-                                <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-7))">Неделю назад</button>
-                            </div>
-                        </div>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-1))">Вчера</button>
+                        <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-2))">Позавчера</button>
+                        <button type="button" class="btn btn-outline-secondary" @onclick="() => SetDate(DateTime.Today.AddDays(-7))">Неделю назад</button>
                     </div>
                 </div>
             </div>
@@ -130,7 +133,7 @@
     private List<MembershipDeductionLogDto> Logs = new();
     private bool isLoading = false;
     private DateTime selectedDate = DateTime.Today.AddDays(-1); // Вчерашняя дата по умолчанию
-
+    
     protected override async Task OnInitializedAsync()
     {
         await LoadLogs();
@@ -145,9 +148,7 @@
         }
         catch (Exception ex)
         {
-            // Здесь можно добавить обработку ошибок
             Console.WriteLine($"Ошибка загрузки логов: {ex.Message}");
-            // Можно добавить уведомление пользователю об ошибке
         }
         finally
         {
@@ -161,6 +162,7 @@
         selectedDate = date;
         await LoadLogs();
     }
+
 
     private string GetTrainingTypeName(TypeTrainings type)
     {
@@ -183,4 +185,89 @@
             _ => type.ToString()
         };
     }
-} 
+}
+
+<style>
+
+    /* Адаптивность для мобильных устройств */
+    @@media (max-width: 768px) {
+        .d-flex.align-items-center.gap-2 {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 0.5rem !important;
+        }
+        
+        .d-flex.align-items-center.gap-2 label {
+            min-width: auto !important;
+        }
+        
+        .d-flex.align-items-center.gap-2 input {
+            max-width: none !important;
+        }
+        
+        .btn-group {
+            flex-wrap: wrap;
+        }
+        
+        .btn-group .btn {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .stats-card {
+            padding: 10px 12px;
+        }
+
+        .stats-content {
+            gap: 12px;
+        }
+
+        .stats-icon {
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+        }
+
+        .stat-item {
+            margin-right: 12px;
+        }
+
+        .stat-number {
+            font-size: 16px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .stats-card {
+            padding: 8px 10px;
+        }
+
+        .stats-content {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .stats-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 13px;
+        }
+
+        .stat-item {
+            margin-right: 8px;
+            gap: 4px;
+        }
+
+        .stat-number {
+            font-size: 14px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+        }
+    }
+</style>

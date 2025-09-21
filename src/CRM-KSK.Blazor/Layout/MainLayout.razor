@@ -8,12 +8,9 @@
 <div class="page">
     @if(!_navigation.Uri.Contains("login", StringComparison.OrdinalIgnoreCase))
     {
-        <div class="sidebar">
-            <NavMenu OnOpenAddClientModal="@ShowAddClientModal" />
-        </div>
+        <NavMenu OnOpenAddClientModal="@ShowAddClientModal" />
     }
     <main>
-        
         <article class="content px-4">
             @Body
         </article>
@@ -25,6 +22,23 @@
 </div>
 
 <style>
+    .page {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    main {
+        flex: 1;
+        width: 100%;
+    }
+
+    .content {
+        width: 100%;
+        max-width: none;
+    }
+
     .unauthorized-container {
         display: flex;
         align-items: center;
@@ -42,61 +56,8 @@
         margin-left: 5px;
     }
 
-        .login-link:hover {
-            text-decoration: underline;
-        }
-
-    .top-row {
-        background-color: #f8f9fa;
-        padding: 10px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .welcome-message {
-        text-align: center;
-        flex-grow: 1;
-    }
-
-        .welcome-message h3 {
-            margin: 0;
-            padding: 0;
-            line-height: 1.5;
-        }
-
-        .welcome-message p {
-            margin: 0;
-            padding: 0;
-            line-height: 1.5;
-        }
-
-    .logout-button {
-        margin-left: auto;
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-        .logout-button:hover {
-            background-color: #c82333;
-        }
-
-    @@media (max-width: 768px) {
-        .top-row {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .logout-button {
-            margin-top: 10px;
-            margin-left: 0;
-        }
+    .login-link:hover {
+        text-decoration: underline;
     }
 </style>
 

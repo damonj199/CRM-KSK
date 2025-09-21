@@ -31,12 +31,8 @@ jobs:
             git pull origin dev
 
             # Остановка и удаление старых контейнеров
-            docker-compose down --rmi all --remove-orphans --volumes
+            docker-compose down --rmi all 
             
-            # Полная очистка системы Docker
-            docker system prune -af --volumes
-            docker volume prune -f
-
             # Сборка новых образов и запуск контейнеров
             docker-compose up -d --build --force-recreate
 

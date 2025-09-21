@@ -19,11 +19,10 @@ public class ClientRepository : IClientRepository
 
     public async Task<Guid> AddClientAsync(Client client, CancellationToken cancellationToken)
     {
-        _logger.LogWarning("передаем клиента на добавление в БД");
-        
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(cancellationToken); 
-        _logger.LogWarning("Клиент добавлен!");
+
+        _logger.LogWarning($"Клиент {client.FirstName} {client.LastName} добавлен!");
         return client.Id;
     }
 
@@ -31,6 +30,19 @@ public class ClientRepository : IClientRepository
     {
         var clients = await _context.Clients
             .Include(m => m.Memberships)
+            .ToListAsync(token);
+
+        return clients ?? [];
+    }
+
+    public async Task<List<Client>> GetStatistics(CancellationToken token)
+    {
+        var twoMonthsAgo = DateOnly.FromDateTime(DateTime.Today.AddMonths(-2));
+        
+        var clients = await _context.Clients
+            .IgnoreQueryFilters()
+            .Include(m => m.Memberships
+                .Where(mem => mem.DateEnd >= twoMonthsAgo))
             .ToListAsync(token);
 
         return clients ?? [];
@@ -80,18 +92,6 @@ public class ClientRepository : IClientRepository
         return clientsBod ?? [];
     }
 
-    public async Task<IReadOnlyList<Client>> SearchClientByNameAsync(string firstName, string lastName, CancellationToken cancellationToken, int pageNumber = 1, int pageSize = 10)
-    {
-        var query = _context.Clients.AsNoTracking().AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(firstName))
-            query = query.Where(f => f.FirstName.ToLower().Contains(firstName.ToLower()));
-
-        if (!string.IsNullOrWhiteSpace(lastName))
-            query = query.Where(query => query.LastName.ToLower().Contains(lastName.ToLower()));
-
-        return await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken) ?? [];
-    }
 
     public async Task SoftDeleteClientAsync(Guid id, CancellationToken cancellationToken)
     {

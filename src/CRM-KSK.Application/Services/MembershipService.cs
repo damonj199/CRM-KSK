@@ -14,15 +14,21 @@ public class MembershipService : IMembershipService
 
     public MembershipService(IMembershipRepository membershipRepository, IMapper mapper, ILogger<MembershipService> logger)
     {
-        _logger = logger;
         _mapper = mapper;
         _membershipRepository = membershipRepository;
+        _logger = logger;
     }
 
     public async Task AddMembershipAsync(List<MembershipDto> membershipsDto, CancellationToken token)
     {
         var membership = _mapper.Map<List<Membership>>(membershipsDto);
-        await _membershipRepository.AddMembershipAsync(membership, token);
+        var addedMemberships = await _membershipRepository.AddMembershipAsync(membership, token);
+        
+        foreach (var addedMembership in addedMemberships)
+        {
+            _logger.LogWarning($"Добавлен абонемент для клиента {addedMembership.Client?.LastName ?? "Неизвестно"} {addedMembership.Client?.FirstName ?? "Неизвестно"}," +
+                $"на {addedMembership.AmountTraining} занятий, абонемент типа - {addedMembership.TypeTrainings}");
+        }
     }
 
     public async Task<List<MembershipDto>> GetAllMembershipClientAsync(Guid id, CancellationToken token)
@@ -32,13 +38,6 @@ public class MembershipService : IMembershipService
         return membershipsDtos ?? [];
     }
 
-    public async Task<MembershipDto> GetMembershipByIdAsync(Guid id, CancellationToken token)
-    {
-        var membership = await _membershipRepository.GetMembershipByIdAsync(id, token);
-        var membershipDto = _mapper.Map<MembershipDto>(membership);
-
-        return membershipDto;
-    }
 
     public async Task UpdateMembershipAsync(MembershipDto membershipDto, CancellationToken token)
     {

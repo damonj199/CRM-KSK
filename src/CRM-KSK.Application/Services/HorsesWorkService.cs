@@ -98,8 +98,6 @@ public class HorsesWorkService : IHorsesWorkService
         var horses = await _horsesRepository.GetScheduleWorkHorsesWeek(sDate, token);
         var horsesDto = _mapper.Map<List<WorkHorseDto>>(horses);
 
-        _logger.LogWarning($"ПРОВЕРЯЕМ СКОЛЬКО ЭЛЕМЕНТОВ ВОЗВРАЩАЕТСЯ - {horsesDto.Count}");
-
         return horsesDto ?? [];
     }
 

@@ -1,0 +1,462 @@
+@page "/statistics"
+@using CRM_KSK.Application.Dtos
+@using CRM_KSK.Core.Enums
+@using CRM_KSK.Blazor.Services
+@using Radzen.Blazor
+@using System.Text.Json
+@inject ClientServiceBlazor ClientService
+@inject MembershipServiceBlazor MembershipService
+@inject TrainerServiceBlazor TrainerService
+
+<PageTitle>Статистика</PageTitle>
+
+<div class="container-fluid">
+    <!-- Заголовок страницы -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h2 class="page-title">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Статистика
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <p class="mt-2">Загрузка статистики...</p>
+        </div>
+    }
+    else
+    {
+        <!-- Основная статистика -->
+        <div class="row g-3 mb-4">
+            <!-- Клиенты -->
+            <div class="col-md-6 col-lg-3">
+                <div class="stats-card clients-card">
+                    <div class="stats-header">
+                        <div class="stats-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h5 class="stats-title">Клиенты</h5>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stat-item">
+                            <span class="stat-label">Всего</span>
+                            <span class="stat-number">@statistics?.TotalClients</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">С активными абонементами</span>
+                            <span class="stat-number active">@statistics?.ClientsWithActiveMemberships</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Были за 2 месяца</span>
+                            <span class="stat-number recent">@statistics?.ClientsWithRecentActivity</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Неактивных</span>
+                            <span class="stat-number inactive">@statistics?.InactiveClients</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Абонементы -->
+            <div class="col-md-6 col-lg-3">
+                <div class="stats-card memberships-card">
+                    <div class="stats-header">
+                        <div class="stats-icon">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <h5 class="stats-title">Абонементы</h5>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stat-item">
+                            <span class="stat-label">Активных</span>
+                            <span class="stat-number">@statistics?.ActiveMemberships</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Разовых</span>
+                            <span class="stat-number one-time">@statistics?.OneTimeMemberships</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Утренних</span>
+                            <span class="stat-number morning">@statistics?.MorningMemberships</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Тренеры -->
+            <div class="col-md-6 col-lg-3">
+                <div class="stats-card trainers-card">
+                    <div class="stats-header">
+                        <div class="stats-icon">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h5 class="stats-title">Тренеры</h5>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stat-item">
+                            <span class="stat-label">Всего тренеров</span>
+                            <span class="stat-number">@statistics?.TotalTrainers</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Средняя загруженность</span>
+                            <span class="stat-number">@statistics?.AverageTrainerWorkload.ToString("F1")</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Самый загруженный</span>
+                            <span class="stat-number busy">@statistics?.MostBusyTrainer</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Менее загруженный</span>
+                            <span class="stat-number less-busy">@statistics?.LeastBusyTrainer</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Тренировки -->
+            <div class="col-md-6 col-lg-3">
+                <div class="stats-card trainings-card">
+                    <div class="stats-header">
+                        <div class="stats-icon">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <h5 class="stats-title">Тренировки</h5>
+                    </div>
+                    <div class="stats-content">
+                        <div class="stat-item">
+                            <span class="stat-label">Вчера</span>
+                            <span class="stat-number">@statistics?.YesterdayTrainings</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">На этой неделе</span>
+                            <span class="stat-number">@statistics?.WeekTrainings</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">В этом месяце</span>
+                            <span class="stat-number">@statistics?.MonthTrainings</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- График статистики по типам тренировок -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h4 class="section-title">
+                    <i class="bi bi-bar-chart"></i>
+                    Статистика по типам тренировок
+                </h4>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3" Style="margin-bottom: 1rem;">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Распределение абонементов по типам тренировок
+                    </RadzenText>
+                    <RadzenChart>
+                        <RadzenColumnSeries Data="@trainingTypeData" 
+                                           CategoryProperty="name" 
+                                           ValueProperty="count" 
+                                           Title="Количество абонементов" />
+                        <RadzenCategoryAxis Padding="20" />
+                        <RadzenValueAxis>
+                            <RadzenGridLines Visible="true" />
+                            <RadzenAxisTitle Text="Количество" />
+                        </RadzenValueAxis>
+                        <RadzenLegend />
+                    </RadzenChart>
+                </RadzenCard>
+            </div>
+        </div>
+
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private StatisticsDto? statistics;
+
+    // Данные для графика типов тренировок
+    private List<TrainingTypeChartData> trainingTypeData = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStatistics();
+    }
+
+    private async Task LoadStatistics()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Получаем готовую статистику с бэкенда
+            statistics = await ClientService.GetStatistics();
+            
+            // Подготавливаем данные для графиков
+            PrepareChartData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка загрузки статистики: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void PrepareChartData()
+    {
+        if (statistics == null) return;
+
+        // Данные для типов тренировок
+        trainingTypeData = statistics.TrainingTypeStats?.Select(x => new TrainingTypeChartData
+        {
+            name = x.Name,
+            count = x.Count
+        }).ToList() ?? new List<TrainingTypeChartData>();
+    }
+
+    // Модель данных для графика типов тренировок
+    public class TrainingTypeChartData
+    {
+        public string name { get; set; } = "";
+        public int count { get; set; }
+    }
+}
+
+<style>
+    /* Стили для заголовков секций */
+    .section-title {
+        color: #495057;
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 20px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-title i {
+        color: #007bff;
+        font-size: 24px;
+    }
+
+    /* Стили для статистических карточек */
+    .stats-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+    }
+
+    .clients-card::before {
+        background: linear-gradient(90deg, #28a745, #1e7e34);
+    }
+
+    .memberships-card::before {
+        background: linear-gradient(90deg, #007bff, #0056b3);
+    }
+
+    .trainers-card::before {
+        background: linear-gradient(90deg, #ffc107, #e0a800);
+    }
+
+    .trainings-card::before {
+        background: linear-gradient(90deg, #17a2b8, #138496);
+    }
+
+    .stats-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .stats-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 123, 255, 0.1);
+        color: #007bff;
+        font-size: 20px;
+    }
+
+    .clients-card .stats-icon {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .memberships-card .stats-icon {
+        background: rgba(0, 123, 255, 0.1);
+        color: #007bff;
+    }
+
+    .trainers-card .stats-icon {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    .trainings-card .stats-icon {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+    }
+
+    .stats-title {
+        color: #212529;
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .stats-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .stat-number {
+        color: #212529;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .stat-number.active {
+        color: #28a745;
+    }
+
+    .stat-number.recent {
+        color: #ffc107;
+    }
+
+    .stat-number.inactive {
+        color: #dc3545;
+    }
+
+    .stat-number.one-time {
+        color: #ffc107;
+    }
+
+    .stat-number.morning {
+        color: #17a2b8;
+    }
+
+    .stat-number.busy {
+        color: #dc3545;
+        font-weight: 700;
+    }
+
+    .stat-number.less-busy {
+        color: #6c757d;
+        font-weight: 700;
+    }
+
+    /* Стили для Radzen карточек */
+    .rz-card {
+        border-radius: 12px !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e9ecef !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .rz-card:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* Стили для графиков */
+    .rz-chart {
+        border-radius: 8px !important;
+    }
+
+    /* Стили для заголовков графиков */
+    .rz-text h3 {
+        color: #495057 !important;
+        font-weight: 600 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .rz-text h3 i {
+        color: #007bff !important;
+        margin-right: 8px !important;
+    }
+
+
+    /* Адаптивность */
+    @@media (max-width: 768px) {
+        .stats-card {
+            margin-bottom: 20px;
+        }
+
+        .rz-card {
+            margin-bottom: 20px !important;
+        }
+
+        .rz-chart {
+            height: 300px !important;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .rz-chart {
+            height: 250px !important;
+        }
+    }
+</style>
