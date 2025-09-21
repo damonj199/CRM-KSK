@@ -47,6 +47,13 @@ public class ClientsController : ControllerBase
         return Ok(clients);
     }
 
+    [HttpGet("statistics")]
+    public async Task<IActionResult> GetStatistics(CancellationToken token)
+    {
+        var statistics = await _clientService.GetStatistics(token);
+        return Ok(statistics);
+    }
+
     [HttpGet("for-schedule")]
     public async Task<IActionResult> GetClientsForSchedules(CancellationToken token)
     {
@@ -54,19 +61,6 @@ public class ClientsController : ControllerBase
         return Ok(clients);
     }
 
-    [HttpGet("by-name")]
-    public async Task<IActionResult> GetClientByName(
-        [FromQuery] string? firstName = null,
-        [FromQuery] string? lastName = null,
-        CancellationToken cancellationToken = default)
-    {
-        var client = await _clientService.GetClientByNameAsync(firstName, lastName, cancellationToken);
-
-        if (client == null)
-            return NotFound(new { message = "Клиент не найден" });
-
-        return Ok(client);
-    }
 
     [HttpGet("birthdays")]
     public async Task<IActionResult> GetAllFromBod(CancellationToken token)

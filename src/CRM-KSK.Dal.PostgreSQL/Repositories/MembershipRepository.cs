@@ -49,12 +49,6 @@ public class MembershipRepository : IMembershipRepository
         return memberships ?? [];
     }
 
-    public async Task<Membership> GetMembershipByIdAsync(Guid id, CancellationToken token)
-    {
-        var membership = await _context.Memberships.FindAsync(id, token);
-
-        return membership;
-    }
 
     public async Task UpdateMembershipAsync(Membership membership, CancellationToken token)
     {

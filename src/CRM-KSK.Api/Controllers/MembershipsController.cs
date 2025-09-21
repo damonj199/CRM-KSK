@@ -32,12 +32,6 @@ public class MembershipsController : ControllerBase
         return Ok(membershipsDtos);
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetMembershipByIdAsync(Guid id, CancellationToken token)
-    {
-        var membership = await _membershipService.GetMembershipByIdAsync(id, token);
-        return Ok(membership);
-    }
 
     [HttpPut]
     public async Task<IActionResult> UpdateMembershipAsync([FromBody] MembershipDto membership, CancellationToken token)
