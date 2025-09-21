@@ -15,11 +15,12 @@ public class StatisticsDto
 
     // Статистика по тренерам
     public int TotalTrainers { get; set; }
-    public int ActiveTrainers { get; set; }
-    public int TotalTrainingsThisMonth { get; set; }
+    public double AverageTrainerWorkload { get; set; } // Средняя загруженность тренера в месяц
+    public string MostBusyTrainer { get; set; } = string.Empty; // Самый загруженный тренер
+    public string LeastBusyTrainer { get; set; } = string.Empty; // Наименее загруженный тренер
 
     // Статистика по тренировкам
-    public int TodayTrainings { get; set; }
+    public int YesterdayTrainings { get; set; }
     public int WeekTrainings { get; set; }
     public int MonthTrainings { get; set; }
 

@@ -139,79 +139,94 @@ public class ClientService : IClientService
 
     public async Task<StatisticsDto> GetStatistics(CancellationToken token)
     {
+        // ---Даты---
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var twoMonthsAgo = today.AddMonths(-2);
+        var monthStart = new DateOnly(today.Year, today.Month, 1);
+
         // Получаем клиентов с абонементами для статистики (включая удаленные за последние 2 месяца)
         var allClients = await _clientRepository.GetStatistics(token);
         var allTrainers = await _trainerRepository.GetTrainersAsync(token);
 
-        var twoMonthsAgo = DateOnly.FromDateTime(DateTime.Today.AddMonths(-2));
+        bool HasActiveMembership(Client c)
+        {
+            // Активный — не удалённый + (active или разовый) + DateEnd >= today
+            return c.Memberships?.Any(m =>
+                !m.IsDeleted &&
+                ((m.StatusMembership == StatusMembership.Active && m.DateEnd >= today) ||
+                 (m.StatusMembership == StatusMembership.OneTime && m.DateEnd >= today))
+            ) == true;
+        }
+
+        bool HasRecentMembership(Client c)
+        {
+            // Recent — закончился в пределах последних двух месяцев (включая мягко удалённые)
+            // Исключаем те, у кого уже есть активный абонемент
+            if (HasActiveMembership(c)) return false;
+
+            return c.Memberships?.Any(m =>
+                m.DateEnd >= twoMonthsAgo && m.DateEnd < today) == true;
+        }
 
         // Статистика по клиентам
         var totalClients = allClients.Count;
-        
-        // Клиенты с активными абонементами (исключая мягко удаленные)
-        var clientsWithActiveMemberships = allClients.Count(c =>
-            c.Memberships?.Any(m =>
-                !m.IsDeleted && (
-                    m.StatusMembership == StatusMembership.Active ||
-                    m.IsOneTimeTraining)) == true);
-
-        // Клиенты без активных абонементов, но с активностью за последние 2 месяца
-        var clientsWithRecentActivity = allClients.Count(c =>
-        {
-            var hasActiveMembership = c.Memberships?.Any(m =>
-                !m.IsDeleted && (
-                    m.StatusMembership == StatusMembership.Active ||
-                    m.IsOneTimeTraining)) == true;
-
-            if (hasActiveMembership) return false; // Уже учтены в активных
-
-            var hasRecentActivity = c.Memberships?.Any(m =>
-                m.DateEnd >= twoMonthsAgo) == true;
-
-            return hasRecentActivity;
-        });
-
-        // Неактивные клиенты
+        var clientsWithActiveMemberships = allClients.Count(HasActiveMembership);
+        var clientsWithRecentActivity = allClients.Count(HasRecentMembership);
         var inactiveClients = totalClients - clientsWithActiveMemberships - clientsWithRecentActivity;
 
-        // Для статистики абонементов используем только не удаленные
-        var activeMembershipsOnly = allClients.SelectMany(c => c.Memberships ?? new()).Where(m => !m.IsDeleted).ToList();
+        if (inactiveClients < 0)
+            inactiveClients = 0;
 
-        var activeMemberships = activeMembershipsOnly.Count(m => m.StatusMembership == StatusMembership.Active || m.StatusMembership == StatusMembership.OneTime);
+        // Для статистики абонементов используем только не удаленные
+        var activeMembershipsOnly = allClients
+            .SelectMany(c => c.Memberships ?? Enumerable.Empty<Membership>())
+            .Where(m => !m.IsDeleted && (m.StatusMembership == StatusMembership.Active || m.StatusMembership == StatusMembership.OneTime))
+            .ToList();
+
+        var activeMemberships = activeMembershipsOnly.Count();
         var oneTimeMemberships = activeMembershipsOnly.Count(m => m.IsOneTimeTraining);
         var morningMemberships = activeMembershipsOnly.Count(m => m.IsMorning);
 
         // Статистика по типам тренировок (только для активных абонементов)
         var trainingTypes = Enum.GetValues<TypeTrainings>().Where(t => t != TypeTrainings.Unknown).ToList();
         var totalActiveMemberships = activeMembershipsOnly.Count;
-        
+
+        // Статистика по типам тренировок (показываем все типы, даже с 0 абонементов)
         var trainingTypeStats = trainingTypes
             .Select(type => new TrainingTypeStatDto
             {
                 Name = GetTrainingTypeName(type),
                 Count = activeMembershipsOnly.Count(m => m.TypeTrainings == type),
-                Percentage = totalActiveMemberships > 0
-                    ? (double)activeMembershipsOnly.Count(m => m.TypeTrainings == type) / totalActiveMemberships * 100
+                Percentage = activeMemberships > 0 
+                    ? (double)activeMembershipsOnly.Count(m => m.TypeTrainings == type) / activeMemberships * 100 
                     : 0
             })
-            .Where(stat => stat.Count > 0) // Показываем только типы с абонементами
-            .OrderByDescending(s => s.Count) // Сортируем по убыванию количества
+            .OrderByDescending(x => x.Count)
             .ToList();
-
-        // Получаем статистику по тренировкам из истории за весь месяц одним запросом
-        var today = DateOnly.FromDateTime(DateTime.Today);
-        var monthStart = new DateOnly(today.Year, today.Month, 1);
         
         // Получаем все тренировки с начала месяца по сегодня
         var monthSchedules = await _scheduleService.GetScheduleHistory(monthStart, today, token);
-        
+
+        // Отладочная информация
+        var totalTrainings = monthSchedules.Sum(s => s.Trainings?.Count ?? 0);
+
         // Рассчитываем статистику из полученных данных
-        var todayTrainings = monthSchedules.Where(s => s.Date == today).Sum(s => s.Trainings?.Count ?? 0);
-        
-        var weekStart = today.AddDays(-(int)today.DayOfWeek + 1); // Начало текущей недели (понедельник)
-        var weekTrainings = monthSchedules.Where(s => s.Date >= weekStart && s.Date <= today).Sum(s => s.Trainings?.Count ?? 0);
-        
+        var yesterdayTrainings = monthSchedules
+            .Where(s => s.Date == today.AddDays(-1))
+            .Sum(s => s.Trainings?.Count ?? 0);
+
+        // начало недели (понедельник) — корректно для любого DayOfWeek
+        int diff = ((int)today.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        var weekStart = today.AddDays(-diff);
+
+        var weekTrainings = monthSchedules
+            .Where(s => s.Date >= weekStart && s.Date <= today)
+            .Sum(s => s.Trainings?.Count ?? 0);
+
         var monthTrainings = monthSchedules.Sum(s => s.Trainings?.Count ?? 0);
+
+        // Статистика по загруженности тренеров
+        var trainerWorkloadStats = CalculateTrainerWorkloadStats(monthSchedules);
 
         return new StatisticsDto
         {
@@ -223,16 +238,64 @@ public class ClientService : IClientService
             OneTimeMemberships = oneTimeMemberships,
             MorningMemberships = morningMemberships,
             TotalTrainers = allTrainers.Count,
-            ActiveTrainers = allTrainers.Count(t => !t.IsDeleted),
-            TotalTrainingsThisMonth = monthTrainings,
-            TodayTrainings = todayTrainings,
+            AverageTrainerWorkload = trainerWorkloadStats.AverageWorkload,
+            MostBusyTrainer = trainerWorkloadStats.MostBusyTrainer,
+            LeastBusyTrainer = trainerWorkloadStats.LeastBusyTrainer,
+            YesterdayTrainings = yesterdayTrainings,
             WeekTrainings = weekTrainings,
             MonthTrainings = monthTrainings,
             TrainingTypeStats = trainingTypeStats
         };
     }
 
+    private TrainerWorkloadStats CalculateTrainerWorkloadStats(IReadOnlyList<ScheduleDto> monthSchedules)
+    {
+        var allTrainings = monthSchedules
+            .Where(s => s.Trainings != null)
+            .SelectMany(s => s.Trainings!)
+            .ToList();
 
+        var trainerCounts = allTrainings
+         .GroupBy(t => t.TrainerName.Id)
+         .Select(g =>
+         {
+             var any = g.First().TrainerName;
+             return new
+             {
+                 Id = g.Key,
+                 Count = g.Count(),
+                 FirstName = any?.FirstName ?? string.Empty,
+                 LastName = any?.LastName ?? string.Empty
+             };
+         })
+         .ToList();
+
+        if (!trainerCounts.Any())
+        {
+            return new TrainerWorkloadStats
+            {
+                AverageWorkload = 0,
+                MostBusyTrainer = "Нет данных",
+                LeastBusyTrainer = "Нет данных"
+            };
+        }
+
+        var most = trainerCounts.OrderByDescending(x => x.Count).First();
+        var least = trainerCounts.OrderBy(x => x.Count).First();
+        var average = trainerCounts.Average(x => x.Count);
+
+        return new TrainerWorkloadStats
+        {
+            AverageWorkload = Math.Round(average, 1),
+            MostBusyTrainer = ShortName(most),
+            LeastBusyTrainer = ShortName(least)
+        };
+
+        static string ShortName(dynamic t) =>
+            string.IsNullOrWhiteSpace(t.FirstName) || string.IsNullOrWhiteSpace(t.LastName)
+                ? "Неизвестно"
+                : $"{t.LastName} {t.FirstName[0]}.";
+    }
 
     private string GetTrainingTypeName(TypeTrainings type) =>
         type switch
@@ -245,7 +308,7 @@ public class ClientService : IClientService
             TypeTrainings.Hippotherapy => "Иппотерапия",
             TypeTrainings.PhysicalTraining => "ОФП",
             TypeTrainings.Rent => "Аренда",
-            TypeTrainings.Owner => "Частный владелец",
+            TypeTrainings.Owner => "Владелец",
             TypeTrainings.Voltiger => "Вольтижировка",
             TypeTrainings.Group => "Группа",
             TypeTrainings.ExerciseMachine30 => "Тренажёры 30",
@@ -253,4 +316,12 @@ public class ClientService : IClientService
             TypeTrainings.Unknown => "Неизвестно",
             _ => type.ToString()
         };
+}
+
+// Вспомогательный класс для статистики загруженности тренеров
+public class TrainerWorkloadStats
+{
+    public double AverageWorkload { get; set; }
+    public string MostBusyTrainer { get; set; } = string.Empty;
+    public string LeastBusyTrainer { get; set; } = string.Empty;
 }
