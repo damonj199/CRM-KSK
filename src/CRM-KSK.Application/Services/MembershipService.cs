@@ -38,13 +38,6 @@ public class MembershipService : IMembershipService
         return membershipsDtos ?? [];
     }
 
-    public async Task<MembershipDto> GetMembershipByIdAsync(Guid id, CancellationToken token)
-    {
-        var membership = await _membershipRepository.GetMembershipByIdAsync(id, token);
-        var membershipDto = _mapper.Map<MembershipDto>(membership);
-
-        return membershipDto;
-    }
 
     public async Task UpdateMembershipAsync(MembershipDto membershipDto, CancellationToken token)
     {
