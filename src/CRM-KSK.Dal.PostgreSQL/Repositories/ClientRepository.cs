@@ -40,9 +40,9 @@ public class ClientRepository : IClientRepository
         var twoMonthsAgo = DateOnly.FromDateTime(DateTime.Today.AddMonths(-2));
         
         var clients = await _context.Clients
-            .Include(m => m.Memberships.Where(mem => 
-                !mem.IsDeleted || // Все активные абонементы
-                mem.DateEnd >= twoMonthsAgo)) // Или абонементы за последние 2 месяца (включая удаленные)
+            .IgnoreQueryFilters()
+            .Include(m => m.Memberships
+                .Where(mem => mem.DateEnd >= twoMonthsAgo))
             .ToListAsync(token);
 
         return clients ?? [];

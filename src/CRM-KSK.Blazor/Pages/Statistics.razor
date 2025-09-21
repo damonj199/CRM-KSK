@@ -2,6 +2,8 @@
 @using CRM_KSK.Application.Dtos
 @using CRM_KSK.Core.Enums
 @using CRM_KSK.Blazor.Services
+@using Radzen.Blazor
+@using System.Text.Json
 @inject ClientServiceBlazor ClientService
 @inject MembershipServiceBlazor MembershipService
 @inject TrainerServiceBlazor TrainerService
@@ -105,12 +107,16 @@
                             <span class="stat-number">@statistics?.TotalTrainers</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Активных</span>
-                            <span class="stat-number active">@statistics?.ActiveTrainers</span>
+                            <span class="stat-label">Средняя загруженность</span>
+                            <span class="stat-number">@statistics?.AverageTrainerWorkload.ToString("F1")</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">Тренировок за месяц</span>
-                            <span class="stat-number">@statistics?.TotalTrainingsThisMonth</span>
+                            <span class="stat-label">Самый загруженный</span>
+                            <span class="stat-number busy">@statistics?.MostBusyTrainer</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Менее загруженный</span>
+                            <span class="stat-number less-busy">@statistics?.LeastBusyTrainer</span>
                         </div>
                     </div>
                 </div>
@@ -127,8 +133,8 @@
                     </div>
                     <div class="stats-content">
                         <div class="stat-item">
-                            <span class="stat-label">Сегодня</span>
-                            <span class="stat-number">@statistics?.TodayTrainings</span>
+                            <span class="stat-label">Вчера</span>
+                            <span class="stat-number">@statistics?.YesterdayTrainings</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">На этой неделе</span>
@@ -143,7 +149,7 @@
             </div>
         </div>
 
-        <!-- Статистика по типам тренировок -->
+        <!-- График статистики по типам тренировок -->
         <div class="row mb-4">
             <div class="col-12">
                 <h4 class="section-title">
@@ -155,21 +161,24 @@
 
         <div class="row">
             <div class="col-12">
-                <div class="training-types-chart">
-                    <div class="chart-container">
-                        @if (statistics?.TrainingTypeStats != null)
-                        {
-                            @foreach (var trainingType in statistics.TrainingTypeStats)
-                            {
-                                <div class="chart-item">
-                                    <div class="chart-bar" style="height:@(trainingType.Percentage * 1.5)px"></div>
-                                    <div class="chart-label">@trainingType.Name</div>
-                                    <div class="chart-value">@trainingType.Count</div>
-                                </div>
-                            }
-                        }
-                    </div>
-                </div>
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3" Style="margin-bottom: 1rem;">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Распределение абонементов по типам тренировок
+                    </RadzenText>
+                    <RadzenChart>
+                        <RadzenColumnSeries Data="@trainingTypeData" 
+                                           CategoryProperty="name" 
+                                           ValueProperty="count" 
+                                           Title="Количество абонементов" />
+                        <RadzenCategoryAxis Padding="20" />
+                        <RadzenValueAxis>
+                            <RadzenGridLines Visible="true" />
+                            <RadzenAxisTitle Text="Количество" />
+                        </RadzenValueAxis>
+                        <RadzenLegend />
+                    </RadzenChart>
+                </RadzenCard>
             </div>
         </div>
 
@@ -179,6 +188,9 @@
 @code {
     private bool isLoading = true;
     private StatisticsDto? statistics;
+
+    // Данные для графика типов тренировок
+    private List<TrainingTypeChartData> trainingTypeData = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -194,6 +206,9 @@
         {
             // Получаем готовую статистику с бэкенда
             statistics = await ClientService.GetStatistics();
+            
+            // Подготавливаем данные для графиков
+            PrepareChartData();
         }
         catch (Exception ex)
         {
@@ -206,6 +221,24 @@
         }
     }
 
+    private void PrepareChartData()
+    {
+        if (statistics == null) return;
+
+        // Данные для типов тренировок
+        trainingTypeData = statistics.TrainingTypeStats?.Select(x => new TrainingTypeChartData
+        {
+            name = x.Name,
+            count = x.Count
+        }).ToList() ?? new List<TrainingTypeChartData>();
+    }
+
+    // Модель данных для графика типов тренировок
+    public class TrainingTypeChartData
+    {
+        public string name { get; set; } = "";
+        public int count { get; set; }
+    }
 }
 
 <style>
@@ -365,54 +398,44 @@
         color: #17a2b8;
     }
 
-    /* Стили для графика типов тренировок */
-    .training-types-chart {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .chart-container {
-        display: flex;
-        align-items: end;
-        justify-content: space-between;
-        gap: 16px;
-        height: 200px;
-        padding: 20px 0;
-    }
-
-    .chart-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        flex: 1;
-        min-width: 60px;
-    }
-
-    .chart-bar {
-        width: 100%;
-        background: linear-gradient(180deg, #007bff, #0056b3);
-        border-radius: 4px 4px 0 0;
-        transition: height 0.3s ease;
-        min-height: 20px;
-    }
-
-    .chart-label {
-        color: #6c757d;
-        font-size: 12px;
-        font-weight: 500;
-        text-align: center;
-        line-height: 1.2;
-        max-width: 80px;
-    }
-
-    .chart-value {
-        color: #007bff;
-        font-size: 14px;
+    .stat-number.busy {
+        color: #dc3545;
         font-weight: 700;
+    }
+
+    .stat-number.less-busy {
+        color: #6c757d;
+        font-weight: 700;
+    }
+
+    /* Стили для Radzen карточек */
+    .rz-card {
+        border-radius: 12px !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e9ecef !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .rz-card:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* Стили для графиков */
+    .rz-chart {
+        border-radius: 8px !important;
+    }
+
+    /* Стили для заголовков графиков */
+    .rz-text h3 {
+        color: #495057 !important;
+        font-weight: 600 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .rz-text h3 i {
+        color: #007bff !important;
+        margin-right: 8px !important;
     }
 
 
@@ -422,33 +445,18 @@
             margin-bottom: 20px;
         }
 
-        .chart-container {
-            height: 150px;
-            gap: 8px;
+        .rz-card {
+            margin-bottom: 20px !important;
         }
 
-        .chart-item {
-            min-width: 40px;
+        .rz-chart {
+            height: 300px !important;
         }
+    }
 
-        .chart-label {
-            font-size: 10px;
-            max-width: 60px;
-        }
-
-
-        .chart-container {
-            height: 150px;
-            gap: 8px;
-        }
-
-        .chart-item {
-            min-width: 30px;
-        }
-
-        .chart-label {
-            font-size: 9px;
-            max-width: 50px;
+    @@media (max-width: 576px) {
+        .rz-chart {
+            height: 250px !important;
         }
     }
 </style>
