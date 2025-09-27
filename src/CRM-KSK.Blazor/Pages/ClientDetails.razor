@@ -166,6 +166,10 @@
             
             <div class="d-flex gap-2 align-items-center mt-2">
                 <button class="btn btn-primary wide-btn" @onclick="EditTrainer">Изменить</button>
+                <button class="btn btn-warning wide-btn" @onclick="ViewTrainingHistory">
+                    <i class="bi bi-clock-history me-1"></i>
+                    История тренировок
+                </button>
             </div>
         }
     </div>
@@ -365,6 +369,26 @@ else
         min-width: 204px;
         max-width: 204px;
         text-align: center;
+    }
+
+    /* Специальные стили для кнопки истории тренировок */
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        border: none;
+        color: #212529;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #e0a800 0%, #d39e00 100%);
+        color: #212529;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-warning:focus {
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.5);
     }
 
     /* Стили для красивой кнопки удаления абонемента */
@@ -832,5 +856,17 @@ else
             StatusMembership.OneTime => "status-paused",
             _ => "status-unknown"
         };
+    }
+
+    private void ViewTrainingHistory()
+    {
+        if (_clientState.SelectedClient != null)
+        {
+            var clientId = _clientState.SelectedClient.Id;
+            var clientName = $"{_clientState.SelectedClient.LastName} {_clientState.SelectedClient.FirstName}";
+            
+            // Переходим на страницу истории тренировок с параметрами клиента
+            _navigation.NavigateTo($"/schedule-history?clientId={clientId}&clientName={Uri.EscapeDataString(clientName)}");
+        }
     }
 }

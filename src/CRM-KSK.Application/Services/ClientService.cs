@@ -14,6 +14,7 @@ public class ClientService : IClientService
     private readonly IMembershipRepository _membershipRepository;
     private readonly IBirtDaysRepository _birtDaysRepository;
     private readonly ITrainerRepository _trainerRepository;
+    private readonly ITrainerService _trainerService;
     private readonly IScheduleService _scheduleService;
     private readonly IMapper _mapper;
     private readonly ILogger<ClientService> _logger;
@@ -21,12 +22,13 @@ public class ClientService : IClientService
     public ClientService(IClientRepository clientRepository, IMapper mapper,
         ILogger<ClientService> logger, IMembershipRepository membershipRepository,
         IBirtDaysRepository birtDaysRepository, ITrainerRepository trainerRepository,
-        IScheduleService scheduleService)
+        ITrainerService trainerService, IScheduleService scheduleService)
     {
         _clientRepository = clientRepository;
         _membershipRepository = membershipRepository;
         _birtDaysRepository = birtDaysRepository;
         _trainerRepository = trainerRepository;
+        _trainerService = trainerService;
         _scheduleService = scheduleService;
         _mapper = mapper;
         _logger = logger;
@@ -146,7 +148,7 @@ public class ClientService : IClientService
 
         // Получаем клиентов с абонементами для статистики (включая удаленные за последние 2 месяца)
         var allClients = await _clientRepository.GetStatistics(token);
-        var allTrainers = await _trainerRepository.GetTrainersAsync(token);
+        var allTrainers = await _trainerService.GetTrainersAsync(token);
 
         bool HasActiveMembership(Client c)
         {
@@ -228,6 +230,9 @@ public class ClientService : IClientService
         // Статистика по загруженности тренеров
         var trainerWorkloadStats = CalculateTrainerWorkloadStats(monthSchedules);
 
+        // Статистика по тренерам
+        var trainerStats = CalculateTrainerStats(monthSchedules, allTrainers);
+
         return new StatisticsDto
         {
             TotalClients = totalClients,
@@ -244,7 +249,8 @@ public class ClientService : IClientService
             YesterdayTrainings = yesterdayTrainings,
             WeekTrainings = weekTrainings,
             MonthTrainings = monthTrainings,
-            TrainingTypeStats = trainingTypeStats
+            TrainingTypeStats = trainingTypeStats,
+            TrainerStats = trainerStats
         };
     }
 
@@ -295,6 +301,45 @@ public class ClientService : IClientService
             string.IsNullOrWhiteSpace(t.FirstName) || string.IsNullOrWhiteSpace(t.LastName)
                 ? "Неизвестно"
                 : $"{t.LastName} {t.FirstName[0]}.";
+    }
+
+    private List<TrainerStatDto> CalculateTrainerStats(IReadOnlyList<ScheduleDto> monthSchedules, IReadOnlyList<TrainerDto> allTrainers)
+    {
+        var allTrainings = monthSchedules
+            .Where(s => s.Trainings != null)
+            .SelectMany(s => s.Trainings!)
+            .ToList();
+
+        var trainerStats = allTrainers.Select(trainer =>
+        {
+            var trainerTrainings = allTrainings.Where(t => t.TrainerName.Id == trainer.Id).ToList();
+            
+            // Группируем тренировки по типу
+            var trainingTypeGroups = trainerTrainings
+                .GroupBy(t => t.TypeTrainings)
+                .Select(g => new { Type = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .ToList();
+
+            var mostFrequentType = trainingTypeGroups.FirstOrDefault();
+            var mostFrequentTypeName = mostFrequentType != null 
+                ? GetTrainingTypeName(mostFrequentType.Type) 
+                : "Нет тренировок";
+
+            return new TrainerStatDto
+            {
+                TrainerId = trainer.Id,
+                TrainerName = $"{trainer.LastName} {trainer.FirstName}",
+                MonthTrainings = trainerTrainings.Count,
+                MostFrequentTrainingType = mostFrequentTypeName,
+                MostFrequentTypeCount = mostFrequentType?.Count ?? 0
+            };
+        })
+        .OrderByDescending(t => t.MonthTrainings)
+        .ThenBy(t => t.TrainerName)
+        .ToList();
+
+        return trainerStats;
     }
 
     private string GetTrainingTypeName(TypeTrainings type) =>

@@ -26,6 +26,9 @@ public class StatisticsDto
 
     // Статистика по типам тренировок
     public List<TrainingTypeStatDto> TrainingTypeStats { get; set; } = new();
+
+    // Статистика по тренерам
+    public List<TrainerStatDto> TrainerStats { get; set; } = new();
 }
 
 public class TrainingTypeStatDto
@@ -33,5 +36,14 @@ public class TrainingTypeStatDto
     public string Name { get; set; } = string.Empty;
     public int Count { get; set; }
     public double Percentage { get; set; }
+}
+
+public class TrainerStatDto
+{
+    public Guid TrainerId { get; set; }
+    public string TrainerName { get; set; } = string.Empty;
+    public int MonthTrainings { get; set; }
+    public string MostFrequentTrainingType { get; set; } = string.Empty;
+    public int MostFrequentTypeCount { get; set; }
 }
 
