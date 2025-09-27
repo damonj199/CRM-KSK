@@ -182,6 +182,85 @@
             </div>
         </div>
 
+        <!-- Статистика по тренерам -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <h4 class="section-title">
+                    <i class="bi bi-people"></i>
+                    Статистика по тренерам за текущий месяц
+                </h4>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <RadzenCard>
+                    <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3" Style="margin-bottom: 1rem;">
+                        <i class="bi bi-table me-2"></i>
+                        Загруженность тренеров и предпочитаемые типы тренировок
+                    </RadzenText>
+                    <RadzenDataGrid Data="@statistics?.TrainerStats" 
+                                   TItem="TrainerStatDto" 
+                                   AllowPaging="true" 
+                                   PageSize="10"
+                                   AllowSorting="true"
+                                   AllowFiltering="true"
+                                   FilterMode="FilterMode.Advanced"
+                                   ShowPagingSummary="true"
+                                   PagerHorizontalAlign="HorizontalAlign.Center">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="TrainerStatDto" 
+                                                Property="TrainerName" 
+                                                Title="Тренер" 
+                                                Width="200px"
+                                                Sortable="true" />
+                            <RadzenDataGridColumn TItem="TrainerStatDto" 
+                                                Property="MonthTrainings" 
+                                                Title="Тренировок за месяц" 
+                                                Width="150px"
+                                                Sortable="true"
+                                                TextAlign="TextAlign.Center">
+                                <Template Context="trainer">
+                                    <RadzenBadge Text="@trainer.MonthTrainings.ToString()" 
+                                                BadgeStyle="@GetTrainerWorkloadBadgeStyle(trainer.MonthTrainings)"
+                                                Icon="@GetTrainerWorkloadIcon(trainer.MonthTrainings)" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="TrainerStatDto" 
+                                                Property="MostFrequentTrainingType" 
+                                                Title="Чаще всего ведет" 
+                                                Width="200px"
+                                                Sortable="true" />
+                            <RadzenDataGridColumn TItem="TrainerStatDto" 
+                                                Property="MostFrequentTypeCount" 
+                                                Title="Количество" 
+                                                Width="120px"
+                                                Sortable="true"
+                                                TextAlign="TextAlign.Center">
+                                <Template Context="trainer">
+                                    <span class="training-count-badge">@trainer.MostFrequentTypeCount</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="TrainerStatDto" 
+                                                Title="Загруженность" 
+                                                Width="150px"
+                                                Sortable="false">
+                                <Template Context="trainer">
+                                    <div class="workload-indicator">
+                                        <div class="workload-bar">
+                                            <div class="workload-fill" 
+                                                 style="@($"width: {GetWorkloadPercentage(trainer.MonthTrainings)}%; background-color: {GetWorkloadColor(trainer.MonthTrainings)};")"></div>
+                                        </div>
+                                        <small class="workload-text">@GetWorkloadPercentage(trainer.MonthTrainings)%</small>
+                                    </div>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </RadzenCard>
+            </div>
+        </div>
+
     }
 </div>
 
@@ -238,6 +317,51 @@
     {
         public string name { get; set; } = "";
         public int count { get; set; }
+    }
+
+    // Методы для стилизации таблицы тренеров
+    private BadgeStyle GetTrainerWorkloadBadgeStyle(int trainingCount)
+    {
+        return trainingCount switch
+        {
+            >= 50 => BadgeStyle.Success,    // Высокая загруженность - зеленый
+            >= 25 => BadgeStyle.Warning,    // Средняя загруженность - желтый
+            >= 10 => BadgeStyle.Info,       // Низкая загруженность - синий
+            _ => BadgeStyle.Secondary       // Очень низкая - серый
+        };
+    }
+
+    private string GetTrainerWorkloadIcon(int trainingCount)
+    {
+        return trainingCount switch
+        {
+            >= 50 => "trending_up",    // Высокая загруженность
+            >= 25 => "trending_flat",  // Средняя загруженность
+            >= 10 => "trending_down",  // Низкая загруженность
+            _ => "remove"              // Очень низкая
+        };
+    }
+
+    private int GetWorkloadPercentage(int trainingCount)
+    {
+        if (statistics?.TrainerStats == null || !statistics.TrainerStats.Any())
+            return 0;
+
+        var maxTrainings = statistics.TrainerStats.Max(t => t.MonthTrainings);
+        if (maxTrainings == 0) return 0;
+
+        return Math.Min(100, (int)((double)trainingCount / maxTrainings * 100));
+    }
+
+    private string GetWorkloadColor(int trainingCount)
+    {
+        return trainingCount switch
+        {
+            >= 50 => "#28a745",    // Зеленый
+            >= 25 => "#ffc107",    // Желтый
+            >= 10 => "#17a2b8",    // Синий
+            _ => "#6c757d"         // Серый
+        };
     }
 }
 
@@ -438,6 +562,60 @@
         margin-right: 8px !important;
     }
 
+    /* Стили для таблицы тренеров */
+    .training-count-badge {
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .workload-indicator {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .workload-bar {
+        width: 100%;
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .workload-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+        border-radius: 4px;
+    }
+
+    .workload-text {
+        text-align: center;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    /* Стили для Radzen DataGrid */
+    .rz-datagrid {
+        border-radius: 8px !important;
+        overflow: hidden !important;
+    }
+
+    .rz-datagrid-header {
+        background-color: #f8f9fa !important;
+        border-bottom: 2px solid #dee2e6 !important;
+    }
+
+    .rz-datagrid-row:nth-child(even) {
+        background-color: #f8f9fa !important;
+    }
+
+    .rz-datagrid-row:hover {
+        background-color: #e9ecef !important;
+    }
 
     /* Адаптивность */
     @@media (max-width: 768px) {
@@ -452,11 +630,24 @@
         .rz-chart {
             height: 300px !important;
         }
+
+        .rz-datagrid {
+            font-size: 0.875rem !important;
+        }
     }
 
     @@media (max-width: 576px) {
         .rz-chart {
             height: 250px !important;
+        }
+
+        .rz-datagrid {
+            font-size: 0.8rem !important;
+        }
+
+        .training-count-badge {
+            font-size: 0.75rem !important;
+            padding: 2px 6px !important;
         }
     }
 </style>
